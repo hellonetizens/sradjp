@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/17/09/21/0655242.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>EC2とEBS、請求単位が「秒」になる | スラド IT</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="EC2とEBS、請求単位が「秒」になる | スラド IT" property="og:title">
+<meta content="https://srad.jp/static/topics/internet_64.png" property="og:image"/>
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '5169203121288875',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content="insiderman曰く、Amazon Web Services（AWS）のEC2およびEBSで、秒単位で課金されるインスタンスが導入されるとのこと（AWS Blog、Developers.IO）。従来は時間単位での課金だったので、より利用時間に即した支払いができるようになる。実験・開発目的でより気軽にインスタンスを使えるようになったのは嬉しい。..." name="description"/>
+<meta content="insiderman曰く、Amazon Web Services（AWS）のEC2およびEBSで、秒単位で課金されるインスタンスが導入されるとのこと（AWS Blog、Developers.IO）。従来は時間単位での課金だったので、より利用時間に即した支払いができるようになる。実験・開発目的でより気軽にインスタンスを使えるようになったのは嬉しい。..." property="og:description"/>
+<meta content="EC2とEBS、請求単位が「秒」になる | スラド IT" itemprop="name"/>
+<meta content="insiderman曰く、Amazon Web Services（AWS）のEC2およびEBSで、秒単位で課金されるインスタンスが導入されるとのこと（AWS Blog、Developers.IO）。従来は時間単位での課金だったので、より利用時間に即した支払いができるようになる。実験・開発目的でより気軽にインスタンスを使えるようになったのは嬉しい。..." itemprop="description"/>
+<link href="../../../../../../srad.jp/index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../../srad.jp/search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../../srad.jp/it.rss" rel="alternate" title="スラド it RSS" type="application/rss+xml"/>
+<link href="../../../../../../srad.jp/static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../../srad.jp/static/topics/internet_64.png" rel="image_src"/>
+<link href="../../../../../../srad.jp/static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../../srad.jp/static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../../srad.jp/static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/17/09/21/0655242/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'it';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//it.srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/17/09/21/0655242.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../../srad.jp/recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../../srad.jp/popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../../srad.jp/comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../../srad.jp/journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../../srad.jp/polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：IT</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="active" id="fhsection-it">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-13">IT</a><span></span>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="active" id="fhsection-it">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-13">IT</a><span></span>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="13413777" data-fhtype="story" id="firehose-13413777">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">13413777</span>
+<span class="type">story</span>
+</span>
+<header>
+<span class="topic" id="topic-13413777">
+<a href="../../../../../../srad.jp/stories/internet.html" onclick="return addfhfilter('internet');">
+<img alt="インターネット" height="64" src="../../../../../../srad.jp/static/topics/internet_64.png" title="インターネット" width="64"/>
+</a>
+</span>
+<h2 class="story">
+<span id="title-13413777"> <a href="index.html">EC2とEBS、請求単位が「秒」になる</a></span>
+<span class="comments commentcnt-13413777">35</span>
+</h2>
+<div class="details" id="details-13413777">ストーリー by <a href="http://hylom.net/">hylom</a>
+<time datetime="2017-09-22T06:00+09:00" id="fhtime-13413777">2017年09月22日  6時00分</time><br/>また一つEC2を使わない理由がなくなった 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "EC2とEBS、請求単位が「秒」になる",
+  "datePublished": "2017-09-22T06:00+09:00",
+  "articleBody": "insiderman曰く、Amazon Web Services（AWS）のEC2およびEBSで、秒単位で課金されるインスタンスが導入されるとのこと（AWS Blog、Developers.IO）。従来は時間単位での課金だったので、より利用時間に即した支払いができるようになる。実験・開発目的でより気軽にインスタンスを使えるようになったのは嬉しい。",
+  "image": "https://srad.jp/static/topics/internet_64.png"
+}
+</script>
+<div class="body" id="fhbody-13413777">
+<div class="contents_text p" id="text-13413777">
+        insiderman曰く、<blockquote><div><p>Amazon Web Services（AWS）のEC2およびEBSで、秒単位で課金されるインスタンスが導入されるとのこと（<a href="https://aws.amazon.com/jp/blogs/aws/new-per-second-billing-for-ec2-instances-and-ebs-volumes/">AWS Blog</a>、<a href="http://dev.classmethod.jp/etc/amazon-ec2-ebs-billing-per-seconds/">Developers.IO</a>）。
+</p><p>
+従来は時間単位での課金だったので、より利用時間に即した支払いができるようになる。実験・開発目的でより気軽にインスタンスを使えるようになったのは嬉しい。</p></div></blockquote>
+</div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //it.srad.jp/story/17/09/21/0655242/ -->
+<!-- http://it.srad.jp/story/17/09/21/0655242/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://it.srad.jp/story/17/09/21/0655242/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://it.srad.jp/story/17/09/21/0655242/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/it.srad.jp/story/17/09/21/0655242/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../../srad.jp/about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">35</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-13413777"><a class="topic tag" href="../../../../../../srad.jp/tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%8D%E3%83%83%E3%83%88.html" rel="statictag" target="_blank">インターネット</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/internet.html" rel="statictag" target="_blank">internet</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/it.html" rel="statictag" target="_blank">it</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../0952252/index.html" id="hrefns">Google、HTCからPixel関連の人材とIPを取得</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../02/07/0627257/index.html">Oracle、ライセンス体系変更でAWSとAzure上での利用が値上げに</a></h3><h3><a href="../../../../../../linux.srad.jp/story/15/09/01/0544213/index.html">Amazon EC2でもっとも人気のあるOSはUbuntu</a></h3><h3><a href="../../../../11/11/08/1030204/index.html">「さくらのクラウド」料金発表、Amazon EC2 の半額の料金設定</a></h3><h3><a href="../../../../../../opensource.srad.jp/story/17/12/05/0614242/index.html">米Amazon.comがFreeRTOSの権利を取得、ライセンスもMITライセンスに変更</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="EC2とEBS、請求単位が「秒」になるのストーリーへ戻る">EC2とEBS、請求単位が「秒」になる</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//it.srad.jp/story/17/09/21/0655242/';
+var parent_item_title = 'EC2とEBS、請求単位が「秒」になる';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「EC2とEBS、請求単位が「秒」になる」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//it.srad.jp/search.pl?op=comments&amp;sid=720120" class="btn"><span class="totalcommentcnt">35</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//it.srad.jp/comments.pl?sid=720120"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_da007b76.html"><span>検索</span><span class="totalcommentcnt">35</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../../srad.jp/static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 3284246: { uid: 20155, pid: 3283981, subject: "Re:うるう秒の時", read: 0, points: 3, kids: [  ], opid: 3283981 }, 3283780: { uid: 1, pid: 3283757, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [  ], opid: 3283757 }, 3283917: { uid: 1, pid: 3283843, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [  ], opid: 3283867 }, 3283977: { uid: 1, pid: 3283760, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [ 3284124 ], opid: 3283760 }, 3283933: { uid: 1, pid: 3283928, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [  ], opid: 3283928 }, 3284645: { uid: 39921, pid: 3283760, subject: "Re:うるう秒の時", read: 0, points: 1, kids: [  ], opid: 3283760 }, 3283757: { uid: 1, pid: 3283749, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [ 3283780 ], opid: 3283749 }, 3283843: { uid: 1, pid: 3283811, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [ 3283867, 3283884, 3283917, 3283958, 3284068 ], opid: 3283811 }, 3284124: { uid: 1, pid: 3283977, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [  ], opid: 3283977 }, 3284321: { uid: 1, pid: 3284221, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [ 3284393 ], opid: 3284221 }, 3284221: { uid: 20155, pid: 3283915, subject: "Re:うるう秒の時", read: 0, points: 2, kids: [ 3284321 ], opid: 3283915 }, 3283928: { uid: 1, pid: 3283785, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [ 3283933 ], opid: 3283785 }, 3283915: { uid: 1, pid: 3283785, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [ 3284221 ], opid: 3283785 }, 3283811: { uid: 1, pid: 3283804, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [ 3283843, 3283919 ], opid: 3283804 }, 3283958: { uid: 1, pid: 3283843, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [  ], opid: 3283867 }, 3283768: { uid: 1, pid: 3283760, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [ 3283775, 3283804 ], opid: 3283760 }, 3283804: { uid: 1, pid: 3283768, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [ 3283811 ], opid: 3283768 }, 3283971: { uid: 45149, pid: 3283785, subject: "Re:うるう秒の時", read: 0, points: 1, kids: [  ], opid: 3283785 }, 3283867: { uid: 14791, pid: 3283843, subject: "Re:うるう秒の時", read: 0, points: 1, kids: [  ], opid: 3283843 }, 3283749: { uid: 1, pid: 0, read: 0, points: 2, kids: [ 3283751, 3283757, 3283760, 3283785 ], opid: 0 }, 3284171: { uid: 1, pid: 0, read: 0, points: 0, kids: [  ], opid: 0 }, 3283875: { uid: 1, pid: 3283785, subject: "Re:うるう秒の時", read: 0, points: 1, kids: [  ], opid: 3283785 }, 3283751: { uid: 1, pid: 3283749, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [  ], opid: 3283749 }, 3283775: { uid: 1, pid: 3283768, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [  ], opid: 3283768 }, 3284393: { uid: 1, pid: 3284321, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [ 3284408, 3285548 ], opid: 3284321 }, 3285085: { uid: 1, pid: 3284836, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [  ], opid: 3284836 }, 3283884: { uid: 1, pid: 3283843, subject: "Re:うるう秒の時", read: 0, points: -1, kids: [  ], opid: 3283867 }, 3283981: { uid: 34215, pid: 3283785, subject: "Re:うるう秒の時", read: 0, points: 3, kids: [ 3284246 ], opid: 3283785 }, 3283919: { uid: 1, pid: 3283811, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [  ], opid: 3283811 }, 3285548: { uid: 1, pid: 3284393, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [  ], opid: 3284408 }, 3284408: { uid: 1, pid: 3284393, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [  ], opid: 3284393 }, 3284068: { uid: 14791, pid: 3283843, subject: "Re:うるう秒の時", read: 0, points: 1, kids: [  ], opid: 3283958 }, 3283785: { uid: 20155, pid: 3283749, subject: "Re:うるう秒の時", read: 0, points: 5, kids: [ 3283875, 3283915, 3283928, 3283971, 3283981, 3284836 ], opid: 3283749 }, 3284836: { uid: 11178, pid: 3283785, subject: "Re:うるう秒の時", read: 0, points: 1, kids: [ 3285085 ], opid: 3283785 }, 3283760: { uid: 1, pid: 3283749, subject: "Re:うるう秒の時", read: 0, points: 0, kids: [ 3283768, 3283977, 3284645 ], opid: 3283749 } });
+
+D2.thresh_totals({6:{6:{1:35,3:0,2:0}},4:{6:{1:34,3:0,2:1},4:{1:34,3:1,2:0},5:{1:34,3:1,2:0}},1:{6:{1:24,3:0,2:11},4:{1:24,3:1,2:10},1:{1:24,3:11,2:0},3:{1:24,3:4,2:7},2:{1:24,3:5,2:6},5:{1:24,3:1,2:10}},3:{6:{1:32,3:0,2:3},4:{1:32,3:1,2:2},3:{1:32,3:3,2:0},5:{1:32,3:1,2:2}},0:{6:{1:1,3:0,2:34},4:{1:1,3:1,2:33},1:{1:1,3:12,2:22},3:{1:1,3:4,2:30},0:{1:1,3:34,2:0},2:{1:1,3:5,2:29},5:{1:1,3:1,2:33}},2:{6:{1:30,3:0,2:5},4:{1:30,3:1,2:4},3:{1:30,3:4,2:1},2:{1:30,3:5,2:0},5:{1:30,3:1,2:4}},5:{6:{1:34,3:0,2:1},5:{1:34,3:1,2:0}},"-1":{6:{1:0,3:0,2:35},4:{1:0,3:1,2:34},1:{1:0,3:12,2:23},3:{1:0,3:4,2:31},0:{1:0,3:34,2:1},2:{1:0,3:5,2:30},5:{1:0,3:1,2:34},"-1":{1:0,3:35,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([3283749,3284171]);
+D2.root_comments_hash({3284171:1,3283749:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(720120);
+
+D2.d2_seen('3283749,2,6,3,8,7,5,5,19,7,32,24,8,9,31,2,2,9,5,25,13,6,4,87,56,47,50,25,75,72,15,237,191,249,463');
+D2.more_comments_num(0);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_3283749"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283749"></div>
+<div class="comment-item" id="comment_3283749">
+<div class="commentTop comment-top newcomment" id="comment_top_3283749">
+<div class="title">
+<h4><a href="../../../../../comments.pl_863440df.html" id="comment_link_3283749" name="comment_link_3283749" onclick="return D2.setFocusComment(3283749)">うるう秒の時</a>
+<span class="score" id="comment_score_3283749">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283749); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283749">on 2017年09月22日  6時24分
+			 (<a href="../../../../../../srad.jp/comment/3283749.html">#3283749</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283749"><p>やはり１秒多く課金されるのでせうか？</p></div>
+</div>
+</div>
+<div id="replyto_3283749"></div>
+<ul class="comment-group" id="group_3283749">
+<li class="hide" id="hiddens_3283749"></li>
+</ul><ul id="commtree_3283749"><li class="comment full contain" id="tree_3283785"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283785"></div>
+<div class="comment-item" id="comment_3283785">
+<div class="commentTop comment-top newcomment" id="comment_top_3283785">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6d5cc7f3.html" id="comment_link_3283785" name="comment_link_3283785" onclick="return D2.setFocusComment(3283785)">Re:うるう秒の時</a>
+<span class="score" id="comment_score_3283785">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283785); return false">スコア:5</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~ikotom/index.html">ikotom (20155)</a>
+<span class="otherdetails" id="comment_otherdetails_3283785">on 2017年09月22日  8時42分
+			 (<a href="../../../../../../srad.jp/comment/3283785.html">#3283785</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283785"><p>&gt; うるう秒のとき１秒多く課金されるのか</p><p>これ中々おもしろい考察ですよ。<br/>というのも「コンピューターにとってうるう秒とは何か」を<br/>突き詰めるとややこしい話になってきます。</p><p>そもそも(例えばUnixでは)OSにとって「時間」とは<br/>つきつめるとハードウェア的なカウンタにすぎないわけです。<br/>カウンタが "1506009661" と毎秒積み上げてるだけなのを人間が<br/>これは 2017/9/22 01:01:01 だな、と変換して解釈しているのですから。</p><p>ところがここにNTPが絡み出すと、現実の時間との同期が意識されます。<br/>ただのカウンタだったのが、現実に併せて進みを早くしたり遅くしたりして<br/>カウンタの値を調整するのですね。<br/>このあたりから UTC、UT0、UT1 の知識が必要になってきます。</p><p>そして一般的にNTPでは、うるう秒は「長ーい1秒」として扱われます。<br/>あえて簡単に言うと、23:59:50 あたりから 現実の1秒を PC内では 1.1秒にして<br/>意図的にPC内の時間の流れを遅くすることでゆるやかに補正する感じです。</p><p>まあつまり結論を言うと、NTPがうるう秒なんて無かったことにしてくれるから<br/>AWSにおいてうるう秒はカウントされない(はず)、です。<br/>もちろんAWSの課金システムが本当にNTPを使ってるかは中の人しか知らないので<br/>ただの外野の推測にすぎませんが、一般的なシステム運用ならそうなるはずです。</p><p>興味ある人はぜひUTCとか「何となく知ってる」じゃなくじっくり調べてみて下さい。<br/>宇宙の（地球と太陽の）動きとかも絡んでくるかなり複雑な話になってくるので<br/>なかなかに知的好奇心が満たされますよ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283785">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うるう秒の時')+'&amp;url='+encodeURIComponent('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283785'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283785'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283785'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_cb9c982e.html" onclick="return D2.selectParent(3283749)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3283785"></div>
+<ul class="comment-group" id="group_3283785">
+<li class="hide" id="hiddens_3283785"></li>
+</ul><ul id="commtree_3283785"><li class="comment full contain" id="tree_3283981"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283981"></div>
+<div class="comment-item" id="comment_3283981">
+<div class="commentTop comment-top newcomment" id="comment_top_3283981">
+<div class="title">
+<h4><a href="../../../../../comments.pl_04cd1bd2.html" id="comment_link_3283981" name="comment_link_3283981" onclick="return D2.setFocusComment(3283981)">Re:うるう秒の時</a>
+<span class="score" id="comment_score_3283981">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283981); return false">スコア:3</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~monoblock/index.html">monoblock (34215)</a>
+<span class="otherdetails" id="comment_otherdetails_3283981">on 2017年09月22日 13時47分
+			 (<a href="../../../../../../srad.jp/comment/3283981.html">#3283981</a>)
+			<small>
+<a class="user_homepage_display" href="http://monoblock.servehttp.com/" title="http://monoblock.servehttp.com/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~monoblock/journal/index.html" title="2017年07月22日  7時21分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283981"><p>そういう動作をする場合もあるようですが、ntpdにはleap indicatorの実装があるため、通常は上位ntpサーバから流されるleap bitを受け取り、これを解釈して明示的にうるう秒を挿入します。<br/>つまり長い1秒ではなく、追加の1秒を挿入します。</p><p>Linuxの場合、さらにtzdataパッケージにうるう秒挿入予定が記載されていれば、local timeとしてxx:xx:60が表現されます。記載が無い場合はxx:xx:59が2回繰り返されます。</p><p>2012年のうるう秒挿入ではバグによるkernel panicが多発したため、leap bitを受け入れない設定で動作しているホストも多いと思いますが、その場合はうるう秒が発生した後で徐々に上位サーバとの同期を取り直す動作になります。<br/>収束までの時間は構成によりますが概ね30分〜1時間程度掛かります。</p><p>事前に1秒の長さを伸ばして帳尻を合わせるのは電話時報などです。NTTの場合は100秒前から1秒表記の間隔を1010msに延長します。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283981">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うるう秒の時')+'&amp;url='+encodeURIComponent('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283981'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283981'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283981'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_e1c680e9.html" onclick="return D2.selectParent(3283785)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3283981"></div>
+<ul class="comment-group" id="group_3283981">
+<li class="hide" id="hiddens_3283981"></li>
+</ul><ul id="commtree_3283981"><li class="comment full contain" id="tree_3284246"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3284246"></div>
+<div class="comment-item" id="comment_3284246">
+<div class="commentTop comment-top newcomment" id="comment_top_3284246">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6557b462.html" id="comment_link_3284246" name="comment_link_3284246" onclick="return D2.setFocusComment(3284246)">Re:うるう秒の時</a>
+<span class="score" id="comment_score_3284246">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3284246); return false">スコア:3</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~ikotom/index.html">ikotom (20155)</a>
+<span class="otherdetails" id="comment_otherdetails_3284246">on 2017年09月22日 21時12分
+			 (<a href="../../../../../../srad.jp/comment/3284246.html">#3284246</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3284246"><p>補足ありがとうございます。<br/>私などよりはるかに素晴らしい専門知識をお持ちで参考になります。</p><p>leap indicator の話まで行くと私の知見レベルではただの下手な説明になるので<br/>省略しましたが、代わりに簡潔かつ正確に説明頂いて感謝です。</p><p>私の認識では、世の運用中サーバは殆どが、うるう秒をまともに扱うような<br/>まっとうであれど危険であることはせず、SLEWモードで無視するだろうと<br/>勝手に思っていたのですが、ちょっと不安になって改めて調べてみたところ、<br/>どうやらAWSは SLEW と STEP とシステムによってバラバラのようです。</p><p>AWS でのうるう秒対応 - Qiita<br/><a href="http://qiita.com/yyoshiki41/items/d63dbbb5d4bc8e38719a" title="qiita.com">http://qiita.com/yyoshiki41/items/d63dbbb5d4bc8e38719a</a> [qiita.com]</p><p>ConsoleはSLEWらしいので元コメの課金の話は「うるう秒でも１秒多く課金はされない」が<br/>正解のようですが・・・こんなバラバラとは思ってませんでした。<br/>恥ずかしながら長文だらだら書く前に検索しろって話でしたね。失礼しました。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3284246">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うるう秒の時')+'&amp;url='+encodeURIComponent('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284246'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284246'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284246'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_b6fbeb31.html" onclick="return D2.selectParent(3283981)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3284246"></div>
+<ul class="comment-group" id="group_3284246">
+<li class="hide" id="hiddens_3284246"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_3283875"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283875"></div>
+<div class="comment-item" id="comment_3283875">
+<div class="commentTop comment-top newcomment" id="comment_top_3283875">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1adf0c3a.html" id="comment_link_3283875" name="comment_link_3283875" onclick="return D2.setFocusComment(3283875)">Re:うるう秒の時</a>
+<span class="score" id="comment_score_3283875">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283875); return false">スコア:1</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283875">on 2017年09月22日 11時14分
+			 (<a href="../../../../../../srad.jp/comment/3283875.html">#3283875</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283875"><p>スラドにこんなに詳しく技術的なコメントのできる方がいるなんて！<br/>geek向けサイトみたいですね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283875">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うるう秒の時')+'&amp;url='+encodeURIComponent('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283875'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283875'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283875'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_e1c680e9.html" onclick="return D2.selectParent(3283785)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3283875"></div>
+<ul class="comment-group" id="group_3283875">
+<li class="hide" id="hiddens_3283875"></li>
+</ul></li><li class="comment full contain" id="tree_3283971"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283971"></div>
+<div class="comment-item" id="comment_3283971">
+<div class="commentTop comment-top newcomment" id="comment_top_3283971">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f90dbc87.html" id="comment_link_3283971" name="comment_link_3283971" onclick="return D2.setFocusComment(3283971)">Re:うるう秒の時</a>
+<span class="score" id="comment_score_3283971">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283971); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~minet/index.html">minet (45149)</a>
+<span class="otherdetails" id="comment_otherdetails_3283971">on 2017年09月22日 13時29分
+			 (<a href="../../../../../../srad.jp/comment/3283971.html">#3283971</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~minet/journal/index.html" title="2023年09月22日 23時53分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283971"><p>こういう稼働時間の算出って、カレンダーを使うんじゃなくて、タイマー割り込みによって増加し続けるカウンタ（を参照できるAPIなど）をもとにするんじゃないの？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283971">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うるう秒の時')+'&amp;url='+encodeURIComponent('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283971'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283971'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283971'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_e1c680e9.html" onclick="return D2.selectParent(3283785)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3283971"></div>
+<ul class="comment-group" id="group_3283971">
+<li class="hide" id="hiddens_3283971"></li>
+</ul></li><li class="comment full contain" id="tree_3284836"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3284836"></div>
+<div class="comment-item" id="comment_3284836">
+<div class="commentTop comment-top newcomment" id="comment_top_3284836">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ecf419c9.html" id="comment_link_3284836" name="comment_link_3284836" onclick="return D2.setFocusComment(3284836)">Re:うるう秒の時</a>
+<span class="score" id="comment_score_3284836">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3284836); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~annoymouse%20coward/index.html">annoymouse coward (11178)</a>
+<span class="otherdetails" id="comment_otherdetails_3284836">on 2017年09月24日  2時01分
+			 (<a href="../../../../../../srad.jp/comment/3284836.html">#3284836</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~annoymouse%20coward/journal/index.html" title="2019年01月29日  8時35分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3284836"><p>根本的に間違えてませんか？</p><p>たとえば１０秒掛かる処理があったとします<br/>ではこの処理は，うるう秒をまたぐと何秒で終わるでしょうか？</p><p>１０秒です．処理時間が変わるわけがありません</p><p>たとえば23時59分55秒に処理を開始したとします<br/>うるう秒がなければ 00時00分05秒に処理は終わります．引き算すると10秒です</p><p>うるう秒が挿入されて，23時59分59秒の次が23時59分60秒<br/>その次が00時00分00秒となったとします<br/>この場合は 00時00分04秒に処理は終わります．この場合も引き算すると10秒です</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3284836">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うるう秒の時')+'&amp;url='+encodeURIComponent('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284836'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284836'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284836'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_e1c680e9.html" onclick="return D2.selectParent(3283785)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3284836"></div>
+<ul class="comment-group" id="group_3284836">
+<li class="hide" id="hiddens_3284836"></li>
+</ul><ul id="commtree_3284836"><li class="comment oneline" id="tree_3285085"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3285085"></div>
+<div class="comment-item" id="comment_3285085">
+<div class="commentTop comment-top newcomment" id="comment_top_3285085">
+<div class="title">
+<h4><a href="../../../../../comments.pl_08236fa1.html" id="comment_link_3285085" name="comment_link_3285085" onclick="return D2.setFocusComment(3285085)">Re:</a>
+<span class="score" id="comment_score_3285085">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3285085); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3285085"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3285085"><p>それはEC2を10秒だけ動かして処理してすぐ止めたときの話だね<br/>でも巷のサーバは24時間ずっと動かしっぱなしで止めたりしないのがほとんどなのよ<br/>そーゆー場合の課金額のことをみんな話してるのよん</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3285085"></div>
+</div>
+<div id="replyto_3285085"></div>
+<ul class="comment-group" id="group_3285085">
+<li class="hide" id="hiddens_3285085"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_3283915"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283915"></div>
+<div class="comment-item" id="comment_3283915">
+<div class="commentTop comment-top newcomment" id="comment_top_3283915">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9f1faf4d.html" id="comment_link_3283915" name="comment_link_3283915" onclick="return D2.setFocusComment(3283915)">Re:</a>
+<span class="score" id="comment_score_3283915">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283915); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283915"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283915"><p>UNIXの時間をUTCで運用すればそういう動作をする場合もあるだろうけど、<br/>TAIで運用すればNTPで同期したまま23:59:60がカウントされるわけで、<br/>「NTPを使っていたらカウントされない」とは言えないんじゃないですかね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283915"></div>
+</div>
+<div id="replyto_3283915"></div>
+<ul class="comment-group" id="group_3283915">
+<li class="hide" id="hiddens_3283915"></li>
+</ul><ul id="commtree_3283915"><li class="comment full contain" id="tree_3284221"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3284221"></div>
+<div class="comment-item" id="comment_3284221">
+<div class="commentTop comment-top newcomment" id="comment_top_3284221">
+<div class="title">
+<h4><a href="../../../../../comments.pl_5a4c5802.html" id="comment_link_3284221" name="comment_link_3284221" onclick="return D2.setFocusComment(3284221)">Re:うるう秒の時</a>
+<span class="score" id="comment_score_3284221">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3284221); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~ikotom/index.html">ikotom (20155)</a>
+<span class="otherdetails" id="comment_otherdetails_3284221">on 2017年09月22日 20時43分
+			 (<a href="../../../../../../srad.jp/comment/3284221.html">#3284221</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3284221"><p>仰るとおりです。<br/>UTC, TAI, あるいは UT1 いずれで運用するかでそのあたりは変わってきます。</p><p>その辺まで書こうと思ったらかなり長文になっちゃうので<br/>私のコメントは「一般的な」という但し書きつきでの、専門特殊でない運用の話に<br/>限らせて頂いてました。</p><p>なので補足＆鋭いツッコミ感謝です。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3284221">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うるう秒の時')+'&amp;url='+encodeURIComponent('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284221'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284221'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284221'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_74bf2a4c.html" onclick="return D2.selectParent(3283915)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3284221"></div>
+<ul class="comment-group" id="group_3284221">
+<li class="hide" id="hiddens_3284221"></li>
+</ul><ul id="commtree_3284221"><li class="comment oneline" id="tree_3284321"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3284321"></div>
+<div class="comment-item" id="comment_3284321">
+<div class="commentTop comment-top newcomment" id="comment_top_3284321">
+<div class="title">
+<h4><a href="../../../../../comments.pl_42c42e71.html" id="comment_link_3284321" name="comment_link_3284321" onclick="return D2.setFocusComment(3284321)">Re:</a>
+<span class="score" id="comment_score_3284321">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3284321); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3284321"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3284321"><p>UT1で運用することなどありえないと思いますがw</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3284321"></div>
+</div>
+<div id="replyto_3284321"></div>
+<ul class="comment-group" id="group_3284321">
+<li class="hide" id="hiddens_3284321"></li>
+</ul><ul id="commtree_3284321"><li class="comment oneline" id="tree_3284393"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3284393"></div>
+<div class="comment-item" id="comment_3284393">
+<div class="commentTop comment-top newcomment" id="comment_top_3284393">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d4784dd8.html" id="comment_link_3284393" name="comment_link_3284393" onclick="return D2.setFocusComment(3284393)">Re:</a>
+<span class="score" id="comment_score_3284393">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3284393); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3284393"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3284393"><p>別ACですが、ありえますよ。<br/>航空系とか天文宇宙系とか、ようは現実世界とシステムとの間において<br/>１秒以下の誤差が致命的になるような分野ですね。<br/>そっち系は全部が全部UT1ってことも勿論ないですが、全然珍しくない程度にはあります。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3284393"></div>
+</div>
+<div id="replyto_3284393"></div>
+<ul class="comment-group" id="group_3284393">
+<li class="hide" id="hiddens_3284393"></li>
+</ul><ul id="commtree_3284393"><li class="comment oneline" id="tree_3284408"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3284408"></div>
+<div class="comment-item" id="comment_3284408">
+<div class="commentTop comment-top newcomment" id="comment_top_3284408">
+<div class="title">
+<h4><a href="../../../../../comments.pl_28eb5405.html" id="comment_link_3284408" name="comment_link_3284408" onclick="return D2.setFocusComment(3284408)">Re:</a>
+<span class="score" id="comment_score_3284408">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3284408); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3284408"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3284408"><p>UT1を使うっていうのとUT1でシステムを運用するっていうのは違うからね</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3284408"></div>
+</div>
+<div id="replyto_3284408"></div>
+<ul class="comment-group" id="group_3284408">
+<li class="hide" id="hiddens_3284408"></li>
+</ul></li><li class="comment oneline" id="tree_3285548"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3285548"></div>
+<div class="comment-item" id="comment_3285548">
+<div class="commentTop comment-top newcomment" id="comment_top_3285548">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7eda03df.html" id="comment_link_3285548" name="comment_link_3285548" onclick="return D2.setFocusComment(3285548)">Re:</a>
+<span class="score" id="comment_score_3285548">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3285548); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3285548"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3285548"><p>ん？それ拘るところ？<br/>運用≒使う、でしょ、日本語的に。<br/>そういう用語の話は置いとこうぜ。</p><p>なんか反論あるなら、ちゃんと実例を出そうな。<br/>具体的な案件の話をしないなら、それはどうでもいい用語論争で荒らしてるだけだよ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3285548"></div>
+</div>
+<div id="replyto_3285548"></div>
+<ul class="comment-group" id="group_3285548">
+<li class="hide" id="hiddens_3285548"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3283928"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283928"></div>
+<div class="comment-item" id="comment_3283928">
+<div class="commentTop comment-top newcomment" id="comment_top_3283928">
+<div class="title">
+<h4><a href="../../../../../comments.pl_02f746d3.html" id="comment_link_3283928" name="comment_link_3283928" onclick="return D2.setFocusComment(3283928)">Re:</a>
+<span class="score" id="comment_score_3283928">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283928); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283928"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283928"><p>いつ起動していつ止めたかの引き算するだけだと思うんだけれども。</p><p>その引き算においてうるう秒を意識するかどうかだけだろうけど、<br/>意識しないだろうなぁ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283928"></div>
+</div>
+<div id="replyto_3283928"></div>
+<ul class="comment-group" id="group_3283928">
+<li class="hide" id="hiddens_3283928"></li>
+</ul><ul id="commtree_3283928"><li class="comment oneline" id="tree_3283933"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283933"></div>
+<div class="comment-item" id="comment_3283933">
+<div class="commentTop comment-top newcomment" id="comment_top_3283933">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9c0eabea.html" id="comment_link_3283933" name="comment_link_3283933" onclick="return D2.setFocusComment(3283933)">Re:</a>
+<span class="score" id="comment_score_3283933">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283933); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283933"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283933">だからのその引き算のとき<br/>
+・23:59:60に相当する1秒が存在する<br/>
+・その前の一定期間で1秒が引き伸ばされていて23:59:60に相当するカウントは存在しない<br/>
+で課金額変わってくるんじゃないの<br/>
+って話してんだけど</div>
+</div>
+<div class="commentSub" id="comment_sub_3283933"></div>
+</div>
+<div id="replyto_3283933"></div>
+<ul class="comment-group" id="group_3283933">
+<li class="hide" id="hiddens_3283933"></li>
+</ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3283751"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283751"></div>
+<div class="comment-item" id="comment_3283751">
+<div class="commentTop comment-top newcomment" id="comment_top_3283751">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8c64d240.html" id="comment_link_3283751" name="comment_link_3283751" onclick="return D2.setFocusComment(3283751)">Re:</a>
+<span class="score" id="comment_score_3283751">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283751); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283751"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283751"><p>多くないだろ</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283751"></div>
+</div>
+<div id="replyto_3283751"></div>
+<ul class="comment-group" id="group_3283751">
+<li class="hide" id="hiddens_3283751"></li>
+</ul></li><li class="comment oneline" id="tree_3283757"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283757"></div>
+<div class="comment-item" id="comment_3283757">
+<div class="commentTop comment-top newcomment" id="comment_top_3283757">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2e19860e.html" id="comment_link_3283757" name="comment_link_3283757" onclick="return D2.setFocusComment(3283757)">Re:</a>
+<span class="score" id="comment_score_3283757">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283757); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283757"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283757"><p>請求額は利用時間分かうるう秒分は無料になるんじゃないの<br/>利用時間分だと報告者がめんどくさいことになるのでその時間は避けたいな</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283757"></div>
+</div>
+<div id="replyto_3283757"></div>
+<ul class="comment-group" id="group_3283757">
+<li class="hide" id="hiddens_3283757"></li>
+</ul><ul id="commtree_3283757"><li class="comment oneline" id="tree_3283780"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283780"></div>
+<div class="comment-item" id="comment_3283780">
+<div class="commentTop comment-top newcomment" id="comment_top_3283780">
+<div class="title">
+<h4><a href="../../../../../comments.pl_fda19ce2.html" id="comment_link_3283780" name="comment_link_3283780" onclick="return D2.setFocusComment(3283780)">Re:</a>
+<span class="score" id="comment_score_3283780">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283780); return false">スコア:0</a>, オフトピック)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283780"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283780"><p>何を言いたいのか、まったく解らないんだけど。<br/>最近、こーゆーの流行なの?</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283780"></div>
+</div>
+<div id="replyto_3283780"></div>
+<ul class="comment-group" id="group_3283780">
+<li class="hide" id="hiddens_3283780"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_3283760"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283760"></div>
+<div class="comment-item" id="comment_3283760">
+<div class="commentTop comment-top newcomment" id="comment_top_3283760">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a0f93926.html" id="comment_link_3283760" name="comment_link_3283760" onclick="return D2.setFocusComment(3283760)">Re:</a>
+<span class="score" id="comment_score_3283760">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283760); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283760"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283760"><p>貴方はうるう年に一日余分に働いても無給で構わないですか？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283760"></div>
+</div>
+<div id="replyto_3283760"></div>
+<ul class="comment-group" id="group_3283760">
+<li class="hide" id="hiddens_3283760"></li>
+</ul><ul id="commtree_3283760"><li class="comment full contain" id="tree_3284645"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3284645"></div>
+<div class="comment-item" id="comment_3284645">
+<div class="commentTop comment-top newcomment" id="comment_top_3284645">
+<div class="title">
+<h4><a href="../../../../../comments.pl_05f5c176.html" id="comment_link_3284645" name="comment_link_3284645" onclick="return D2.setFocusComment(3284645)">Re:うるう秒の時</a>
+<span class="score" id="comment_score_3284645">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3284645); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~hjmhjm/index.html">hjmhjm (39921)</a>
+<span class="otherdetails" id="comment_otherdetails_3284645">on 2017年09月23日 18時24分
+			 (<a href="../../../../../../srad.jp/comment/3284645.html">#3284645</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3284645"><p>あなたは、2月に他の月と同じ給料をもらっても心が痛まないのですか？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3284645">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うるう秒の時')+'&amp;url='+encodeURIComponent('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284645'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284645'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284645'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_26421564.html" onclick="return D2.selectParent(3283760)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3284645"></div>
+<ul class="comment-group" id="group_3284645">
+<li class="hide" id="hiddens_3284645"></li>
+</ul></li><li class="comment oneline" id="tree_3283768"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283768"></div>
+<div class="comment-item" id="comment_3283768">
+<div class="commentTop comment-top newcomment" id="comment_top_3283768">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9ab1de99.html" id="comment_link_3283768" name="comment_link_3283768" onclick="return D2.setFocusComment(3283768)">Re:</a>
+<span class="score" id="comment_score_3283768">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283768); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283768"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283768"><p>月給制や年俸制なら，うるう年でもそうでない年でも，基本給は同じです。<br/>それで構わないと思っています。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283768"></div>
+</div>
+<div id="replyto_3283768"></div>
+<ul class="comment-group" id="group_3283768">
+<li class="hide" id="hiddens_3283768"></li>
+</ul><ul id="commtree_3283768"><li class="comment oneline" id="tree_3283775"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283775"></div>
+<div class="comment-item" id="comment_3283775">
+<div class="commentTop comment-top newcomment" id="comment_top_3283775">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7b2ed440.html" id="comment_link_3283775" name="comment_link_3283775" onclick="return D2.setFocusComment(3283775)">Re:</a>
+<span class="score" id="comment_score_3283775">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283775); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283775"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283775"><p>アマゾンが秒で課金って言ってるんだから、この例え話の場合は日報制だとしての話に決まってるだろ</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283775"></div>
+</div>
+<div id="replyto_3283775"></div>
+<ul class="comment-group" id="group_3283775">
+<li class="hide" id="hiddens_3283775"></li>
+</ul></li><li class="comment oneline" id="tree_3283804"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283804"></div>
+<div class="comment-item" id="comment_3283804">
+<div class="commentTop comment-top newcomment" id="comment_top_3283804">
+<div class="title">
+<h4><a href="../../../../../comments.pl_fa5c9060.html" id="comment_link_3283804" name="comment_link_3283804" onclick="return D2.setFocusComment(3283804)">Re:</a>
+<span class="score" id="comment_score_3283804">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283804); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283804"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283804">うるう年は休日が1日増えるだけなので、基本給が同じなのは当たり前でしょ。<br/>
+基本給は同じで、所定労働時間が1日分増えても構わないんですか？</div>
+</div>
+<div class="commentSub" id="comment_sub_3283804"></div>
+</div>
+<div id="replyto_3283804"></div>
+<ul class="comment-group" id="group_3283804">
+<li class="hide" id="hiddens_3283804"></li>
+</ul><ul id="commtree_3283804"><li class="comment oneline" id="tree_3283811"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283811"></div>
+<div class="comment-item" id="comment_3283811">
+<div class="commentTop comment-top newcomment" id="comment_top_3283811">
+<div class="title">
+<h4><a href="../../../../../comments.pl_83768156.html" id="comment_link_3283811" name="comment_link_3283811" onclick="return D2.setFocusComment(3283811)">Re:</a>
+<span class="score" id="comment_score_3283811">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283811); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283811"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283811"><p><div class="quote"><p>うるう年は休日が1日増えるだけ</p></div><p>kwsk</p></p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283811"></div>
+</div>
+<div id="replyto_3283811"></div>
+<ul class="comment-group" id="group_3283811">
+<li class="hide" id="hiddens_3283811"></li>
+</ul><ul id="commtree_3283811"><li class="comment oneline" id="tree_3283843"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283843"></div>
+<div class="comment-item" id="comment_3283843">
+<div class="commentTop comment-top newcomment" id="comment_top_3283843">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a8fbbf5e.html" id="comment_link_3283843" name="comment_link_3283843" onclick="return D2.setFocusComment(3283843)">Re:</a>
+<span class="score" id="comment_score_3283843">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283843); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283843"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283843">製造業は普通そうでしょ<br/>
+いわゆるトヨタカレンダー使ってるようなところは</div>
+</div>
+<div class="commentSub" id="comment_sub_3283843"></div>
+</div>
+<div id="replyto_3283843"></div>
+<ul class="comment-group" id="group_3283843">
+<li class="hide" id="hiddens_3283843"></li>
+</ul><ul id="commtree_3283843"><li class="comment full contain" id="tree_3283867"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283867"></div>
+<div class="comment-item" id="comment_3283867">
+<div class="commentTop comment-top newcomment" id="comment_top_3283867">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e7937eed.html" id="comment_link_3283867" name="comment_link_3283867" onclick="return D2.setFocusComment(3283867)">Re:うるう秒の時</a>
+<span class="score" id="comment_score_3283867">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283867); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~taka2/index.html">taka2 (14791)</a>
+<span class="otherdetails" id="comment_otherdetails_3283867">on 2017年09月22日 11時06分
+			 (<a href="../../../../../../srad.jp/comment/3283867.html">#3283867</a>)
+			<small>
+<a class="user_homepage_display" href="http://taka2.info/" title="http://taka2.info/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~taka2/journal/index.html" title="2023年11月11日  7時50分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283867"><p>閏年については、普通の会社でもトヨタカレンダーでも、週休二日なら、<br/>2月29日は、閏年の71%は「平日」で残り29%が「休日」になるんじゃないですかね。<br/>必ず休日が増える(2月29日は休日としている)ところって聞いたこと無いです。</p><p>閏秒の方は、1/1に調整する場合は確実に休日ですけど、<br/>7/1に調整する場合は、日本では午前9時に調整が入りますから、<br/>71%の割合で「閏秒により労働時間が1秒長くなる」ことになるでしょうね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283867">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うるう秒の時')+'&amp;url='+encodeURIComponent('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283867'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283867'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3283867'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_eec3c774.html" onclick="return D2.selectParent(3283843)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3283867"></div>
+<ul class="comment-group" id="group_3283867">
+<li class="hide" id="hiddens_3283867"></li>
+</ul></li><li class="comment hidden" id="tree_3283884"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283884"></div>
+<div class="comment-item" id="comment_3283884">
+</div>
+<div id="replyto_3283884"></div>
+<ul class="comment-group" id="group_3283884">
+<li class="hide" id="hiddens_3283884"></li>
+</ul></li><li class="comment oneline" id="tree_3283917"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283917"></div>
+<div class="comment-item" id="comment_3283917">
+<div class="commentTop comment-top newcomment" id="comment_top_3283917">
+<div class="title">
+<h4><a href="../../../../../comments.pl_50a6c8fa.html" id="comment_link_3283917" name="comment_link_3283917" onclick="return D2.setFocusComment(3283917)">Re:</a>
+<span class="score" id="comment_score_3283917">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283917); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283917"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283917"><p>「うるう年の２月２９日の扱い」の話なんて誰もしとらんのだが？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283917"></div>
+</div>
+<div id="replyto_3283917"></div>
+<ul class="comment-group" id="group_3283917">
+<li class="hide" id="hiddens_3283917"></li>
+</ul></li><li class="comment oneline" id="tree_3283958"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283958"></div>
+<div class="comment-item" id="comment_3283958">
+<div class="commentTop comment-top newcomment" id="comment_top_3283958">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0cf603e9.html" id="comment_link_3283958" name="comment_link_3283958" onclick="return D2.setFocusComment(3283958)">Re:</a>
+<span class="score" id="comment_score_3283958">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283958); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283958"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283958">トヨタの所定労働時間は244日だそうですので、平年は休日が121日、うるう年は122日となります。<br/>
+トヨタカレンダーでは毎週平日5日出勤、土日2日休日の繰り返しが基本ですが、年末年始やゴールデンウィークにまとまった休みが設定されています。よくニュースでトヨタの連休は長いと報じられることがありますが、祝日が無い分長くなってるだけです。</div>
+</div>
+<div class="commentSub" id="comment_sub_3283958"></div>
+</div>
+<div id="replyto_3283958"></div>
+<ul class="comment-group" id="group_3283958">
+<li class="hide" id="hiddens_3283958"></li>
+</ul></li><li class="comment full contain" id="tree_3284068"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3284068"></div>
+<div class="comment-item" id="comment_3284068">
+<div class="commentTop comment-top newcomment" id="comment_top_3284068">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f03fce31.html" id="comment_link_3284068" name="comment_link_3284068" onclick="return D2.setFocusComment(3284068)">Re:うるう秒の時</a>
+<span class="score" id="comment_score_3284068">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3284068); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~taka2/index.html">taka2 (14791)</a>
+<span class="otherdetails" id="comment_otherdetails_3284068">on 2017年09月22日 16時17分
+			 (<a href="../../../../../../srad.jp/comment/3284068.html">#3284068</a>)
+			<small>
+<a class="user_homepage_display" href="http://taka2.info/" title="http://taka2.info/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~taka2/journal/index.html" title="2023年11月11日  7時50分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3284068"><p>ご説明ありがとうございます。そういうことでしたか。トヨタカレンダーは祝日がない、ってぐらいの知識しかなく適当なことを書いてしまいました。すみません。</p><p>私自身の周りでは、「基本的に暦通り」+「年末年始、盆、それぞれに固定日数の休み」ってパターンな(閏年にかぎらず、土曜日に祝日があたれば労働日数が増えるし、逆に国民の休日の発生で労働日数が減る場合もある)ようなとこばっかりなので、どこもそんなものだと思ってたんですが、トヨタカレンダーおそるべし。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3284068">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うるう秒の時')+'&amp;url='+encodeURIComponent('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284068'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284068'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://it.srad.jp/comments.pl?sid=720120&amp;cid=3284068'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_11ad169a.html" onclick="return D2.selectParent(3283958)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3284068"></div>
+<ul class="comment-group" id="group_3284068">
+<li class="hide" id="hiddens_3284068"></li>
+</ul></li><li id="hidestring_3283843"><noscript><b class="more"><a href="../../../../../comments.pl_60084d45.html">1個のコメント</a> が現在のしきい値以下です。</b></noscript></li></ul></li><li class="comment oneline" id="tree_3283919"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283919"></div>
+<div class="comment-item" id="comment_3283919">
+<div class="commentTop comment-top newcomment" id="comment_top_3283919">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2f90c288.html" id="comment_link_3283919" name="comment_link_3283919" onclick="return D2.setFocusComment(3283919)">Re:</a>
+<span class="score" id="comment_score_3283919">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283919); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283919"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283919"><p>そもそも出発点は「年間総労働時間」。<br/>これと１日の労働時間から年間の出勤日数が決まり、年間の休日日数が決まる。<br/>だから、年間の日数が変わっても（365日→366日）年間総労働時間が変わらなければ<br/>休日が増えるだけ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283919"></div>
+</div>
+<div id="replyto_3283919"></div>
+<ul class="comment-group" id="group_3283919">
+<li class="hide" id="hiddens_3283919"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3283977"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3283977"></div>
+<div class="comment-item" id="comment_3283977">
+<div class="commentTop comment-top newcomment" id="comment_top_3283977">
+<div class="title">
+<h4><a href="../../../../../comments.pl_21fb558a.html" id="comment_link_3283977" name="comment_link_3283977" onclick="return D2.setFocusComment(3283977)">Re:</a>
+<span class="score" id="comment_score_3283977">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3283977); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3283977"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3283977"><p>そもそも、３０日の月と３１日の月があるし、曜日によって実勤務日数も変わるけど、月給って基本一緒じゃない？<br/>みんな違うの？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3283977"></div>
+</div>
+<div id="replyto_3283977"></div>
+<ul class="comment-group" id="group_3283977">
+<li class="hide" id="hiddens_3283977"></li>
+</ul><ul id="commtree_3283977"><li class="comment oneline" id="tree_3284124"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3284124"></div>
+<div class="comment-item" id="comment_3284124">
+<div class="commentTop comment-top newcomment" id="comment_top_3284124">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f8ac78a3.html" id="comment_link_3284124" name="comment_link_3284124" onclick="return D2.setFocusComment(3284124)">Re:</a>
+<span class="score" id="comment_score_3284124">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3284124); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3284124"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3284124"><p>時間単位課金でなく秒単位課金の場合、うるう秒の扱いはどうなるんだろうね、というのが元々の話なので、<br/>月給制でなく日給制の場合、うるう日の扱いはどうなるんだろうね、というのが対応する話であって、<br/>月給制・年棒制の場合の話をするのは的外れなんでしょう。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3284124"></div>
+</div>
+<div id="replyto_3284124"></div>
+<ul class="comment-group" id="group_3284124">
+<li class="hide" id="hiddens_3284124"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_3284171"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3284171"></div>
+<div class="comment-item" id="comment_3284171">
+<div class="commentTop comment-top newcomment" id="comment_top_3284171">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3ea85bd9.html" id="comment_link_3284171" name="comment_link_3284171" onclick="return D2.setFocusComment(3284171)">まさに秒で億(以上)を稼ぐ企業だな！！！１！</a>
+<span class="score" id="comment_score_3284171">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3284171); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3284171">on 2017年09月22日 19時23分
+			 (<a href="../../../../../../srad.jp/comment/3284171.html">#3284171</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3284171"><p>T/O</p><p>にしたいけどできない。ごめん。書きたかっただけです。</p></div>
+</div>
+</div>
+<div id="replyto_3284171"></div>
+<ul class="comment-group" id="group_3284171">
+<li class="hide" id="hiddens_3284171"></li>
+</ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 1;
+		D2.currents()['full']     = 12;
+		D2.currents()['oneline']  = 22;
+		// D2.currents_total(35);
+
+		D2.abbrev_comments({});
+		D2.noshow_comments([3283884]);
+		D2.pieces_comments([3285085,3283915,3284321,3284393,3284408,3285548,3283928,3283933,3283751,3283757,3283780,3283760,3283768,3283775,3283804,3283811,3283843,3283917,3283958,3283919,3283977,3284124]);
+		D2.init_hiddens([3283843]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">35</span>/<span class="totalcommentcnt">35</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>日々是ハック也 -- あるハードコアバイナリアン<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../../srad.jp/about.html">About</a></li>
+<li><a href="../../../../../../srad.jp/faq/index.html">FAQ</a></li>
+<li><a href="../../../../../../srad.jp/story/index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../../srad.jp/hof.html">殿堂入り</a></li>
+<li><a href="../../../../../../srad.jp/authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../../srad.jp/topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../../srad.jp/index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

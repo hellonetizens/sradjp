@@ -1,0 +1,2929 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/09/06/15/0317226.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>JavaScriptを使わずにWebブラウザの閲覧履歴を盗む | スラド セキュリティ</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="JavaScriptを使わずにWebブラウザの閲覧履歴を盗む | スラド セキュリティ" property="og:title">
+<meta content="https://srad.jp/static/topics/security_64.png" property="og:image"/>
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '92389921074528935',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content=" 本家/.曰く、 Ergasiophobia曰く、JavaScriptを使わずに、過去に訪れたWebサイトのリストを生成するというデモが公開されている。このデモでは、NoScriptを使っていてもリストの生成を防ぐことはできない。デモページの解説によると、このWeb閲覧履歴を「盗む」テクニックはCSSを利用するもので、あらかじめページ内にその..." name="description"/>
+<meta content=" 本家/.曰く、 Ergasiophobia曰く、JavaScriptを使わずに、過去に訪れたWebサイトのリストを生成するというデモが公開されている。このデモでは、NoScriptを使っていてもリストの生成を防ぐことはできない。デモページの解説によると、このWeb閲覧履歴を「盗む」テクニックはCSSを利用するもので、あらかじめページ内にその..." property="og:description"/>
+<meta content="JavaScriptを使わずにWebブラウザの閲覧履歴を盗む | スラド セキュリティ" itemprop="name"/>
+<meta content=" 本家/.曰く、 Ergasiophobia曰く、JavaScriptを使わずに、過去に訪れたWebサイトのリストを生成するというデモが公開されている。このデモでは、NoScriptを使っていてもリストの生成を防ぐことはできない。デモページの解説によると、このWeb閲覧履歴を「盗む」テクニックはCSSを利用するもので、あらかじめページ内にその..." itemprop="description"/>
+<link href="../../../../../../srad.jp/index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../../srad.jp/search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../../srad.jp/security.rss" rel="alternate" title="スラド security RSS" type="application/rss+xml"/>
+<link href="../../../../../../srad.jp/static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../../srad.jp/static/topics/security_64.png" rel="image_src"/>
+<link href="../../../../../../srad.jp/static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../../srad.jp/static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../../srad.jp/static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/09/06/15/0317226/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'security';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//security.srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/09/06/15/0317226.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../../srad.jp/recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../../srad.jp/popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../../srad.jp/comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../../srad.jp/journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../../srad.jp/polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：セキュリティ</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="active" id="fhsection-security">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-11">セキュリティ</a><span></span>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="active" id="fhsection-security">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-11">セキュリティ</a><span></span>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="108275" data-fhtype="story" id="firehose-108275">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">108275</span>
+<span class="type">story</span>
+</span>
+<header>
+<span class="topic" id="topic-108275">
+<a href="../../../../../../srad.jp/stories/security.html" onclick="return addfhfilter('security');">
+<img alt="セキュリティ" height="64" src="../../../../../../srad.jp/static/topics/security_64.png" title="セキュリティ" width="64"/>
+</a>
+</span>
+<h2 class="story">
+<span id="title-108275"> <a href="index.html">JavaScriptを使わずにWebブラウザの閲覧履歴を盗む</a></span>
+<span class="comments commentcnt-108275">68</span>
+</h2>
+<div class="details" id="details-108275">ストーリー by <a href="http://hylom.net/">hylom</a>
+<time datetime="2009-06-15T12:25+09:00" id="fhtime-108275">2009年06月15日 12時25分</time><br/>仕様です 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "JavaScriptを使わずにWebブラウザの閲覧履歴を盗む",
+  "datePublished": "2009-06-15T12:25+09:00",
+  "articleBody": " 本家/.曰く、 Ergasiophobia曰く、JavaScriptを使わずに、過去に訪れたWebサイトのリストを生成するというデモが公開されている。このデモでは、NoScriptを使っていてもリストの生成を防ぐことはできない。デモページの解説によると、このWeb閲覧履歴を「盗む」テクニックはCSSを利用するもので、あらかじめページ内にそのユーザーが訪問しているかをチェックしたいURLを仕込んでおき、CSSを使ってそのURLを過去に訪れているかを調べるというもの。本家のコメントによると、このテクニックは数年前から確認されていたようだ。",
+  "image": "https://srad.jp/static/topics/security_64.png"
+}
+</script>
+<div class="body" id="fhbody-108275">
+<div class="contents_text p" id="text-108275">
+<div><p> <a href="http://it.slashdot.org/story/09/06/13/2125211/Sniffing-Browser-History-Without-Javascript">本家/.</a>曰く、</p><blockquote><div><p> <a href="mailto:deepsixomega@gmai%5B%5Dom%5B'l.c'ingap%5D">Ergasiophobia</a>曰く、<a href="http://www.making-the-web.com/misc/sites-you-visit/nojs/">JavaScriptを使わずに、過去に訪れたWebサイトのリストを生成するというデモ</a>が公開されている。このデモでは、<a href="https://addons.mozilla.org/ja/firefox/addon/722">NoScript</a>を使っていてもリストの生成を防ぐことはできない。</p></div></blockquote><p>デモページの解説によると、このWeb閲覧履歴を「盗む」テクニックはCSSを利用するもので、あらかじめページ内にそのユーザーが訪問しているかをチェックしたいURLを仕込んでおき、CSSを使ってそのURLを過去に訪れているかを調べるというもの。<a href="http://it.slashdot.org/comments.pl?sid=1268009&amp;cid=28323679">本家のコメント</a>によると、このテクニックは数年前から確認されていたようだ。</p></div>
+</div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //security.srad.jp/story/09/06/15/0317226/ -->
+<!-- http://security.srad.jp/story/09/06/15/0317226/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://security.srad.jp/story/09/06/15/0317226/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://security.srad.jp/story/09/06/15/0317226/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/security.srad.jp/story/09/06/15/0317226/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../../srad.jp/about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">68</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-108275"><a class="popular popular topic tag" href="../../../../../../srad.jp/tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3.html" rel="statictag" target="_blank">セキュリティ</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../../../../../../srad.jp/story/09/06/14/0616245/index.html" id="hrefns">白髪は遺伝子の損傷が原因</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../../08/10/20/0337226/index.html">楽天・ドリコムの行動ターゲッティング広告、HTML/CSS仕様の不備を突いて訪問先サイトを調査</a></h3><h3><a href="../../../../../../yro.srad.jp/story/08/07/18/086225/index.html">ヤフージャパンが人のWeb閲覧履歴に応じた広告システムを今秋開始</a></h3><h3><a href="../../../../13/08/07/1347255/index.html">Webブラウザの閲覧履歴や閲覧中のサイトのソースコードを盗む新手法</a></h3><h3><a href="../../../../10/04/06/0133223/index.html">Mozilla、「CSS による Web ブラウズ履歴漏えい」をブロックする方向へ </a></h3><h3><a href="../../../../../../yro.srad.jp/story/08/07/14/0436223/index.html">「非匿名化」されてしまった携帯電話からのWebアクセス</a></h3><h3><a href="../../../../../../it.srad.jp/story/14/10/10/2150201/index.html">CSS、提案から20年</a></h3><h3><a href="../../../../../../it.srad.jp/story/09/11/27/0545257/index.html">JavaScriptからローカルファイルシステムへのアクセスを可能にするFile API、標準化へ一</a></h3><h3><a href="../../../../10/05/21/015202/index.html">CSS の visited を利用してブラウザの訪問履歴を取得されうるユーザは 76 % 以上に上る</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="JavaScriptを使わずにWebブラウザの閲覧履歴を盗むのストーリーへ戻る">JavaScriptを使わずにWebブラウザの閲覧履歴を盗む</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//security.srad.jp/story/09/06/15/0317226/';
+var parent_item_title = 'JavaScriptを使わずにWebブラウザの閲覧履歴を盗む';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「JavaScriptを使わずにWebブラウザの閲覧履歴を盗む」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//security.srad.jp/search.pl?op=comments&amp;sid=454861" class="btn"><span class="totalcommentcnt">68</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//security.srad.jp/comments.pl?sid=454861"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_ccad5332.html"><span>検索</span><span class="totalcommentcnt">68</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../../srad.jp/static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 1586644: { uid: 1, pid: 1586621, subject: "Re:楽天ad4Uって、この仕組みを使ってるのでは？", read: 0, points: 2, kids: [ 1586647 ], opid: 1586621 }, 1586736: { uid: 1, pid: 1586628, subject: "Re:オートコンプリートと訪問先の色付けをOFF", read: 0, points: 0, kids: [  ], opid: 1586628 }, 1586580: { uid: 347, pid: 1586576, subject: "Re:元記事を読まずに手口を予想", read: 0, points: 1, kids: [  ], opid: 1586576 }, 1586582: { uid: 1, pid: 1586576, subject: "Re:元記事を読まずに手口を予想", read: 0, points: 3, kids: [ 1586584, 1586652, 1586655 ], opid: 1586576 }, 1586915: { uid: 33105, pid: 1586766, subject: "Re:もしかして", read: 0, points: 2, kids: [  ], opid: 1586766 }, 1586663: { uid: 38147, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 1586690: { uid: 1, pid: 1586667, subject: "Re:オートコンプリートと訪問先の色付けをOFF", read: 0, points: 0, kids: [  ], opid: 1586667 }, 1586877: { uid: 572, pid: 1586801, subject: "Re:逆にすべて訪問済み扱いにしてやろう", read: 0, points: 1, kids: [  ], opid: 1586801 }, 1586652: { uid: 37884, pid: 1586582, subject: "Re:元記事を読まずに手口を予想", read: 0, points: 4, kids: [  ], opid: 1586582 }, 1586766: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 1586915 ], opid: undefined }, 1586641: { uid: 37359, pid: 1586620, subject: "Re:Proxomitron使って", read: 0, points: 1, kids: [  ], opid: 1586620 }, 1586672: { uid: 1, pid: 1586636, subject: "Re:たぶん早い者勝ち", read: 0, points: 2, kids: [ 1586695 ], opid: 1586636 }, 1586633: { uid: 1, pid: 1586625, subject: "Re:うわ", read: 0, points: 1, kids: [  ], opid: 1586625 }, 1586594: { uid: 1, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 1586628: { uid: 1, pid: 0, read: 0, points: 2, kids: [ 1586646, 1586736 ], opid: 0 }, 1586588: { uid: 1, pid: 1586576, read: 0, points: 0, kids: [ 1586741, 1586801 ], opid: 1586576 }, 1586653: { uid: 1, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 1586587: { uid: 38066, pid: 0, read: 0, points: 3, kids: [ 1586621, 1586635 ], opid: 0 }, 1586629: { uid: 32783, pid: 0, read: 0, points: 5, kids: [  ], opid: 0 }, 1586635: { uid: 1, pid: 1586587, subject: "Re:楽天ad4Uって、この仕組みを使ってるのでは？", read: 0, points: 1, kids: [  ], opid: 1586587 }, 1586645: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 1586648 ], opid: 0 }, 1586705: { uid: 1, pid: 1586695, subject: "Re:たぶん早い者勝ち", read: 0, points: 0, kids: [ 1586729 ], opid: 1586695 }, 1590986: { uid: 38497, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 1586607: { uid: 1, pid: 1586569, subject: "Re:たぶん早い者勝ち", read: 0, points: 0, kids: [  ], opid: 1586569 }, 1586584: { uid: 572, pid: 1586582, subject: "Re:元記事を読まずに手口を予想", read: 0, points: 1, kids: [  ], opid: 1586582 }, 1586647: { uid: 1, pid: 1586644, subject: "Re:楽天ad4Uって、この仕組みを使ってるのでは？", read: 0, points: 0, kids: [ 1586668 ], opid: 1586644 }, 1586741: { uid: 1, pid: 1586588, subject: "Re:対策", read: 0, points: 0, kids: [  ], opid: 1586588 }, 1591016: { uid: 38497, pid: 1586620, subject: "Re:Proxomitron使って", read: 0, points: 1, kids: [  ], opid: 1586620 }, 1586657: { uid: 1, pid: 1586621, read: 0, points: 0, kids: [  ], opid: 1586621 }, 1586801: { uid: undefined, pid: 1586588, read: 0, points: -2, kids: [ 1586877 ], opid: undefined }, 1586640: { uid: 1, pid: 1586578, subject: "Re:おー", read: 0, points: 1, kids: [  ], opid: 1586578 }, 1586569: { uid: 1, pid: 0, read: 0, points: 1, kids: [ 1586607, 1586636 ], opid: 0 }, 1586668: { uid: 1, pid: 1586647, subject: "Re:楽天ad4Uって、この仕組みを使ってるのでは？", read: 0, points: 1, kids: [ 1586902 ], opid: 1586647 }, 1586729: { uid: 1, pid: 1586705, subject: "Re:たぶん早い者勝ち", read: 0, points: 0, kids: [  ], opid: 1586705 }, 1586625: { uid: 16098, pid: 1586567, subject: "Re:うわ", read: 0, points: 1, kids: [ 1586633 ], opid: 1586567 }, 1586578: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 1586640 ], opid: 0 }, 1586724: { uid: 1, pid: 1586695, subject: "Re:たぶん早い者勝ち", read: 0, points: 0, kids: [  ], opid: 1586695 }, 1586763: { uid: 1183, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 1586592: { uid: 1, pid: 0, read: 0, points: 4, kids: [  ], opid: 0 }, 1586620: { uid: 1, pid: 0, read: 0, points: 1, kids: [ 1586641, 1591016 ], opid: 0 }, 1586902: { uid: 1, pid: 1586668, subject: "Re:楽天ad4Uって、この仕組みを使ってるのでは？", read: 0, points: 2, kids: [  ], opid: 1586668 }, 1586648: { uid: 1, pid: 1586645, subject: "Re:なんでなんで？", read: 0, points: 1, kids: [  ], opid: 1586645 }, 1586695: { uid: 1, pid: 1586672, subject: "Re:たぶん早い者勝ち", read: 0, points: 0, kids: [ 1586705, 1586724 ], opid: 1586672 }, 1586621: { uid: 1, pid: 1586587, subject: "Re:楽天ad4Uって、この仕組みを使ってるのでは？", read: 0, points: 2, kids: [ 1586644, 1586657 ], opid: 1586587 }, 1586667: { uid: 1, pid: 1586646, subject: "Re:オートコンプリートと訪問先の色付けをOFF", read: 0, points: 2, kids: [ 1586690 ], opid: 1586646 }, 1586636: { uid: 1, pid: 1586569, subject: "Re:たぶん早い者勝ち", read: 0, points: 0, kids: [ 1586672 ], opid: 1586569 }, 1586746: { uid: 31258, pid: 1586646, subject: "Re:オートコンプリートと訪問先の色付けをOFF", read: 0, points: 2, kids: [  ], opid: 1586646 }, 1586646: { uid: 1, pid: 1586628, subject: "Re:オートコンプリートと訪問先の色付けをOFF", read: 0, points: 0, kids: [ 1586667, 1586746 ], opid: 1586628 }, 1586655: { uid: 14791, pid: 1586582, subject: "Re:元記事を読まずに手口を予想", read: 0, points: 2, kids: [  ], opid: 1586582 }, 1586574: { uid: 1, pid: 0, read: 0, points: 0, kids: [  ], opid: 0 }, 1586576: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 1586580, 1586582, 1586588 ], opid: 0 }, 1586567: { uid: 1, pid: 0, read: 0, points: 2, kids: [ 1586625 ], opid: 0 } });
+
+D2.thresh_totals({6:{6:{1:50,3:0,2:0}},4:{6:{1:47,3:1,2:2},4:{1:47,3:3,2:0},5:{1:47,3:2,2:1}},1:{6:{1:17,3:1,2:32},4:{1:17,3:4,2:29},1:{1:17,3:33,2:0},3:{1:17,3:10,2:23},2:{1:17,3:22,2:11},5:{1:17,3:2,2:31}},3:{6:{1:45,3:1,2:4},4:{1:45,3:4,2:1},3:{1:45,3:5,2:0},5:{1:45,3:2,2:3}},0:{6:{1:0,3:1,2:49},4:{1:0,3:4,2:46},1:{1:0,3:37,2:13},3:{1:0,3:10,2:40},0:{1:0,3:50,2:0},2:{1:0,3:22,2:28},5:{1:0,3:2,2:48}},2:{6:{1:32,3:1,2:17},4:{1:32,3:4,2:14},3:{1:32,3:10,2:8},2:{1:32,3:18,2:0},5:{1:32,3:2,2:16}},5:{6:{1:49,3:1,2:0},5:{1:49,3:1,2:0}},"-1":{6:{1:0,3:1,2:49},4:{1:0,3:4,2:46},1:{1:0,3:37,2:13},3:{1:0,3:10,2:40},0:{1:0,3:50,2:0},2:{1:0,3:22,2:28},5:{1:0,3:2,2:48},"-1":{1:0,3:50,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([1586629,1586592,1586587,1586567,1586594,1586628,1586653,1586663,1586569,1586620,1586763,1590986,1586574,1586576,1586578,1586645,1586766]);
+D2.root_comments_hash({1586569:1,1586663:1,1586766:1,1586578:1,1586594:1,1586763:1,1586628:1,1586592:1,1586587:1,1586653:1,1586620:1,1586629:1,1586645:1,1590986:1,1586574:1,1586576:1,1586567:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(454861);
+
+D2.d2_seen('1586567,2,5,2,2,2,2,2,3,1,4,2,13,13,1,4,3,1,4,2,1,4,1,3,1,1,1,1,4,1,2,2,6,4,1,4,18,5,10,19,5,7,5,5,17,114,25,13,4071,30');
+D2.more_comments_num(18);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_1586629"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586629"></div>
+<div class="comment-item" id="comment_1586629">
+<div class="commentTop comment-top newcomment" id="comment_top_1586629">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8661a1ba.html" id="comment_link_1586629" name="comment_link_1586629" onclick="return D2.setFocusComment(1586629)">気の早い宣伝</a>
+<span class="score" id="comment_score_1586629">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586629); return false">スコア:5</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~fcp/index.html">fcp (32783)</a>
+<span class="otherdetails" id="comment_otherdetails_1586629">on 2009年06月15日 14時06分
+			 (<a href="../../../../../../srad.jp/comment/1586629.html">#1586629</a>)
+			<small>
+<a class="user_homepage_display" href="http://www.unsanitized.net/" title="http://www.unsanitized.net/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~fcp/journal/index.html" title="2010年08月11日  9時05分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586629"><p>bugzilla.mozilla.org では JavaScript を使う exploit も使わない exploit も <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=147777" title="mozilla.org">Bug 147777</a> [mozilla.org] として扱っています。この bug のコメント中、 JavaScript を使わない例は、はっきりしたものとしては 2006 年 12 月の <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=147777#c71" title="mozilla.org">Comment 71</a> [mozilla.org] が初出でしょうか。 2005 年 6 月の <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=147777#c48" title="mozilla.org">Comment 48</a> [mozilla.org] もそれっぽいですが。</p><p>まだ正式版どころか RC も出ていないので一般の人にはお勧めしませんが、人柱の人は Firefox 3.5 Preview を使って about:config から layout.css.visited_links_enabled を false にすると、リンクが visited かどうかによってスタイルを変えるのを一切やめるようになるので、この攻撃を防げます。</p><p>それだとリンクが visited であるかどうかがまったくわからないから不便というかたは、拙作の拡張機能 <a href="https://addons.mozilla.org/addon/12312" title="mozilla.org">Link Status</a> [mozilla.org] を併せてお使いください (宣伝)。リンクにマウスカーソルを合わせると、 vistied の場合はステータスバーに星のアイコンが表示されてわかるようになります。</p><p>ただし、 <a href="http://d.hatena.ne.jp/Rockridge/20090610/1244582502" title="hatena.ne.jp">3.5 Preview を使った後同じプロファイルで 3.5 Beta 4 に戻ると、 Places データベースが壊れてブックマークや履歴が読めなくなる</a> [hatena.ne.jp]ので、くれぐれもご注意を。 3.5 Preview から 3.0.x に戻すのも大丈夫かどうか僕は知りません。普通の人は Firefox 3.5 の正式版が出るまで待つのが吉だと思います。</p></div>
+</div>
+</div>
+<div id="replyto_1586629"></div>
+<ul class="comment-group" id="group_1586629">
+<li class="hide" id="hiddens_1586629"></li>
+</ul></li><li class="comment full contain" id="tree_1586592"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586592"></div>
+<div class="comment-item" id="comment_1586592">
+<div class="commentTop comment-top newcomment" id="comment_top_1586592">
+<div class="title">
+<h4><a href="../../../../../comments.pl_00df47d6.html" id="comment_link_1586592" name="comment_link_1586592" onclick="return D2.setFocusComment(1586592)">2006年どころか</a>
+<span class="score" id="comment_score_1586592">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586592); return false">スコア:4</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586592">on 2009年06月15日 13時02分
+			 (<a href="../../../../../../srad.jp/comment/1586592.html">#1586592</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586592"><blockquote><div><p>このテクニックは数年前から確認されていたようだ。</p></div> </blockquote><p>本家のコメントでは2006年のBlog記事を参照していますが、<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=147777" rel="nofollow" title="mozilla.org">2002年には</a> [mozilla.org]すでに知られていますね。一度非公開にされていたのですが、2003年に<a href="http://browserspy.dk/css-exploit.html" rel="nofollow" title="browserspy.dk">デモが公開された</a> [browserspy.dk]ことから、バグも再公開されました。このデモはJavaScriptを使っていますが、バグのほうではスクリプトを使わないで検出できる可能性に最初から触れられています。</p></div>
+</div>
+</div>
+<div id="replyto_1586592"></div>
+<ul class="comment-group" id="group_1586592">
+<li class="hide" id="hiddens_1586592"></li>
+</ul></li><li class="comment full contain" id="tree_1586587"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586587"></div>
+<div class="comment-item" id="comment_1586587">
+<div class="commentTop comment-top newcomment" id="comment_top_1586587">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0ea4457a.html" id="comment_link_1586587" name="comment_link_1586587" onclick="return D2.setFocusComment(1586587)">楽天ad4Uって、この仕組みを使ってるのでは？</a>
+<span class="score" id="comment_score_1586587">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586587); return false">スコア:3</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~JULY/index.html">JULY (38066)</a>
+<span class="otherdetails" id="comment_otherdetails_1586587">on 2009年06月15日 12時58分
+			 (<a href="../../../../../../srad.jp/comment/1586587.html">#1586587</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586587">真っ先の頭をよぎったのは、高木浩光さんの楽天ad4Uに関する記事。<br/>
+<br/>
+<a href="http://takagi-hiromitsu.jp/diary/20081211.html" rel="nofollow" title="takagi-hiromitsu.jp">http://takagi-hiromitsu.jp/diary/20081211.html</a> [takagi-hiromitsu.jp] <br/>
+<br/>
+これと同じでは？</div>
+</div>
+</div>
+<div id="replyto_1586587"></div>
+<ul class="comment-group" id="group_1586587">
+<li class="hide" id="hiddens_1586587"></li>
+</ul><ul id="commtree_1586587"><li class="comment full contain" id="tree_1586621"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586621"></div>
+<div class="comment-item" id="comment_1586621">
+<div class="commentTop comment-top newcomment" id="comment_top_1586621">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6ef6017e.html" id="comment_link_1586621" name="comment_link_1586621" onclick="return D2.setFocusComment(1586621)">Re:楽天ad4Uって、この仕組みを使ってるのでは？</a>
+<span class="score" id="comment_score_1586621">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586621); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586621">on 2009年06月15日 13時52分
+			 (<a href="../../../../../../srad.jp/comment/1586621.html">#1586621</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586621"><p>発表資料　"<a href="http://sales.infoseek.co.jp/menu/200811/rakuten_ad4U_1-3.ppt" rel="nofollow" title="infoseek.co.jp">次世代行動ターゲティング広告「楽天 ad4U」　※パワーポイント形式ファイルに直リンク※</a> [infoseek.co.jp]"　によると。</p><p>この機能は、Webブラウザの基本機能であり、埋め込まれたURLと履歴との照合処理は、訪問者のWebブラウザ自身が行うものである<br/>↓<br/>したがって「楽天及びドリコムはデータの取得及び保存は行っていません」だそうです</p><blockquote><div><p>Q:ターゲティングの元となるサイトはどの様なサイトなのか<br/>　該当カテゴリに関連するサイトをad4U技術独自のアルゴリズムで自動収集しております。<br/>そのルールは変更される場合もございますので、現状では具体的なサイト名の公表は控えさせて頂きます。</p><p>Q:行動履歴の参照方法はどのようにしているのか？<br/>　ブラウザの基本機能を利用し行動履歴を照会しております。<br/>判別方法はブラウザ上で完結するので、データの取得、蓄積等は行いません。</p><p>Q:ブラウザ基本機能とは具体的にどういったものか？<br/>　ブラウザには過去に訪れたことのあるページを早く表示したり、過去に訪れたページへのリンクの色を変えたりと言ったようなユーザの使い勝手を向上させる色々な機能が備わっており、当技術ではそれを利用しております。<br/>それ以上の判別技術に関わる事項は特許事項となっておりますので公表は差し控えさせて頂いております。</p></div></blockquote></div>
+</div>
+<div class="commentSub" id="comment_sub_1586621">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:楽天ad4Uって、この仕組みを使ってるのでは？')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586621'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586621'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586621'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_dcb6028e.html" onclick="return D2.selectParent(1586587)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586621"></div>
+<ul class="comment-group" id="group_1586621">
+<li class="hide" id="hiddens_1586621"></li>
+</ul><ul id="commtree_1586621"><li class="comment full contain" id="tree_1586644"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586644"></div>
+<div class="comment-item" id="comment_1586644">
+<div class="commentTop comment-top newcomment" id="comment_top_1586644">
+<div class="title">
+<h4><a href="../../../../../comments.pl_473f1864.html" id="comment_link_1586644" name="comment_link_1586644" onclick="return D2.setFocusComment(1586644)">Re:楽天ad4Uって、この仕組みを使ってるのでは？</a>
+<span class="score" id="comment_score_1586644">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586644); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586644">on 2009年06月15日 14時45分
+			 (<a href="../../../../../../srad.jp/comment/1586644.html">#1586644</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586644">特許ならむしろ公開してもいいのでは</div>
+</div>
+<div class="commentSub" id="comment_sub_1586644">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:楽天ad4Uって、この仕組みを使ってるのでは？')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586644'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586644'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586644'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a94ccd3b.html" onclick="return D2.selectParent(1586621)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586644"></div>
+<ul class="comment-group" id="group_1586644">
+<li class="hide" id="hiddens_1586644"></li>
+</ul><ul id="commtree_1586644"><li class="comment oneline" id="tree_1586647"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586647"></div>
+<div class="comment-item" id="comment_1586647">
+<div class="commentTop comment-top newcomment" id="comment_top_1586647">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d8212031.html" id="comment_link_1586647" name="comment_link_1586647" onclick="return D2.setFocusComment(1586647)">Re:</a>
+<span class="score" id="comment_score_1586647">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586647); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586647"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586647"><p>「特許を取るためにテスト中」なら公表する訳にはいかんから、きっとそっちだよ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586647"></div>
+</div>
+<div id="replyto_1586647"></div>
+<ul class="comment-group" id="group_1586647">
+<li class="hide" id="hiddens_1586647"></li>
+</ul><ul id="commtree_1586647"><li class="comment full contain" id="tree_1586668"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586668"></div>
+<div class="comment-item" id="comment_1586668">
+<div class="commentTop comment-top newcomment" id="comment_top_1586668">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3594fdd4.html" id="comment_link_1586668" name="comment_link_1586668" onclick="return D2.setFocusComment(1586668)">Re:楽天ad4Uって、この仕組みを使ってるのでは？</a>
+<span class="score" id="comment_score_1586668">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586668); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586668">on 2009年06月15日 15時32分
+			 (<a href="../../../../../../srad.jp/comment/1586668.html">#1586668</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586668">「特許があるので言えません」て<br/>後ろ暗いことしてる業者の常套句だよね。<br/><br/>まだ出願してないってのなら、もう手法は公知なんだから、手遅れでは？<br/>既に出願してるってのなら、隠す理由がないわけで。</div>
+</div>
+<div class="commentSub" id="comment_sub_1586668">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:楽天ad4Uって、この仕組みを使ってるのでは？')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586668'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586668'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586668'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_b8179b9f.html" onclick="return D2.selectParent(1586647)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586668"></div>
+<ul class="comment-group" id="group_1586668">
+<li class="hide" id="hiddens_1586668"></li>
+</ul><ul id="commtree_1586668"><li class="comment full contain" id="tree_1586902"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586902"></div>
+<div class="comment-item" id="comment_1586902">
+<div class="commentTop comment-top newcomment" id="comment_top_1586902">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b0271b73.html" id="comment_link_1586902" name="comment_link_1586902" onclick="return D2.setFocusComment(1586902)">Re:楽天ad4Uって、この仕組みを使ってるのでは？</a>
+<span class="score" id="comment_score_1586902">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586902); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586902">on 2009年06月16日  9時11分
+			 (<a href="../../../../../../srad.jp/comment/1586902.html">#1586902</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586902">＞まだ出願してないってのなら、もう手法は公知なんだから、手遅れでは？<br/><br/>公知ではない周辺技術の部分を特許出願する場合がある<br/><br/>＞既に出願してるってのなら、隠す理由がないわけで。<br/><br/>出願していても，すぐに公知となる（出願公開される）わけではないので隠す理由はある<br/>（公開されるまでの間に周辺特許をどんどん出願して権利を固める場合ある）</div>
+</div>
+<div class="commentSub" id="comment_sub_1586902">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:楽天ad4Uって、この仕組みを使ってるのでは？')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586902'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586902'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586902'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_95ae4a72.html" onclick="return D2.selectParent(1586668)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586902"></div>
+<ul class="comment-group" id="group_1586902">
+<li class="hide" id="hiddens_1586902"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment oneline" id="tree_1586657"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586657"></div>
+<div class="comment-item" id="comment_1586657">
+<div class="commentTop comment-top newcomment" id="comment_top_1586657">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ec516173.html" id="comment_link_1586657" name="comment_link_1586657" onclick="return D2.setFocusComment(1586657)">楽天とドリコムの言い分</a>
+<span class="score" id="comment_score_1586657">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586657); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586657"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586657">まさか #1586621 のACは、<br/>送信してないから許される！！<br/>とか言い出すんじゃないよね？</div>
+</div>
+<div class="commentSub" id="comment_sub_1586657"></div>
+</div>
+<div id="replyto_1586657"></div>
+<ul class="comment-group" id="group_1586657">
+<li class="hide" id="hiddens_1586657"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1586635"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586635"></div>
+<div class="comment-item" id="comment_1586635">
+<div class="commentTop comment-top newcomment" id="comment_top_1586635">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6da5b145.html" id="comment_link_1586635" name="comment_link_1586635" onclick="return D2.setFocusComment(1586635)">Re:楽天ad4Uって、この仕組みを使ってるのでは？</a>
+<span class="score" id="comment_score_1586635">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586635); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586635">on 2009年06月15日 14時14分
+			 (<a href="../../../../../../srad.jp/comment/1586635.html">#1586635</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586635">以前、それがここ(/.J)で話題になった時にも、<br/>同じ事はFlashやJS抜きでも可能、と言うコメントがあったような...<br/><br/>http://srad.jp/security/comments.pl?sid=423251&amp;cid=1440682<br/>http://srad.jp/security/comments.pl?sid=423251&amp;cid=1440692</div>
+</div>
+<div class="commentSub" id="comment_sub_1586635">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:楽天ad4Uって、この仕組みを使ってるのでは？')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586635'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586635'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586635'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_dcb6028e.html" onclick="return D2.selectParent(1586587)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586635"></div>
+<ul class="comment-group" id="group_1586635">
+<li class="hide" id="hiddens_1586635"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1586567"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586567"></div>
+<div class="comment-item" id="comment_1586567">
+<div class="commentTop comment-top newcomment" id="comment_top_1586567">
+<div class="title">
+<h4><a href="../../../../../comments.pl_135352ef.html" id="comment_link_1586567" name="comment_link_1586567" onclick="return D2.setFocusComment(1586567)">うわ</a>
+<span class="score" id="comment_score_1586567">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586567); return false">スコア:2</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586567">on 2009年06月15日 12時28分
+			 (<a href="../../../../../../srad.jp/comment/1586567.html">#1586567</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586567">Ergasiophobiaをクリックしたらメールソフトが立ち上がった！</div>
+</div>
+</div>
+<div id="replyto_1586567"></div>
+<ul class="comment-group" id="group_1586567">
+<li class="hide" id="hiddens_1586567"></li>
+</ul><ul id="commtree_1586567"><li class="comment full contain" id="tree_1586625"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586625"></div>
+<div class="comment-item" id="comment_1586625">
+<div class="commentTop comment-top newcomment" id="comment_top_1586625">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9a2a0311.html" id="comment_link_1586625" name="comment_link_1586625" onclick="return D2.setFocusComment(1586625)">Re:うわ</a>
+<span class="score" id="comment_score_1586625">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586625); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~flutist/index.html">flutist (16098)</a>
+<span class="otherdetails" id="comment_otherdetails_1586625">on 2009年06月15日 13時59分
+			 (<a href="../../../../../../srad.jp/comment/1586625.html">#1586625</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586625"><p>ステータスバーを見るクセを付けるべきだと思います。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586625">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うわ')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586625'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586625'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586625'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_dfed1a91.html" onclick="return D2.selectParent(1586567)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586625"></div>
+<ul class="comment-group" id="group_1586625">
+<li class="hide" id="hiddens_1586625"></li>
+</ul><ul id="commtree_1586625"><li class="comment full contain" id="tree_1586633"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586633"></div>
+<div class="comment-item" id="comment_1586633">
+<div class="commentTop comment-top newcomment" id="comment_top_1586633">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3d825415.html" id="comment_link_1586633" name="comment_link_1586633" onclick="return D2.setFocusComment(1586633)">Re:うわ</a>
+<span class="score" id="comment_score_1586633">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586633); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586633">on 2009年06月15日 14時11分
+			 (<a href="../../../../../../srad.jp/comment/1586633.html">#1586633</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586633"><p>ステータスバーの表示なんかスクリプトを使わずとも簡単に偽装できるので何の役にも立ちません。<br/>ChromeやSafari 4に至ってはデフォルトで役立たずのステータスバーは非表示にしてますね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586633">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:うわ')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586633'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586633'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586633'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_e6931054.html" onclick="return D2.selectParent(1586625)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586633"></div>
+<ul class="comment-group" id="group_1586633">
+<li class="hide" id="hiddens_1586633"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1586594"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586594"></div>
+<div class="comment-item" id="comment_1586594">
+<div class="commentTop comment-top newcomment" id="comment_top_1586594">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a52be153.html" id="comment_link_1586594" name="comment_link_1586594" onclick="return D2.setFocusComment(1586594)">JavaScript</a>
+<span class="score" id="comment_score_1586594">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586594); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586594">on 2009年06月15日 13時06分
+			 (<a href="../../../../../../srad.jp/comment/1586594.html">#1586594</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586594"><p>を切ってるのは少数派だと思う。</p></div>
+</div>
+</div>
+<div id="replyto_1586594"></div>
+<ul class="comment-group" id="group_1586594">
+<li class="hide" id="hiddens_1586594"></li>
+</ul></li><li class="comment full contain" id="tree_1586628"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586628"></div>
+<div class="comment-item" id="comment_1586628">
+<div class="commentTop comment-top newcomment" id="comment_top_1586628">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3639e01e.html" id="comment_link_1586628" name="comment_link_1586628" onclick="return D2.setFocusComment(1586628)">オートコンプリートと訪問先の色付けをOFF</a>
+<span class="score" id="comment_score_1586628">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586628); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586628">on 2009年06月15日 14時04分
+			 (<a href="../../../../../../srad.jp/comment/1586628.html">#1586628</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586628">で検出されなくなります</div>
+</div>
+</div>
+<div id="replyto_1586628"></div>
+<ul class="comment-group" id="group_1586628">
+<li class="hide" id="hiddens_1586628"></li>
+</ul><ul id="commtree_1586628"><li class="comment oneline" id="tree_1586646"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586646"></div>
+<div class="comment-item" id="comment_1586646">
+<div class="commentTop comment-top newcomment" id="comment_top_1586646">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6eebc018.html" id="comment_link_1586646" name="comment_link_1586646" onclick="return D2.setFocusComment(1586646)">Re:</a>
+<span class="score" id="comment_score_1586646">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586646); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586646"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586646"><p>具体的にはどのブラウザでどうやって設定すればいいのですか? 少なくともFirefoxには3.5まで:visited擬似クラスを無効にする機能はありませんでしたし、IEのインターネットオプションにも見当たりません。あとプラスモデしてる人は実際にそんな設定項目がブラウザに存在するのかどうか確認したのですか?<br/>ただしプライベートブラウズ中は通常モードの訪問履歴を反映しないので、この攻撃を防げるようです。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586646"></div>
+</div>
+<div id="replyto_1586646"></div>
+<ul class="comment-group" id="group_1586646">
+<li class="hide" id="hiddens_1586646"></li>
+</ul><ul id="commtree_1586646"><li class="comment full contain" id="tree_1586667"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586667"></div>
+<div class="comment-item" id="comment_1586667">
+<div class="commentTop comment-top newcomment" id="comment_top_1586667">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6fbd6e98.html" id="comment_link_1586667" name="comment_link_1586667" onclick="return D2.setFocusComment(1586667)">Re:オートコンプリートと訪問先の色付けをOFF</a>
+<span class="score" id="comment_score_1586667">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586667); return false">スコア:2</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586667">on 2009年06月15日 15時31分
+			 (<a href="../../../../../../srad.jp/comment/1586667.html">#1586667</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586667"><p>ホントにやったのか？<br/>ツール－インターネットオプション－全般－色</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586667">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:オートコンプリートと訪問先の色付けをOFF')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586667'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586667'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586667'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_7894931a.html" onclick="return D2.selectParent(1586646)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586667"></div>
+<ul class="comment-group" id="group_1586667">
+<li class="hide" id="hiddens_1586667"></li>
+</ul><ul id="commtree_1586667"><li class="comment oneline" id="tree_1586690"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586690"></div>
+<div class="comment-item" id="comment_1586690">
+<div class="commentTop comment-top newcomment" id="comment_top_1586690">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2fce00c7.html" id="comment_link_1586690" name="comment_link_1586690" onclick="return D2.setFocusComment(1586690)">Re:</a>
+<span class="score" id="comment_score_1586690">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586690); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586690"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586690">&gt; ホントにやったのか？<br/>&gt; ツール－インターネットオプション－全般－色<br/><br/>「インターネットオプション」と言うからにはIEの事だろうと思い、<br/>IE8で御指摘の箇所の設定を変更してみたのだが、<br/>a:visitedの判定は無効化できなかった。<br/>もう少し詳しく宜しく。<br/><br/>まさかとは思うが、色を変えただけじゃないよね？<br/>色付けを行う判定をOFFに出来たんだよね？</div>
+</div>
+<div class="commentSub" id="comment_sub_1586690"></div>
+</div>
+<div id="replyto_1586690"></div>
+<ul class="comment-group" id="group_1586690">
+<li class="hide" id="hiddens_1586690"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1586746"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586746"></div>
+<div class="comment-item" id="comment_1586746">
+<div class="commentTop comment-top newcomment" id="comment_top_1586746">
+<div class="title">
+<h4><a href="../../../../../comments.pl_bb624b1b.html" id="comment_link_1586746" name="comment_link_1586746" onclick="return D2.setFocusComment(1586746)">Re:オートコンプリートと訪問先の色付けをOFF</a>
+<span class="score" id="comment_score_1586746">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586746); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~phenix/index.html">phenix (31258)</a>
+<span class="otherdetails" id="comment_otherdetails_1586746">on 2009年06月15日 19時10分
+			 (<a href="../../../../../../srad.jp/comment/1586746.html">#1586746</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586746"><p>ブラウザ側の対策として、色付けをOFFにすることと引き替えに<br/>回避できるって話では？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586746">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:オートコンプリートと訪問先の色付けをOFF')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586746'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586746'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586746'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_7894931a.html" onclick="return D2.selectParent(1586646)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586746"></div>
+<ul class="comment-group" id="group_1586746">
+<li class="hide" id="hiddens_1586746"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_1586736"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586736"></div>
+<div class="comment-item" id="comment_1586736">
+<div class="commentTop comment-top newcomment" id="comment_top_1586736">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b844df81.html" id="comment_link_1586736" name="comment_link_1586736" onclick="return D2.setFocusComment(1586736)">Re:</a>
+<span class="score" id="comment_score_1586736">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586736); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586736"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586736">色分けされるからどうこうの話では…。</div>
+</div>
+<div class="commentSub" id="comment_sub_1586736"></div>
+</div>
+<div id="replyto_1586736"></div>
+<ul class="comment-group" id="group_1586736">
+<li class="hide" id="hiddens_1586736"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1586653"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586653"></div>
+<div class="comment-item" id="comment_1586653">
+<div class="commentTop comment-top newcomment" id="comment_top_1586653">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0be90576.html" id="comment_link_1586653" name="comment_link_1586653" onclick="return D2.setFocusComment(1586653)">古くて新しい問題</a>
+<span class="score" id="comment_score_1586653">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586653); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586653">on 2009年06月15日 14時57分
+			 (<a href="../../../../../../srad.jp/comment/1586653.html">#1586653</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586653"><p> <a href="http://takagi-hiromitsu.jp/diary/20081019.html" rel="nofollow" title="takagi-hiromitsu.jp">http://takagi-hiromitsu.jp/diary/20081019.html</a> [takagi-hiromitsu.jp] によると、2001年から、というか2000年から指摘があった問題なのですね。</p><blockquote><div><ul>
+<li>Edward W. Felten and Michael A. Schneider, "Timing attacks on Web privacy", Proceedings of the 7th ACM conference on Computer and communications security, pp.25-32 (Nov 2000)
+ </li><li>Ari Juels, "<b>Targeted Advertising ... And Privacy Too</b>", Proceedings of the 2001 Conference on Topics in Cryptology: The Cryptographer's Track at RSA, Lecture Notes In Computer Science, Vol. 2020, pp.408-424 (2001)
+ </li><li> <a href="http://archives.neohapsis.com/archives/bugtraq/2002-02/0208.html" rel="nofollow" title="neohapsis.com">CSS visited pages disclosure</a> [neohapsis.com], Bugtraq, 2002年2月20日
+ </li><li> <a href="http://www.securityfocus.com/bid/4136/info" rel="nofollow" title="securityfocus.com">bid:4136, W3C CSS :visited Pseudo-Class Information Disclosure Vulnerability</a> [securityfocus.com], SecurityFocus
+ </li><li> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=147777" rel="nofollow" title="mozilla.org">Bug 147777 – :visited support allows queries into global history</a> [mozilla.org], Bugzilla@Mozilla, 2002年5月
+ </li><li>Markus Jakobsson and Sid Stamm, "Invasive Browser Sniffing and Countermeasures", Proceedings of the 15th international conference on World Wide Web, pp.523-532 (May 2006)
+ </li><li> <a href="http://www.cs.indiana.edu/~sstamm/projects/recon/" rel="nofollow" title="indiana.edu">Guessing Your Bank</a> [indiana.edu]
+ </li><li>Markus Jakobsson, Ari Juels and Jacob Ratkiewicz, "<a href="http://www.rsa.com/rsalabs/node.asp?id=3498" rel="nofollow" title="rsa.com">Privacy-Preserving History Mining for Web Browsers</a> [rsa.com]", W2SP 2008: Web 2.0 security and privacy 2008 (May 2008)
+ </li></ul></div>
+</blockquote></div>
+</div>
+</div>
+<div id="replyto_1586653"></div>
+<ul class="comment-group" id="group_1586653">
+<li class="hide" id="hiddens_1586653"></li>
+</ul></li><li class="comment full contain" id="tree_1586663"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586663"></div>
+<div class="comment-item" id="comment_1586663">
+<div class="commentTop comment-top newcomment" id="comment_top_1586663">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b4940c1d.html" id="comment_link_1586663" name="comment_link_1586663" onclick="return D2.setFocusComment(1586663)">Java Scriptなんて使わなくても</a>
+<span class="score" id="comment_score_1586663">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586663); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~gonzo/index.html">gonzo (38147)</a>
+<span class="otherdetails" id="comment_otherdetails_1586663">on 2009年06月15日 15時28分
+			 (<a href="../../../../../../srad.jp/comment/1586663.html">#1586663</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586663"><p>隣の席のあの娘の閲覧履歴は盗み放題。</p><p>。。。大丈夫、そんなことしてませんよ。</p></div>
+</div>
+</div>
+<div id="replyto_1586663"></div>
+<ul class="comment-group" id="group_1586663">
+<li class="hide" id="hiddens_1586663"></li>
+</ul></li><li class="comment full contain" id="tree_1586569"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586569"></div>
+<div class="comment-item" id="comment_1586569">
+<div class="commentTop comment-top newcomment" id="comment_top_1586569">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a5152828.html" id="comment_link_1586569" name="comment_link_1586569" onclick="return D2.setFocusComment(1586569)">たぶん早い者勝ち</a>
+<span class="score" id="comment_score_1586569">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586569); return false">スコア:1</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586569">on 2009年06月15日 12時31分
+			 (<a href="../../../../../../srad.jp/comment/1586569.html">#1586569</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586569"><p>w3m 最強:-)</p></div>
+</div>
+</div>
+<div id="replyto_1586569"></div>
+<ul class="comment-group" id="group_1586569">
+<li class="hide" id="hiddens_1586569"></li>
+</ul><ul id="commtree_1586569"><li class="comment oneline" id="tree_1586607"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586607"></div>
+<div class="comment-item" id="comment_1586607">
+<div class="commentTop comment-top newcomment" id="comment_top_1586607">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f68d6b56.html" id="comment_link_1586607" name="comment_link_1586607" onclick="return D2.setFocusComment(1586607)">Re:</a>
+<span class="score" id="comment_score_1586607">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586607); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586607"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586607"><p>Mosaicのほうが使いやすいと思う。<br/>だからMosaic最強！<br/>w3mは２番目だ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586607"></div>
+</div>
+<div id="replyto_1586607"></div>
+<ul class="comment-group" id="group_1586607">
+<li class="hide" id="hiddens_1586607"></li>
+</ul></li><li class="comment oneline" id="tree_1586636"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586636"></div>
+<div class="comment-item" id="comment_1586636">
+<div class="commentTop comment-top newcomment" id="comment_top_1586636">
+<div class="title">
+<h4><a href="../../../../../comments.pl_110edbe3.html" id="comment_link_1586636" name="comment_link_1586636" onclick="return D2.setFocusComment(1586636)">Re:</a>
+<span class="score" id="comment_score_1586636">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586636); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586636"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586636">script どうこうとか以前に，ある程度まとまった文章のような内容を読むときは
+わざわざ GUI ブラウザから URL を w3m にコピペして読んでます．
+<br/> <br/>
+
+変にデザインだのなんだので，
+<ul>
+<li>フォントの大きさが小さすぎたり，</li>
+<li>横スクロールしないと読めなかったり，</li>
+<li>背景色・文字色が変だったり，</li>
+<li>横に変なのがチラついてたり</li>
+</ul><p>
+本当に読みにくいのが多いです…
+(flashは w3m 経由みたいなこと出来ないから余計にキライ)</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586636"></div>
+</div>
+<div id="replyto_1586636"></div>
+<ul class="comment-group" id="group_1586636">
+<li class="hide" id="hiddens_1586636"></li>
+</ul><ul id="commtree_1586636"><li class="comment full contain" id="tree_1586672"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586672"></div>
+<div class="comment-item" id="comment_1586672">
+<div class="commentTop comment-top newcomment" id="comment_top_1586672">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2022382f.html" id="comment_link_1586672" name="comment_link_1586672" onclick="return D2.setFocusComment(1586672)">Re:たぶん早い者勝ち</a>
+<span class="score" id="comment_score_1586672">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586672); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586672">on 2009年06月15日 15時54分
+			 (<a href="../../../../../../srad.jp/comment/1586672.html">#1586672</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586672">そんなことしなくても、普通にブラウザでCSSをオフにすればよいのでは？<br/><br/>Firefoxなら、「表示」→「スタイルシート」→「スタイルシートを使用しない」</div>
+</div>
+<div class="commentSub" id="comment_sub_1586672">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:たぶん早い者勝ち')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586672'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586672'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586672'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_32f32878.html" onclick="return D2.selectParent(1586636)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586672"></div>
+<ul class="comment-group" id="group_1586672">
+<li class="hide" id="hiddens_1586672"></li>
+</ul><ul id="commtree_1586672"><li class="comment oneline" id="tree_1586695"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586695"></div>
+<div class="comment-item" id="comment_1586695">
+<div class="commentTop comment-top newcomment" id="comment_top_1586695">
+<div class="title">
+<h4><a href="../../../../../comments.pl_108039c8.html" id="comment_link_1586695" name="comment_link_1586695" onclick="return D2.setFocusComment(1586695)">Re:</a>
+<span class="score" id="comment_score_1586695">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586695); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586695"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586695"><p>でもさぁ、CSSを無効にするとしょぼすぎるとこ多いんだよね。<br/>コンソール上ならさほど気にならないんだけど。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586695"></div>
+</div>
+<div id="replyto_1586695"></div>
+<ul class="comment-group" id="group_1586695">
+<li class="hide" id="hiddens_1586695"></li>
+</ul><ul id="commtree_1586695"><li class="comment oneline" id="tree_1586705"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586705"></div>
+<div class="comment-item" id="comment_1586705">
+<div class="commentTop comment-top newcomment" id="comment_top_1586705">
+<div class="title">
+<h4><a href="../../../../../comments.pl_41f876e1.html" id="comment_link_1586705" name="comment_link_1586705" onclick="return D2.setFocusComment(1586705)">Re:</a>
+<span class="score" id="comment_score_1586705">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586705); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586705"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586705">w3m はしょぼくないの？</div>
+</div>
+<div class="commentSub" id="comment_sub_1586705"></div>
+</div>
+<div id="replyto_1586705"></div>
+<ul class="comment-group" id="group_1586705">
+<li class="hide" id="hiddens_1586705"></li>
+</ul><ul id="commtree_1586705"><li class="comment oneline" id="tree_1586729"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586729"></div>
+<div class="comment-item" id="comment_1586729">
+<div class="commentTop comment-top newcomment" id="comment_top_1586729">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6fcfd253.html" id="comment_link_1586729" name="comment_link_1586729" onclick="return D2.setFocusComment(1586729)">Re:</a>
+<span class="score" id="comment_score_1586729">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586729); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586729"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586729">ページャなりの表示がされるよ<br/>ブラウザのＣＳＳを切ったのとはまた違う</div>
+</div>
+<div class="commentSub" id="comment_sub_1586729"></div>
+</div>
+<div id="replyto_1586729"></div>
+<ul class="comment-group" id="group_1586729">
+<li class="hide" id="hiddens_1586729"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_1586724"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586724"></div>
+<div class="comment-item" id="comment_1586724">
+<div class="commentTop comment-top newcomment" id="comment_top_1586724">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7d7519e1.html" id="comment_link_1586724" name="comment_link_1586724" onclick="return D2.setFocusComment(1586724)">Re:</a>
+<span class="score" id="comment_score_1586724">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586724); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586724"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586724"><p>たぶんテーブルレイアウト全盛の10年前から同じことを言い続けてるのだと思いますが、最近はBlogのおかげでCSSオフでもとりあえず読めるページがかなり多くなってきました。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586724"></div>
+</div>
+<div id="replyto_1586724"></div>
+<ul class="comment-group" id="group_1586724">
+<li class="hide" id="hiddens_1586724"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1586620"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586620"></div>
+<div class="comment-item" id="comment_1586620">
+<div class="commentTop comment-top newcomment" id="comment_top_1586620">
+<div class="title">
+<h4><a href="../../../../../comments.pl_52d02fdf.html" id="comment_link_1586620" name="comment_link_1586620" onclick="return D2.setFocusComment(1586620)">Proxomitron使って</a>
+<span class="score" id="comment_score_1586620">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586620); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586620">on 2009年06月15日 13時50分
+			 (<a href="../../../../../../srad.jp/comment/1586620.html">#1586620</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586620"><ul> <li>iframeをリンク化</li><li>metaタグによる再読み込みを無効化</li></ul><p>何の脅威も感じなかった</p></div>
+</div>
+</div>
+<div id="replyto_1586620"></div>
+<ul class="comment-group" id="group_1586620">
+<li class="hide" id="hiddens_1586620"></li>
+</ul><ul id="commtree_1586620"><li class="comment full contain" id="tree_1586641"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586641"></div>
+<div class="comment-item" id="comment_1586641">
+<div class="commentTop comment-top newcomment" id="comment_top_1586641">
+<div class="title">
+<h4><a href="../../../../../comments.pl_73516942.html" id="comment_link_1586641" name="comment_link_1586641" onclick="return D2.setFocusComment(1586641)">Re:Proxomitron使って</a>
+<span class="score" id="comment_score_1586641">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586641); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~feenal/index.html">feenal (37359)</a>
+<span class="otherdetails" id="comment_otherdetails_1586641">on 2009年06月15日 14時27分
+			 (<a href="../../../../../../srad.jp/comment/1586641.html">#1586641</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586641"><p>デモサイトではiframeを使っているようですが、やり方によってはiframeなしでも十分可能じゃないでしょうか?<br/>それとmetaタグによる再読み込みって使われている?</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586641">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:Proxomitron使って')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586641'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586641'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586641'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_3191eaa5.html" onclick="return D2.selectParent(1586620)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586641"></div>
+<ul class="comment-group" id="group_1586641">
+<li class="hide" id="hiddens_1586641"></li>
+</ul></li><li class="comment full contain" id="tree_1591016"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1591016"></div>
+<div class="comment-item" id="comment_1591016">
+<div class="commentTop comment-top newcomment" id="comment_top_1591016">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2b9b3ede.html" id="comment_link_1591016" name="comment_link_1591016" onclick="return D2.setFocusComment(1591016)">Re:Proxomitron使って</a>
+<span class="score" id="comment_score_1591016">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1591016); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~think49/index.html">think49 (38497)</a>
+<span class="otherdetails" id="comment_otherdetails_1591016">on 2009年06月21日 21時25分
+			 (<a href="../../../../../../srad.jp/comment/1591016.html">#1591016</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1591016"><p><a href="../../../../../../srad.jp/security/comments.pl_8f92840d.html" title="srad.jp">iframe,meta なしで可能でした。</a> [srad.jp]</p><p>画像が表示されたら、アクセスログから取得できてます。</p><p># この場合、Proxomitronならではの対策法ってあるんでしょうか。ユーザCSSしか思いつかない…。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1591016">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:Proxomitron使って')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1591016'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1591016'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1591016'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_3191eaa5.html" onclick="return D2.selectParent(1586620)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1591016"></div>
+<ul class="comment-group" id="group_1591016">
+<li class="hide" id="hiddens_1591016"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1586763"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586763"></div>
+<div class="comment-item" id="comment_1586763">
+<div class="commentTop comment-top newcomment" id="comment_top_1586763">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d8847f74.html" id="comment_link_1586763" name="comment_link_1586763" onclick="return D2.setFocusComment(1586763)">プライバシー情報</a>
+<span class="score" id="comment_score_1586763">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586763); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~masahikoi/index.html">masahikoi (1183)</a>
+<span class="otherdetails" id="comment_otherdetails_1586763">on 2009年06月15日 19時59分
+			 (<a href="../../../../../../srad.jp/comment/1586763.html">#1586763</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586763"><p>
+このやり方はまともな目的でも結果的に同じようなことになっている場合がありえますね。
+リンク集でa:linkとa:visitedのbackground-imageにサイトのバナー画像を使っているとか。
+</p><p>
+結局履歴を知られたくないサイトにアクセスするときはInPrivateブラウズ(IE8)やシークレットモード(Chrome)をつかって履歴自体を残さないようにするしかないんですかね。
+</p></div>
+</div>
+</div>
+<div id="replyto_1586763"></div>
+<ul class="comment-group" id="group_1586763">
+<li class="hide" id="hiddens_1586763"></li>
+</ul></li><li class="comment full contain" id="tree_1590986"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1590986"></div>
+<div class="comment-item" id="comment_1590986">
+<div class="commentTop comment-top newcomment" id="comment_top_1590986">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8f92840d.html" id="comment_link_1590986" name="comment_link_1590986" onclick="return D2.setFocusComment(1590986)">ごく簡単なコードで閲覧履歴を盗めることを確認</a>
+<span class="score" id="comment_score_1590986">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1590986); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~think49/index.html">think49 (38497)</a>
+<span class="otherdetails" id="comment_otherdetails_1590986">on 2009年06月21日 19時55分
+			 (<a href="../../../../../../srad.jp/comment/1590986.html">#1590986</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1590986"><p> <a href="http://vird2002.s8.xrea.com/test/test_css/get_visited.html" rel="nofollow" title="xrea.com">http://vird2002.s8.xrea.com/test/test_css/get_visited.html</a> [xrea.com] にテストコードを置きました。</p><blockquote><div><p> <tt>&lt;style type='text/css'&gt;<br/>    a:visited[href="http://www.google.co.jp/"]:after {<br/>...(中略)...<br/>&lt;/style&gt;</tt></p></div> </blockquote><p>が該当コードです。<br/>
+<a href="http://pc12.2ch.net/test/read.cgi/software/1233657293/832n-" rel="nofollow" title="2ch.net">Proxomitron フィルター作成スレッド Part11</a> [2ch.net] で</p><blockquote><div><p>Gecko系だったら-moz-bindingで外部ファイルを読み込むことだってするし、
+CSS3のwebfontsも外部ファイルを読み込む。</p></div>
+</blockquote><p>と言われているので、抜け道はまだあるんだろうと思います。</p><p>ところで、Firefoxで a:visited を無効化する about:config はないんでしょうか？<br/>
+いろいろ探してみましたが、どうにも見つかりません…。</p></div>
+</div>
+</div>
+<div id="replyto_1590986"></div>
+<ul class="comment-group" id="group_1590986">
+<li class="hide" id="hiddens_1590986"></li>
+</ul></li><li class="comment full contain" id="tree_1586574"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586574"></div>
+<div class="comment-item" id="comment_1586574">
+<div class="commentTop comment-top newcomment" id="comment_top_1586574">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ddf6d088.html" id="comment_link_1586574" name="comment_link_1586574" onclick="return D2.setFocusComment(1586574)">Opera10</a>
+<span class="score" id="comment_score_1586574">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586574); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586574">on 2009年06月15日 12時41分
+			 (<a href="../../../../../../srad.jp/comment/1586574.html">#1586574</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586574">Opera10で行ったらものすごく重くて、しかもなんだか分からなかった。</div>
+</div>
+</div>
+<div id="replyto_1586574"></div>
+<ul class="comment-group" id="group_1586574">
+<li class="hide" id="hiddens_1586574"></li>
+</ul></li><li class="comment full contain" id="tree_1586576"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586576"></div>
+<div class="comment-item" id="comment_1586576">
+<div class="commentTop comment-top newcomment" id="comment_top_1586576">
+<div class="title">
+<h4><a href="../../../../../comments.pl_39311d97.html" id="comment_link_1586576" name="comment_link_1586576" onclick="return D2.setFocusComment(1586576)">元記事を読まずに手口を予想</a>
+<span class="score" id="comment_score_1586576">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586576); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586576">on 2009年06月15日 12時44分
+			 (<a href="../../../../../../srad.jp/comment/1586576.html">#1586576</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586576"><p>:visitedセレクタあたりを使って訪れているサイトを判定する。<br/>あとはそれを...どうやって取得するんだろうｗ</p></div>
+</div>
+</div>
+<div id="replyto_1586576"></div>
+<ul class="comment-group" id="group_1586576">
+<li class="hide" id="hiddens_1586576"></li>
+</ul><ul id="commtree_1586576"><li class="comment full contain" id="tree_1586582"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586582"></div>
+<div class="comment-item" id="comment_1586582">
+<div class="commentTop comment-top newcomment" id="comment_top_1586582">
+<div class="title">
+<h4><a href="../../../../../comments.pl_545da461.html" id="comment_link_1586582" name="comment_link_1586582" onclick="return D2.setFocusComment(1586582)">Re:元記事を読まずに手口を予想</a>
+<span class="score" id="comment_score_1586582">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586582); return false">スコア:3</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586582">on 2009年06月15日 12時50分
+			 (<a href="../../../../../../srad.jp/comment/1586582.html">#1586582</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586582"><p>visited の時だけ参照するリソースを仕込む<br/>→ んでそのリソースのログを取る</p><p>と予想したらそのままでしたよ</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586582">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:元記事を読まずに手口を予想')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586582'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586582'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586582'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_6b19c201.html" onclick="return D2.selectParent(1586576)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586582"></div>
+<ul class="comment-group" id="group_1586582">
+<li class="hide" id="hiddens_1586582"></li>
+</ul><ul id="commtree_1586582"><li class="comment full contain" id="tree_1586652"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586652"></div>
+<div class="comment-item" id="comment_1586652">
+<div class="commentTop comment-top newcomment" id="comment_top_1586652">
+<div class="title">
+<h4><a href="../../../../../comments.pl_03c2a3ee.html" id="comment_link_1586652" name="comment_link_1586652" onclick="return D2.setFocusComment(1586652)">Re:元記事を読まずに手口を予想</a>
+<span class="score" id="comment_score_1586652">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586652); return false">スコア:4</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~mmgames/index.html">mmgames (37884)</a>
+<span class="otherdetails" id="comment_otherdetails_1586652">on 2009年06月15日 14時56分
+			 (<a href="../../../../../../srad.jp/comment/1586652.html">#1586652</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586652"><p>ＰＨＰのプログラムまでは読みようがありませんが、<br/><a href="http://www.making-the-web.com/misc/sites-you-visit/nojs/base.html" title="making-the-web.com">http://www.making-the-web.com/misc/sites-you-visit/nojs/base.php</a> [making-the-web.com]<br/>にアクセスすればほぼ仕組みはわかりますね。</p><p>ここのサイトへのリンクを貼り、それに個別のスタイルシートを適用して 、<br/>visited 時に特定のＰＨＰに引数付きでアクセスするようにすることでＰＨＰ側で訪問済みサイトがわかるわけです。<br/>ただし欠点として、大量のリンクをブラウザ側で解析するので結構重いことがあげられそうです。</p><p>ＨＴＭＬ形式の迷惑メールにＣＧＩアクセスする画像を貼り付ける手法と手口は同じです。</p><p>これを防ぐには訪問済みサイトのスタイル変更を無効にするか、あるいはこまめにリセットするしかなさそうです。<br/>あるいはユーザースタイルシートなどを使い visited 時 のスタイルを強制的に固定するか。</p><p>ちなみにかなりの数のリストがありましたが海外サイトなのに楽天があったのがおかしい。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586652">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:元記事を読まずに手口を予想')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586652'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586652'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586652'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_9437cfeb.html" onclick="return D2.selectParent(1586582)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586652"></div>
+<ul class="comment-group" id="group_1586652">
+<li class="hide" id="hiddens_1586652"></li>
+</ul></li><li class="comment full contain" id="tree_1586655"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586655"></div>
+<div class="comment-item" id="comment_1586655">
+<div class="commentTop comment-top newcomment" id="comment_top_1586655">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c88e6fa8.html" id="comment_link_1586655" name="comment_link_1586655" onclick="return D2.setFocusComment(1586655)">Re:元記事を読まずに手口を予想</a>
+<span class="score" id="comment_score_1586655">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586655); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~taka2/index.html">taka2 (14791)</a>
+<span class="otherdetails" id="comment_otherdetails_1586655">on 2009年06月15日 14時58分
+			 (<a href="../../../../../../srad.jp/comment/1586655.html">#1586655</a>)
+			<small>
+<a class="user_homepage_display" href="http://taka2.info/" title="http://taka2.info/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~taka2/journal/index.html" title="2023年11月11日  7時50分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586655"><p>この方法って、直接「vistedなURLを取得できる」のではなく、<br/>「あるURLがvistedかどうか判定できる」ことを利用して虱潰しに検索してるわけですが、<br/>この方法だと、いかに大量の「判定用URLリスト」を持てるかどうかがキモだと思いますね。</p><p>判定用のページには大量(2000ぐらい?)のURLが埋め込まれてますが、さらにそのページをRefreshで随時更新していくことで、<br/>どんどん判定URLを送り込んでいるようです。20回リロードしてたので、約40000URLぐらいかな。<br/>ここ /.-J のストーリーもいくつかマッチしてました…</p><p>全ストーリーが入っているわけではなく、かなり歯抜けなのですが、<br/>Refererで集めたのか、それとも適当にクローリングしたんですかねぇ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586655">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:元記事を読まずに手口を予想')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586655'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586655'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586655'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_9437cfeb.html" onclick="return D2.selectParent(1586582)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586655"></div>
+<ul class="comment-group" id="group_1586655">
+<li class="hide" id="hiddens_1586655"></li>
+</ul></li><li class="comment full contain" id="tree_1586584"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586584"></div>
+<div class="comment-item" id="comment_1586584">
+<div class="commentTop comment-top newcomment" id="comment_top_1586584">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b3a225ed.html" id="comment_link_1586584" name="comment_link_1586584" onclick="return D2.setFocusComment(1586584)">Re:元記事を読まずに手口を予想</a>
+<span class="score" id="comment_score_1586584">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586584); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~shuichi/index.html">shuichi (572)</a>
+<span class="otherdetails" id="comment_otherdetails_1586584">on 2009年06月15日 12時55分
+			 (<a href="../../../../../../srad.jp/comment/1586584.html">#1586584</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~shuichi/journal/index.html" title="2022年05月05日 19時15分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586584"><p>見て戻ってきたら遅かったorz<br/>みんな解析早すぎですよ</p><p>３０分待ちなのでIDで</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586584">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:元記事を読まずに手口を予想')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586584'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586584'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586584'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_9437cfeb.html" onclick="return D2.selectParent(1586582)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586584"></div>
+<ul class="comment-group" id="group_1586584">
+<li class="hide" id="hiddens_1586584"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1586580"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586580"></div>
+<div class="comment-item" id="comment_1586580">
+<div class="commentTop comment-top newcomment" id="comment_top_1586580">
+<div class="title">
+<h4><a href="../../../../../comments.pl_572ae42d.html" id="comment_link_1586580" name="comment_link_1586580" onclick="return D2.setFocusComment(1586580)">Re:元記事を読まずに手口を予想</a>
+<span class="score" id="comment_score_1586580">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586580); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~mer/index.html">mer (347)</a>
+<span class="otherdetails" id="comment_otherdetails_1586580">on 2009年06月15日 12時47分
+			 (<a href="../../../../../../srad.jp/comment/1586580.html">#1586580</a>)
+			<small>
+<a class="user_homepage_display" href="http://blog.masakura.jp/" title="http://blog.masakura.jp/">ホームページ</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586580">a:visited でやっています。<br/><br/>どうやって取得するかどうかですが…、私も気になって思わずソースコード読んでみました。<br/><br/>読めば分かるレベルなので、あえて書きませんが、意外と単純な手だったのでビックリです。</div>
+</div>
+<div class="commentSub" id="comment_sub_1586580">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:元記事を読まずに手口を予想')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586580'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586580'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586580'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_6b19c201.html" onclick="return D2.selectParent(1586576)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586580"></div>
+<ul class="comment-group" id="group_1586580">
+<li class="hide" id="hiddens_1586580"></li>
+</ul></li><li class="comment oneline" id="tree_1586588"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586588"></div>
+<div class="comment-item" id="comment_1586588">
+<div class="commentTop comment-top newcomment" id="comment_top_1586588">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d4a0c028.html" id="comment_link_1586588" name="comment_link_1586588" onclick="return D2.setFocusComment(1586588)">対策</a>
+<span class="score" id="comment_score_1586588">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586588); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586588"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586588">対策として、次のようなユーザースタイルシートを使えばいいかもしれない。<br/>a:visited {<br/>
+        background: none !important;<br/>}<br/>IEだと制限つきサイトに登録しても動かなくなりますね。</div>
+</div>
+<div class="commentSub" id="comment_sub_1586588"></div>
+</div>
+<div id="replyto_1586588"></div>
+<ul class="comment-group" id="group_1586588">
+<li class="hide" id="hiddens_1586588"></li>
+</ul><ul id="commtree_1586588"><li class="comment oneline" id="tree_1586741"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586741"></div>
+<div class="comment-item" id="comment_1586741">
+<div class="commentTop comment-top newcomment" id="comment_top_1586741">
+<div class="title">
+<h4><a href="../../../../../comments.pl_38fcecd4.html" id="comment_link_1586741" name="comment_link_1586741" onclick="return D2.setFocusComment(1586741)">Re:</a>
+<span class="score" id="comment_score_1586741">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586741); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586741"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586741"><p>a:visited {<br/>
+    cursor: ;<br/>}<br/>とかも出来るんじゃないかな。<br/>ブラウザの独自プロパティ(-moz-*とか)とかまで考えるとかなり難しいかも</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1586741"></div>
+</div>
+<div id="replyto_1586741"></div>
+<ul class="comment-group" id="group_1586741">
+<li class="hide" id="hiddens_1586741"></li>
+</ul></li><li class="comment hidden" id="tree_1586801"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586801"></div>
+<div class="comment-item" id="comment_1586801">
+</div>
+<div id="replyto_1586801"></div>
+<ul class="comment-group" id="group_1586801">
+<li class="hide" id="hiddens_1586801"></li>
+</ul><ul id="commtree_1586801"><li class="comment full contain" id="tree_1586877"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586877"></div>
+<div class="comment-item" id="comment_1586877">
+<div class="commentTop comment-top newcomment" id="comment_top_1586877">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c40c4e5d.html" id="comment_link_1586877" name="comment_link_1586877" onclick="return D2.setFocusComment(1586877)">Re:逆にすべて訪問済み扱いにしてやろう</a>
+<span class="score" id="comment_score_1586877">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586877); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~shuichi/index.html">shuichi (572)</a>
+<span class="otherdetails" id="comment_otherdetails_1586877">on 2009年06月16日  7時02分
+			 (<a href="../../../../../../srad.jp/comment/1586877.html">#1586877</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~shuichi/journal/index.html" title="2022年05月05日 19時15分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586877">この手の手法（悪用された場合ね）は正確性よりも量がものを言うので<br/>多くの人が対応しないと意味がなさげですね。<br/>ブラウザ側で対応してもらうといいんだけど、通信料が増えるので<br/>携帯・モバイル用では難しいでしょうね。<br/><br/>ところで、この手法を使用（悪用？）できそうなサイトはどれぐらいあるんでしょうか？<br/>検索・広告サイトとかなら使えそうですが他に思いつきません。</div>
+</div>
+<div class="commentSub" id="comment_sub_1586877">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:逆にすべて訪問済み扱いにしてやろう')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586877'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586877'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586877'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_bf61bdd4.html" onclick="return D2.selectParent(1586801)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586877"></div>
+<ul class="comment-group" id="group_1586877">
+<li class="hide" id="hiddens_1586877"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1586578"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586578"></div>
+<div class="comment-item" id="comment_1586578">
+<div class="commentTop comment-top newcomment" id="comment_top_1586578">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e1da8317.html" id="comment_link_1586578" name="comment_link_1586578" onclick="return D2.setFocusComment(1586578)">おー</a>
+<span class="score" id="comment_score_1586578">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586578); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586578">on 2009年06月15日 12時45分
+			 (<a href="../../../../../../srad.jp/comment/1586578.html">#1586578</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586578">ほんとだ<br/>NoScript状態でもURLバレバレだ！</div>
+</div>
+</div>
+<div id="replyto_1586578"></div>
+<ul class="comment-group" id="group_1586578">
+<li class="hide" id="hiddens_1586578"></li>
+</ul><ul id="commtree_1586578"><li class="comment full contain" id="tree_1586640"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586640"></div>
+<div class="comment-item" id="comment_1586640">
+<div class="commentTop comment-top newcomment" id="comment_top_1586640">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a8053d6b.html" id="comment_link_1586640" name="comment_link_1586640" onclick="return D2.setFocusComment(1586640)">Re:おー</a>
+<span class="score" id="comment_score_1586640">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586640); return false">スコア:1</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586640">on 2009年06月15日 14時25分
+			 (<a href="../../../../../../srad.jp/comment/1586640.html">#1586640</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586640">「ヤツはとんでもない物を盗んでいきました。あなたの閲覧履歴です。<br/>「んだとあの野郎！</div>
+</div>
+<div class="commentSub" id="comment_sub_1586640">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:おー')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586640'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586640'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586640'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_25baf7ec.html" onclick="return D2.selectParent(1586578)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586640"></div>
+<ul class="comment-group" id="group_1586640">
+<li class="hide" id="hiddens_1586640"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1586645"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586645"></div>
+<div class="comment-item" id="comment_1586645">
+<div class="commentTop comment-top newcomment" id="comment_top_1586645">
+<div class="title">
+<h4><a href="../../../../../comments.pl_59aee9cc.html" id="comment_link_1586645" name="comment_link_1586645" onclick="return D2.setFocusComment(1586645)">なんでなんで？</a>
+<span class="score" id="comment_score_1586645">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586645); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586645">on 2009年06月15日 14時45分
+			 (<a href="../../../../../../srad.jp/comment/1586645.html">#1586645</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586645"><p>編集者の言う通り（部門名）、仕様ですよね。<br/>ただ、何年も前からこの仕様は脆弱性として利用出来ると指摘されてて、<br/>いよいよ大々的にユーザの情報を盗むのに使われ始めたので、<br/>仕様不良として潰さざるを得なくなっていると言う事。</p><p>「大々的にユーザの情報を盗むのに使われ始めた」時に騒がれて、<br/><a href="../../../../../../srad.jp/security/article.pl_7f9d6acb.html" title="srad.jp">/.Jでも取り上げていた</a> [srad.jp]のは記憶に新しいわけですが、<br/>最初の指摘から現在まで、あるいは、前回掲載から現在までの間に、<br/>何か新たな手法や、関連する別の問題が見付かったと言うワケでもなく、<br/>また、実証コードが書かれてなかった・公表されてなかったわけでもないのに、<br/>何故今更話題にするんだろう？ と言う疑問があります。</p><p>Firefoxの次のバージョンか何かの宣伝ですか？＞編集者様</p><p># 他意が無いならいいんですけど、<br/># 言いたい事を隠してる様な誘導的な話題って、<br/># 生理的に気持ち悪いんで、</p><p># この件で、script切ってる環境ならダイジョウブ、<br/># と言う誤解を広めてた人が居るなら、それは糾弾されるべき。</p></div>
+</div>
+</div>
+<div id="replyto_1586645"></div>
+<ul class="comment-group" id="group_1586645">
+<li class="hide" id="hiddens_1586645"></li>
+</ul><ul id="commtree_1586645"><li class="comment full contain" id="tree_1586648"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586648"></div>
+<div class="comment-item" id="comment_1586648">
+<div class="commentTop comment-top newcomment" id="comment_top_1586648">
+<div class="title">
+<h4><a href="../../../../../comments.pl_83aac8ec.html" id="comment_link_1586648" name="comment_link_1586648" onclick="return D2.setFocusComment(1586648)">Re:なんでなんで？</a>
+<span class="score" id="comment_score_1586648">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586648); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1586648">on 2009年06月15日 14時51分
+			 (<a href="../../../../../../srad.jp/comment/1586648.html">#1586648</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586648">本家が話題にしたから</div>
+</div>
+<div class="commentSub" id="comment_sub_1586648">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:なんでなんで？')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586648'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586648'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586648'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_fd3676ea.html" onclick="return D2.selectParent(1586645)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586648"></div>
+<ul class="comment-group" id="group_1586648">
+<li class="hide" id="hiddens_1586648"></li>
+</ul></li></ul></li><li class="comment hidden" id="tree_1586766"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586766"></div>
+<div class="comment-item" id="comment_1586766">
+</div>
+<div id="replyto_1586766"></div>
+<ul class="comment-group" id="group_1586766">
+<li class="hide" id="hiddens_1586766"></li>
+</ul><ul id="commtree_1586766"><li class="comment full contain" id="tree_1586915"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1586915"></div>
+<div class="comment-item" id="comment_1586915">
+<div class="commentTop comment-top newcomment" id="comment_top_1586915">
+<div class="title">
+<h4><a href="../../../../../comments.pl_fc784546.html" id="comment_link_1586915" name="comment_link_1586915" onclick="return D2.setFocusComment(1586915)">Re:もしかして</a>
+<span class="score" id="comment_score_1586915">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1586915); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~127.0.0.1/index.html">127.0.0.1 (33105)</a>
+<span class="otherdetails" id="comment_otherdetails_1586915">on 2009年06月16日  9時51分
+			 (<a href="../../../../../../srad.jp/comment/1586915.html">#1586915</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~127.0.0.1/journal/index.html" title="2008年04月01日 17時18分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1586915">閲覧履歴が漏れる漏れないとは別に、判定用のURLを大量に送りこんで<br/>くるのは防げないから、送りこんでくるサーバーにアクセスしに行かないように<br/>設定しておくべきですね。個人での対策以外では、フィルタリングソフトとかで<br/>あらかじめブラックリストに登録されるようになればいいですね。</div>
+</div>
+<div class="commentSub" id="comment_sub_1586915">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:もしかして')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586915'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586915'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=454861&amp;cid=1586915'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_700baa90.html" onclick="return D2.selectParent(1586766)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1586915"></div>
+<ul class="comment-group" id="group_1586915">
+<li class="hide" id="hiddens_1586915"></li>
+</ul></li></ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 0;
+		D2.currents()['full']     = 37;
+		D2.currents()['oneline']  = 13;
+		// D2.currents_total(50);
+
+		D2.abbrev_comments({});
+		D2.noshow_comments([1586801,1586766]);
+		D2.pieces_comments([1586647,1586657,1586646,1586690,1586736,1586607,1586636,1586695,1586705,1586729,1586724,1586588,1586741]);
+		D2.init_hiddens([]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">50</span>/<span class="totalcommentcnt">68</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>アレゲはアレゲ以上のなにものでもなさげ  -- アレゲ研究家<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../../srad.jp/about.html">About</a></li>
+<li><a href="../../../../../../srad.jp/faq/index.html">FAQ</a></li>
+<li><a href="../../../../../../srad.jp/story/index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../../srad.jp/hof.html">殿堂入り</a></li>
+<li><a href="../../../../../../srad.jp/authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../../srad.jp/topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../../srad.jp/index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

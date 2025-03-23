@@ -1,0 +1,3075 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/01/10/28/1350243.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>UNICODEをどう組み込む | スラド デベロッパー</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="UNICODEをどう組み込む | スラド デベロッパー" property="og:title">
+<meta content="https://srad.jp/static/topics/programming_64.png" property="og:image"/>
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '382710526741489836',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content='takusi 曰く，"ソフトウェアのi18n(国際化)の切り札と目されているUNICODE。しかし、このUNICODEはUTF-16、UTF-8などのいくつかのエンコードや、実装を支援するための、IBMのICUやGNUのgtextのような多数のライブラリがあります。UNICODEはどのようにプログラムに組み込むのが吉でしょうか？(当然、OSや言語によって様々で...' name="description"/>
+<meta content='takusi 曰く，"ソフトウェアのi18n(国際化)の切り札と目されているUNICODE。しかし、このUNICODEはUTF-16、UTF-8などのいくつかのエンコードや、実装を支援するための、IBMのICUやGNUのgtextのような多数のライブラリがあります。UNICODEはどのようにプログラムに組み込むのが吉でしょうか？(当然、OSや言語によって様々で...' property="og:description"/>
+<meta content="UNICODEをどう組み込む | スラド デベロッパー" itemprop="name"/>
+<meta content='takusi 曰く，"ソフトウェアのi18n(国際化)の切り札と目されているUNICODE。しかし、このUNICODEはUTF-16、UTF-8などのいくつかのエンコードや、実装を支援するための、IBMのICUやGNUのgtextのような多数のライブラリがあります。UNICODEはどのようにプログラムに組み込むのが吉でしょうか？(当然、OSや言語によって様々で...' itemprop="description"/>
+<link href="../../../../../../srad.jp/index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../../srad.jp/search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../../srad.jp/developers.rss" rel="alternate" title="スラド developers RSS" type="application/rss+xml"/>
+<link href="../../../../../../srad.jp/static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../../srad.jp/static/topics/programming_64.png" rel="image_src"/>
+<link href="../../../../../../srad.jp/static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../../srad.jp/static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../../srad.jp/static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/01/10/28/1350243/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'developers';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//developers.srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/01/10/28/1350243.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../../srad.jp/recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../../srad.jp/popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../../srad.jp/comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../../srad.jp/journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../../srad.jp/polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：デベロッパー</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+<li class="active" id="fhsection-developers">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-5">デベロッパー</a><span></span>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+<li class="active" id="fhsection-developers">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-5">デベロッパー</a><span></span>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="1396" data-fhtype="story" id="firehose-1396">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">1396</span>
+<span class="type">story</span>
+</span>
+<header>
+<span class="topic" id="topic-1396">
+<a href="../../../../../../srad.jp/stories/programming.html" onclick="return addfhfilter('programming');">
+<img alt="プログラミング" height="64" src="../../../../../../srad.jp/static/topics/programming_64.png" title="プログラミング" width="64"/>
+</a>
+</span>
+<h2 class="story">
+<span id="title-1396"> <a href="index.html">UNICODEをどう組み込む</a></span>
+<span class="comments commentcnt-1396">160</span>
+</h2>
+<div class="details" id="details-1396">ストーリー by <a href="http://d.hatena.ne.jp/wakatono/">wakatono</a>
+<time datetime="2001-10-28T22:50+09:00" id="fhtime-1396">2001年10月28日 22時50分</time><br/>とりあえず仕様調査から入ろう 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "UNICODEをどう組み込む",
+  "datePublished": "2001-10-28T22:50+09:00",
+  "articleBody": "takusi 曰く，\"ソフトウェアのi18n(国際化)の切り札と目されているUNICODE。しかし、このUNICODEはUTF-16、UTF-8などのいくつかのエンコードや、実装を支援するための、IBMのICUやGNUのgtextのような多数のライブラリがあります。UNICODEはどのようにプログラムに組み込むのが吉でしょうか？(当然、OSや言語によって様々でしょう)\"確かに悩ましい。iconv() 1つ取ってもさまざまな仕様があったりするし、Samba 日本語版などでは MS の CodePage の仕様から、結局 iconv() に頼ることなく自前で実装してたりする。悩むくらいならば自前でやるぜと思う人もいるかと思うが、それはそれでメンテナンスの面で悩ましい。さて、どうするのが吉か？",
+  "image": "https://srad.jp/static/topics/programming_64.png"
+}
+</script>
+<div class="body" id="fhbody-1396">
+<div class="contents_text p" id="text-1396">
+<p><a href="mailto:takusi@ff.iij4u.or.jp">takusi</a> 曰く，"ソフトウェアのi18n(国際化)の切り札と目されているUNICODE。しかし、このUNICODEはUTF-16、UTF-8などのいくつかのエンコードや、実装を支援するための、IBMのICUやGNUのgtextのような多数のライブラリがあります。UNICODEはどのようにプログラムに組み込むのが吉でしょうか？(当然、OSや言語によって様々でしょう)"</p>
+<p>確かに悩ましい。iconv() 1つ取ってもさまざまな仕様があったりするし、Samba 日本語版などでは MS の CodePage の仕様から、結局 iconv() に頼ることなく自前で実装してたりする。悩むくらいならば自前でやるぜと思う人もいるかと思うが、それはそれでメンテナンスの面で悩ましい。さて、どうするのが吉か？</p>
+</div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //developers.srad.jp/story/01/10/28/1350243/ -->
+<!-- http://developers.srad.jp/story/01/10/28/1350243/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://developers.srad.jp/story/01/10/28/1350243/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://developers.srad.jp/story/01/10/28/1350243/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/developers.srad.jp/story/01/10/28/1350243/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../../srad.jp/about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">160</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-1396"><a class="topic tag" href="../../../../../../srad.jp/tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%83%87%E3%83%99%E3%83%AD%E3%83%83%E3%83%91%E3%83%BC.html" rel="statictag" target="_blank">デベロッパー</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0.html" rel="statictag" target="_blank">プログラミング</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/slashdot%E3%81%AB%E8%81%9E%E3%81%91.html" rel="statictag" target="_blank">slashdotに聞け</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../../../../../../srad.jp/story/01/10/28/1329200/index.html" id="hrefns">200KBのメールヘッダ</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../../../../it.srad.jp/story/17/11/14/0537205/index.html">世界的な絵文字の普及によってUTF-8の普及やUTF-16における4バイト文字の扱いが改善される？</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="UNICODEをどう組み込むのストーリーへ戻る">UNICODEをどう組み込む</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//developers.srad.jp/story/01/10/28/1350243/';
+var parent_item_title = 'UNICODEをどう組み込む';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「UNICODEをどう組み込む」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//developers.srad.jp/search.pl?op=comments&amp;sid=1397" class="btn"><span class="totalcommentcnt">160</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//developers.srad.jp/comments.pl?sid=1397"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_8f89c6e7.html"><span>検索</span><span class="totalcommentcnt">160</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../../srad.jp/static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 33528: { uid: 5065, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33493: { uid: 1, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 33454: { uid: 4610, pid: 0, read: 0, points: 3, kids: [  ], opid: 0 }, 33461: { uid: 3923, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33486: { uid: 4865, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 33561: { uid: 4850, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 33550: { uid: 5007, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 33877: { uid: 4610, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33547: { uid: 4865, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 33552: { uid: 1225, pid: 0, read: 0, points: 3, kids: [  ], opid: 0 }, 33555: { uid: 5476, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 33463: { uid: 4610, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 34475: { uid: 64, pid: 34360, read: 0, points: 2, kids: [  ], opid: 34418 }, 33970: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 34199 ], opid: undefined }, 33442: { uid: 1, pid: 0, read: 0, points: 3, kids: [  ], opid: 0 }, 33428: { uid: 4610, pid: 0, read: 0, points: 4, kids: [  ], opid: 0 }, 33769: { uid: 3689, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33773: { uid: 1245, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33472: { uid: 3923, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 34158: { uid: undefined, pid: 33915, read: 0, points: -2, kids: [ 34164 ], opid: undefined }, 33560: { uid: 4865, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 36333: { uid: 3541, pid: 35180, read: 0, points: 2, kids: [ 36397 ], opid: 35180 }, 33458: { uid: 4610, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 34260: { uid: 3541, pid: 33918, read: 0, points: 2, kids: [  ], opid: 33918 }, 33464: { uid: 3923, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 34178: { uid: undefined, pid: 34164, read: 0, points: -2, kids: [ 34280 ], opid: undefined }, 33430: { uid: 3541, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33501: { uid: 1, pid: 0, read: 0, points: 3, kids: [  ], opid: 0 }, 33580: { uid: 55, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33473: { uid: 5065, pid: 0, read: 0, points: 3, kids: [  ], opid: 0 }, 33546: { uid: 1, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 34252: { uid: 3541, pid: 0, read: 0, points: 2, kids: [ 35180 ], opid: 0 }, 33579: { uid: 4865, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 33581: { uid: 3653, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 34371: { uid: 6359, pid: 34199, read: 0, points: 2, kids: [  ], opid: 34199 }, 33540: { uid: 1, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 36414: { uid: 3541, pid: 36397, read: 0, points: 2, kids: [  ], opid: 36397 }, 34164: { uid: undefined, pid: 34158, read: 0, points: -2, kids: [ 34178 ], opid: undefined }, 33525: { uid: 5065, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33413: { uid: 1, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 34360: { uid: undefined, pid: 34280, read: 0, points: -2, kids: [ 34418, 34475 ], opid: undefined }, 33444: { uid: 4590, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 33913: { uid: 64, pid: 0, read: 0, points: 3, kids: [ 34119 ], opid: 0 }, 34199: { uid: undefined, pid: 33970, read: 0, points: -2, kids: [ 34371 ], opid: undefined }, 36397: { uid: undefined, pid: 36333, read: 0, points: -2, kids: [ 36414 ], opid: undefined }, 33655: { uid: 55, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 34418: { uid: undefined, pid: 34360, read: 0, points: -2, kids: [  ], opid: undefined }, 33584: { uid: 55, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33468: { uid: 1, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 34119: { uid: undefined, pid: 33913, read: 0, points: -2, kids: [ 34143 ], opid: undefined }, 33542: { uid: 1, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33479: { uid: 1, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 33918: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 34260 ], opid: undefined }, 34280: { uid: undefined, pid: 34178, read: 0, points: -2, kids: [ 34360 ], opid: undefined }, 33692: { uid: 1483, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33465: { uid: 4610, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 33915: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 34158 ], opid: undefined }, 33738: { uid: 4610, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 34143: { uid: 4467, pid: 34119, read: 0, points: 2, kids: [  ], opid: 34119 }, 33426: { uid: 4610, pid: 0, read: 0, points: 4, kids: [  ], opid: 0 }, 33559: { uid: 5100, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 35180: { uid: undefined, pid: 34252, read: 0, points: -2, kids: [ 36333 ], opid: undefined }, 33487: { uid: 1, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 } });
+
+D2.thresh_totals({6:{6:{1:50,3:0,2:0}},4:{6:{1:48,3:0,2:2},4:{1:48,3:2,2:0},5:{1:48,3:2,2:0}},1:{6:{1:0,3:0,2:50},4:{1:0,3:8,2:42},1:{1:0,3:50,2:0},3:{1:0,3:28,2:22},2:{1:0,3:50,2:0},5:{1:0,3:2,2:48}},3:{6:{1:42,3:0,2:8},4:{1:42,3:8,2:0},3:{1:42,3:8,2:0},5:{1:42,3:2,2:6}},0:{6:{1:0,3:0,2:50},4:{1:0,3:8,2:42},1:{1:0,3:50,2:0},3:{1:0,3:28,2:22},0:{1:0,3:50,2:0},2:{1:0,3:50,2:0},5:{1:0,3:2,2:48}},2:{6:{1:16,3:0,2:34},4:{1:16,3:8,2:26},3:{1:16,3:28,2:6},2:{1:16,3:34,2:0},5:{1:16,3:2,2:32}},5:{6:{1:50,3:0,2:0},5:{1:50,3:0,2:0}},"-1":{6:{1:0,3:0,2:50},4:{1:0,3:8,2:42},1:{1:0,3:50,2:0},3:{1:0,3:28,2:22},0:{1:0,3:50,2:0},2:{1:0,3:50,2:0},5:{1:0,3:2,2:48},"-1":{1:0,3:50,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([33426,33428,33442,33454,33473,33501,33552,33913,33413,33430,33458,33461,33463,33465,33525,33528,33542,33560,33580,33581,33584,33655,33692,33738,33769,33773,33877,34252,33444,33464,33468,33472,33479,33486,33487,33493,33540,33546,33547,33550,33555,33559,33561,33579,33918,33970,33915]);
+D2.root_comments_hash({33493:1,33528:1,33454:1,33561:1,33486:1,33461:1,33550:1,33547:1,33877:1,33555:1,33552:1,33463:1,33970:1,33769:1,33428:1,33442:1,33472:1,33773:1,33560:1,33458:1,33464:1,33430:1,33580:1,33501:1,33546:1,33473:1,34252:1,33579:1,33540:1,33581:1,33413:1,33525:1,33444:1,33913:1,33655:1,33584:1,33468:1,33479:1,33542:1,33918:1,33465:1,33692:1,33915:1,33738:1,33426:1,33559:1,33487:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(1397);
+
+D2.d2_seen('33413,13,2,2,12,2,10,4,3,2,1,1,3,4,1,6,7,1,6,8,24,3,12,2,4,1,3,2,3,4,1,1,18,1,1,3,71,37,46,31,4,104,36,230,109,8,111,104,1858,81');
+D2.more_comments_num(110);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_33426"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33426"></div>
+<div class="comment-item" id="comment_33426">
+<div class="commentTop comment-top newcomment" id="comment_top_33426">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7b8e13c4.html" id="comment_link_33426" name="comment_link_33426" onclick="return D2.setFocusComment(33426)">i18n の範疇ならば</a>
+<span class="score" id="comment_score_33426">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33426); return false">スコア:4</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~oku/index.html">oku (4610)</a>
+<span class="otherdetails" id="comment_otherdetails_33426">on 2001年10月28日 23時41分
+			 (<a href="../../../../../../srad.jp/comment/33426.html">#33426</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~oku/journal/index.html" title="2021年09月19日 11時30分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33426"><p>
+何も iconv や Unicode に関わらずとも
+wchar_t⇔char + メッセージカタログで
+十分ではありませんか？
+</p>
+<p>
+m17n だと内部コードはやっぱり
+UCS-4 (or UTF-32) かな～とか
+考えざるを得なくなるのかも知れませんが。
+</p></div>
+</div>
+</div>
+<div id="replyto_33426"></div>
+<ul class="comment-group" id="group_33426">
+<li class="hide" id="hiddens_33426"></li>
+</ul></li><li class="comment full contain" id="tree_33428"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33428"></div>
+<div class="comment-item" id="comment_33428">
+<div class="commentTop comment-top newcomment" id="comment_top_33428">
+<div class="title">
+<h4><a href="../../../../../comments.pl_878ab1f8.html" id="comment_link_33428" name="comment_link_33428" onclick="return D2.setFocusComment(33428)">Re:ＵＮＩＣＯＤＥなんて</a>
+<span class="score" id="comment_score_33428">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33428); return false">スコア:4</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~oku/index.html">oku (4610)</a>
+<span class="otherdetails" id="comment_otherdetails_33428">on 2001年10月28日 23時45分
+			 (<a href="../../../../../../srad.jp/comment/33428.html">#33428</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~oku/journal/index.html" title="2021年09月19日 11時30分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33428">英語だけ == 8bit clean の事であれば
+まあ世界中の大概の人は困らないでしょうね。<br/>
+# 私も適当に誤魔化して使うと思う。
+<br/>
+でも US-ASCII 限定の意味だとすると
+ISO-8859 人にも使えなくなってしまいますよ？</div>
+</div>
+</div>
+<div id="replyto_33428"></div>
+<ul class="comment-group" id="group_33428">
+<li class="hide" id="hiddens_33428"></li>
+</ul></li><li class="comment full contain" id="tree_33442"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33442"></div>
+<div class="comment-item" id="comment_33442">
+<div class="commentTop comment-top newcomment" id="comment_top_33442">
+<div class="title">
+<h4><a href="../../../../../comments.pl_895c71f0.html" id="comment_link_33442" name="comment_link_33442" onclick="return D2.setFocusComment(33442)">Re:ＵＮＩＣＯＤＥなんて</a>
+<span class="score" id="comment_score_33442">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33442); return false">スコア:3</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_33442">on 2001年10月29日  0時18分
+			 (<a href="../../../../../../srad.jp/comment/33442.html">#33442</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33442">その提案が２バイト日本語でなされているのがイタイ(w<br/></div>
+</div>
+</div>
+<div id="replyto_33442"></div>
+<ul class="comment-group" id="group_33442">
+<li class="hide" id="hiddens_33442"></li>
+</ul></li><li class="comment full contain" id="tree_33454"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33454"></div>
+<div class="comment-item" id="comment_33454">
+<div class="commentTop comment-top newcomment" id="comment_top_33454">
+<div class="title">
+<h4><a href="../../../../../comments.pl_951eb83e.html" id="comment_link_33454" name="comment_link_33454" onclick="return D2.setFocusComment(33454)">Re:他人に売れる物が作れるか</a>
+<span class="score" id="comment_score_33454">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33454); return false">スコア:3</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~oku/index.html">oku (4610)</a>
+<span class="otherdetails" id="comment_otherdetails_33454">on 2001年10月29日  0時56分
+			 (<a href="../../../../../../srad.jp/comment/33454.html">#33454</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~oku/journal/index.html" title="2021年09月19日 11時30分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33454">「他人に売れるものが作れるか」<br/>
+ということを念頭におかないのであれば
+<ol>
+<li>まずは 8bit clean で作りました。ソース公開します</li>
+<li>誰か i18n 対応してください &gt; i18n が必要な人</li>
+<li>誰か m17n 対応してください &gt; m17n が必要な人</li>
+</ol>
+という解もありうるのではないかと思いますが。
+<p>
+# Ext-B への需要とか Unicode 以外の日本語処理の<br/>
+# 部分については大筋で御意です。
+</p></div>
+</div>
+</div>
+<div id="replyto_33454"></div>
+<ul class="comment-group" id="group_33454">
+<li class="hide" id="hiddens_33454"></li>
+</ul></li><li class="comment full contain" id="tree_33473"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33473"></div>
+<div class="comment-item" id="comment_33473">
+<div class="commentTop comment-top newcomment" id="comment_top_33473">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7cb7fe24.html" id="comment_link_33473" name="comment_link_33473" onclick="return D2.setFocusComment(33473)">Re:i18n の範疇ならば</a>
+<span class="score" id="comment_score_33473">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33473); return false">スコア:3</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~brake-handle/index.html">brake-handle (5065)</a>
+<span class="otherdetails" id="comment_otherdetails_33473">on 2001年10月29日  2時04分
+			 (<a href="../../../../../../srad.jp/comment/33473.html">#33473</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33473"><p>
+メッセージカタログというのは、i18nの全体像から考えるとUCS-4などのcharsetよりも上位に来る概念ではないですか? メッセージカタログに含まれる各ロケールのメッセージを記述するために例えばiso-8859-1やUCS-4などのcharsetを選ぶという位置づけになるので。
+</p>
+<p>
+ただし、世の中を見渡してみるとメッセージを出さないツールなんてほとんどないんですよね。したがって、用意されているロケールのどれか1つを選択することは必須です。このとき、実際にあるロケールを選択することによって、それによって選べるcharsetが限定されてしまう(場合によってはUCSを除くとuniqueになってしまう)ことがしばしばあります。その点からするとUCS-4はいささかオーバースペックに見えます(間違いなく使わない文字が大量に残ってしまう)。
+</p>
+<p>
+そう考えてみると、UCS-4が魅力を持つためには、複数のロケールを併用する場面を作り出すことが必要になってきそうです(そんな場面あるのか?)。
+</p></div>
+</div>
+</div>
+<div id="replyto_33473"></div>
+<ul class="comment-group" id="group_33473">
+<li class="hide" id="hiddens_33473"></li>
+</ul></li><li class="comment full contain" id="tree_33501"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33501"></div>
+<div class="comment-item" id="comment_33501">
+<div class="commentTop comment-top newcomment" id="comment_top_33501">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3e5b61d6.html" id="comment_link_33501" name="comment_link_33501" onclick="return D2.setFocusComment(33501)">初心者の敵だ</a>
+<span class="score" id="comment_score_33501">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33501); return false">スコア:3</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_33501">on 2001年10月29日  4時15分
+			 (<a href="../../../../../../srad.jp/comment/33501.html">#33501</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33501">JavaはUNICODEを使うようになってるので国際化は全部解決してるみたいな甘い言葉に誘われて手を出してみたらエディタやらデータ入出力等あらゆるところで文字コード変換が必要で死ぬかと思った。　ごめんなさい、初心者のボクにはJavaは無理でした。うそです。弱音は吐きません。がんばって文字コードの泥沼を横断するです。</div>
+</div>
+</div>
+<div id="replyto_33501"></div>
+<ul class="comment-group" id="group_33501">
+<li class="hide" id="hiddens_33501"></li>
+</ul></li><li class="comment full contain" id="tree_33552"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33552"></div>
+<div class="comment-item" id="comment_33552">
+<div class="commentTop comment-top newcomment" id="comment_top_33552">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9f13f628.html" id="comment_link_33552" name="comment_link_33552" onclick="return D2.setFocusComment(33552)">Pythonでは</a>
+<span class="score" id="comment_score_33552">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33552); return false">スコア:3</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~bravo/index.html">bravo (1225)</a>
+<span class="otherdetails" id="comment_otherdetails_33552">&lt;<a href="mailto:reversethis-%7Bgro.zecruoser%7D%20%7Bta%7D%20%7Bovarb%7D">reversethis-{gro.zecruoser} {ta} {ovarb}</a>&gt;
+			on 2001年10月29日 11時28分
+			 (<a href="../../../../../../srad.jp/comment/33552.html">#33552</a>)
+			<small>
+<a class="user_homepage_display" href="https://twitter.com/bravotan" title="https://twitter.com/bravotan">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~bravo/journal/index.html" title="2018年08月14日 12時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33552"><p>PythonでUNICODEするときは「<a href="http://www.python.jp/Zope/articles/japanese/win_utf8">日本語環境で Python (Idle) を使う (utf-8編)</a>」が有益です。</p></div>
+</div>
+</div>
+<div id="replyto_33552"></div>
+<ul class="comment-group" id="group_33552">
+<li class="hide" id="hiddens_33552"></li>
+</ul></li><li class="comment full contain" id="tree_33913"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33913"></div>
+<div class="comment-item" id="comment_33913">
+<div class="commentTop comment-top newcomment" id="comment_top_33913">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6f98ddaa.html" id="comment_link_33913" name="comment_link_33913" onclick="return D2.setFocusComment(33913)">Unicode 移行のメリットとデメリット</a>
+<span class="score" id="comment_score_33913">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33913); return false">スコア:3</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kubota/index.html">kubota (64)</a>
+<span class="otherdetails" id="comment_otherdetails_33913">on 2001年10月30日  9時33分
+			 (<a href="../../../../../../srad.jp/comment/33913.html">#33913</a>)
+			<small>
+<a class="user_homepage_display" href="http://www.debian.or.jp/~kubota/" title="http://www.debian.or.jp/~kubota/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~kubota/journal/index.html" title="2003年12月12日 23時19分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33913"><p>まず、Unicode (UTF-8) のほうがいい理由。</p><ul>
+<li>フル規格の ISO-2022 の実装は大変すぎてとてもできない。</li>
+<li>ISO-2022 は、そこそこのサブセットでさえ、実装するのは面倒。</li>
+<li>stateless である。つまり、「状態」を持たない。エスケープシーケンスもない。というわけで、サロゲートペアで批判されている UTF-16 でさえ、ISO-2022 よりもはるかにシンプル。ISO-2022-JP よりもシンプルと言える。</li>
+<li>必要に迫られていて、かなりの能力と時間がある人でないと実装ができないので、対応ソフトウェアがいつまでたっても増えない。</li>
+<li>CJK の漢字はたしかに CJK で区別できるといろいろと利点があるが、
+ISO-8859-* に載っている文字 (たとえば、ISO-8859-1 [の右半分]
+にも ISO-8859-2 [の右半分]
+にも同じ文字 [たとえば 0xc4 はウムラウトのついた A]
+が入っている [というか、大部分が共通な文字]) は区別しないほうがいい。</li>
+</ul><p>次に、どちらでもいい、もしくは、どちらともいいがたい点。</p><ul>
+<li>結合文字や bidi (bi-direction、アラビア文字やヘブライ文字のように右から左へと文字が進むのを許す実装) は、Unicode でも ISO-2022 でも手間は同じ。</li>
+<li>漢字のうち、CJK で字形が同じものについては、賛成、反対どちらも意見がある。賛成の意見で有名なのは「grep 毛沢東」だろう。(反対は「grep 手紙」かな?)</li>
+</ul><p>最後に、Unicode に移行したほうが悪くなる点。</p><ul>
+<li>CJK 統合漢字のうち、字形が異なるもの。「骨」とかが有名だが、「直」に至っては中国の字形はたいていの日本人には判読不能と思われる。ただしこれも、U+E0000
+からのタグや、もうひとつレベルを上げてマークアップで区別することが可能だが、実装が大変。</li>
+<li>JIS X 0208 と Unicode との相互変換テーブルが、さまざまな実装があって統一されていない。漢字部分については
+Unicode Consortium がきちんと変換テーブルを用意しているので問題がないが、記号部分については各社ばらばら
+(英語ですみませんが、<a href="http://www.debian.or.jp/~kubota/unicode-symbols.html" rel="nofollow" title="debian.or.jp">ぼくの書いた文書</a> [debian.or.jp]の Conversion tables differ between venders
+を参照してください)。
+Unicode Consortium は、参考扱いの変換テーブルを用意していたが、
+最近それも obsolete (廃止) 扱いにしてしまった
+(<a href="http://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/" rel="nofollow" title="unicode.org">http://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/</a> [unicode.org])。
+完全に移行しきってしまえば問題とはならないはずだけども。
+ちなみに、GNU libc は、上記の OBSOLETE なテーブルのうちの JIS0208.TXT
+をもとに、上記拙文の EUC-JP round-trip compatibility に記載されている問題を回避する目的で、JIS X 0208 の 0x2140 (「＼」)
+を U+005C から U+FF3C に変更したものを使っています。
+XFree86 は、JIS0208.TXT そのままでしたが、GNU libc
+式に追随するパッチが受け入れ待ちとなっています。</li>
+<li>文字幅問題。これは、ターミナルエミュレータなど、固定幅フォントを使う場面において、どの文字が倍角扱いになるかが、EUC-JP
+などで広く使われていたデファクトスタンダード (JIS X 0208 や JIS X 0212 に含まれている文字はすべて全角、ASCII や JIS X 0201 に含まれている文字はすべて半角)
+とは異なる。詳しくは、<a href="http://www.debian.or.jp/~kubota/unicode-symbols.html" rel="nofollow" title="debian.or.jp">上記拙文</a> [debian.or.jp]の Width problems を参照 (英語)。
+ただしこれも、完全に移行してしまえば問題でなくなる。</li>
+<li>EUC-JP や Shift_JIS で、2バイト文字 = 全角、という世界では、マルチバイト文字に対応していないソフトウェアもごまかして使うことができる場合があったが、UTF-8 だとそうはいかなくなる。</li>
+</ul><p>完全にユーザである (開発は一切おこなわない) のなら、対応ソフトウェアの状況で、移行するほうがいいかどうかを決めればいいと思います。</p></div>
+<div class="commentshrunk" id="comment_shrunk_33913"><a class="readrest" href="../../../../../comments.pl_6f98ddaa.html" onclick="return D2.readRest(33913)">続きを読む...</a></div>
+</div>
+</div>
+<div id="replyto_33913"></div>
+<ul class="comment-group" id="group_33913">
+<li class="hide" id="hiddens_33913"></li>
+</ul><ul id="commtree_33913"><li class="comment hidden" id="tree_34119"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34119"></div>
+<div class="comment-item" id="comment_34119">
+</div>
+<div id="replyto_34119"></div>
+<ul class="comment-group" id="group_34119">
+<li class="hide" id="hiddens_34119"></li>
+</ul><ul id="commtree_34119"><li class="comment full contain" id="tree_34143"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34143"></div>
+<div class="comment-item" id="comment_34143">
+<div class="commentTop comment-top newcomment" id="comment_top_34143">
+<div class="title">
+<h4><a href="../../../../../comments.pl_66a1444c.html" id="comment_link_34143" name="comment_link_34143" onclick="return D2.setFocusComment(34143)">Re:Unicode 移行のメリットとデメリット</a>
+<span class="score" id="comment_score_34143">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 34143); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~numa/index.html">numa (4467)</a>
+<span class="otherdetails" id="comment_otherdetails_34143">on 2001年10月30日 19時50分
+			 (<a href="../../../../../../srad.jp/comment/34143.html">#34143</a>)
+			<small>
+<a class="user_homepage_display" href="http://blog.livedoor.jp/numa2666/" title="http://blog.livedoor.jp/numa2666/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~numa/journal/index.html" title="2016年01月20日 12時25分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_34143"><blockquote>私はこれ、かなり疑問に思ってます。100% pure Unicodeな環境下で、IMEから「～」を入力した場合、それはWAVE DASHなんでしょうか? それともFULLWIDTH TILDEなんでしょうか? 「―」、「∥」、「－」についても同様の問題がありますよね。
+</blockquote>
+<p>JIS X 0208 の範囲だけでもそれだけ問題になる文字があるわけですが，Unicode に移行すると対象になる文字はさらに増えます．</p>
+<p>たとえば「Å」は，JIS X 0208 の範囲なら U+212B ANGSTROM SIGN でしょうけれど，その限定をなくせば，
+<ul>
+<li>U+00C5 LATIN CAPITAL LETTER A WITH RING ABOVE かもしれないし</li>
+<li>U+0041 LATIN CAPITAL LETTER A の後ろに U+030A COMBINING RING ABOVE が続いたもの (意味的に上と同じですが) かもしれないし
+ <li>U+0391 GREEK CAPITAL LETTER ALPHA の後ろに U+030A COMBINING RING ABOVE が続いたものかもしれないし
+ <li>U+0410 CYRILLIC CAPITAL LETTER A の後ろに U+030A COMBINING RING ABOVE が続いたものかもしれない</li>
+</li></li></ul>
+<p>わけですから．他にも，Σやμは2つずつあるし(ギリシャ文字アルファベットとしてのものと，記号としてのものと)，「中点のような文字」や「横棒のような文字」や「空白のような文字」に至っては，数えるのが嫌になるほどあります．</p></p></div>
+</div>
+<div class="commentSub" id="comment_sub_34143">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:Unicode 移行のメリットとデメリット')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34143'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34143'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34143'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_8e3f5264.html" onclick="return D2.selectParent(34119)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_34143"></div>
+<ul class="comment-group" id="group_34143">
+<li class="hide" id="hiddens_34143"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_33413"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33413"></div>
+<div class="comment-item" id="comment_33413">
+<div class="commentTop comment-top newcomment" id="comment_top_33413">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d79d9991.html" id="comment_link_33413" name="comment_link_33413" onclick="return D2.setFocusComment(33413)">ＵＮＩＣＯＤＥなんて</a>
+<span class="score" id="comment_score_33413">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33413); return false">スコア:2</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_33413">on 2001年10月28日 23時26分
+			 (<a href="../../../../../../srad.jp/comment/33413.html">#33413</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33413">使わなければいい。英語だけでたくさん。</div>
+</div>
+</div>
+<div id="replyto_33413"></div>
+<ul class="comment-group" id="group_33413">
+<li class="hide" id="hiddens_33413"></li>
+</ul></li><li class="comment full contain" id="tree_33430"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33430"></div>
+<div class="comment-item" id="comment_33430">
+<div class="commentTop comment-top newcomment" id="comment_top_33430">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d6db973b.html" id="comment_link_33430" name="comment_link_33430" onclick="return D2.setFocusComment(33430)">Re:ＵＮＩＣＯＤＥなんて</a>
+<span class="score" id="comment_score_33430">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33430); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~argon/index.html">argon (3541)</a>
+<span class="otherdetails" id="comment_otherdetails_33430">on 2001年10月28日 23時49分
+			 (<a href="../../../../../../srad.jp/comment/33430.html">#33430</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~argon/journal/index.html" title="2020年01月01日 17時40分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33430">なんだか、モデレータ氏がフレームを煽っているような気がします。<br/> <br/>ところで UTF-16 で書いたソースコードを扱えるＣコンパイラってあるのでしょうか？<br/></div>
+</div>
+</div>
+<div id="replyto_33430"></div>
+<ul class="comment-group" id="group_33430">
+<li class="hide" id="hiddens_33430"></li>
+</ul></li><li class="comment full contain" id="tree_33458"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33458"></div>
+<div class="comment-item" id="comment_33458">
+<div class="commentTop comment-top newcomment" id="comment_top_33458">
+<div class="title">
+<h4><a href="../../../../../comments.pl_42166060.html" id="comment_link_33458" name="comment_link_33458" onclick="return D2.setFocusComment(33458)">Re:ＵＮＩＣＯＤＥなんて</a>
+<span class="score" id="comment_score_33458">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33458); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~oku/index.html">oku (4610)</a>
+<span class="otherdetails" id="comment_otherdetails_33458">on 2001年10月29日  1時10分
+			 (<a href="../../../../../../srad.jp/comment/33458.html">#33458</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~oku/journal/index.html" title="2021年09月19日 11時30分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33458"><blockquote> <i>
+ところで UTF-16 で書いたソースコードを扱えるＣコンパイラってあるのでしょうか？
+</i> </blockquote>
+存在の有無については寡聞にして存じ上げないわけですが。
+<br/>
+そのコンパイラは
+<div>
+<tt>
+puts("&amp;#00a5;n");
+</tt>
+</div>
+をどう解釈するのでしょうね？
+ :-)
+<br/>
+# いや、\xa5\x6e が正しいと言うのは<br/>
+# 頭では分かってはいるんですけどね...</div>
+</div>
+</div>
+<div id="replyto_33458"></div>
+<ul class="comment-group" id="group_33458">
+<li class="hide" id="hiddens_33458"></li>
+</ul></li><li class="comment full contain" id="tree_33461"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33461"></div>
+<div class="comment-item" id="comment_33461">
+<div class="commentTop comment-top newcomment" id="comment_top_33461">
+<div class="title">
+<h4><a href="../../../../../comments.pl_da7f70f6.html" id="comment_link_33461" name="comment_link_33461" onclick="return D2.setFocusComment(33461)">あなたには（Re:ＵＮＩＣＯＤＥなんて）</a>
+<span class="score" id="comment_score_33461">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33461); return false">スコア:2</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kyle/index.html">kyle (3923)</a>
+<span class="otherdetails" id="comment_otherdetails_33461">on 2001年10月29日  1時26分
+			 (<a href="../../../../../../srad.jp/comment/33461.html">#33461</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~kyle/journal/index.html" title="2009年04月30日 11時56分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33461"><p>LANG=ja_JP.romaji を使う覚悟があるのですか？
+読みにくいぞー、慣れの問題かも知れんが。</p></div>
+</div>
+</div>
+<div id="replyto_33461"></div>
+<ul class="comment-group" id="group_33461">
+<li class="hide" id="hiddens_33461"></li>
+</ul></li><li class="comment full contain" id="tree_33463"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33463"></div>
+<div class="comment-item" id="comment_33463">
+<div class="commentTop comment-top newcomment" id="comment_top_33463">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2e31f439.html" id="comment_link_33463" name="comment_link_33463" onclick="return D2.setFocusComment(33463)">それ「だけ」では</a>
+<span class="score" id="comment_score_33463">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33463); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~oku/index.html">oku (4610)</a>
+<span class="otherdetails" id="comment_otherdetails_33463">on 2001年10月29日  1時32分
+			 (<a href="../../../../../../srad.jp/comment/33463.html">#33463</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~oku/journal/index.html" title="2021年09月19日 11時30分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33463">i18n 上、何の解決にもなっていないと思いますが。
+<br/>
+# きちんと入力を Byte[] で受けて<br/>
+# 自前で操るのであれば別ですけど...<br/>
+# ひょっとして考えているターゲットがズレてます？</div>
+</div>
+</div>
+<div id="replyto_33463"></div>
+<ul class="comment-group" id="group_33463">
+<li class="hide" id="hiddens_33463"></li>
+</ul></li><li class="comment full contain" id="tree_33465"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33465"></div>
+<div class="comment-item" id="comment_33465">
+<div class="commentTop comment-top newcomment" id="comment_top_33465">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b2bed6d0.html" id="comment_link_33465" name="comment_link_33465" onclick="return D2.setFocusComment(33465)">Re:あなたには（Re:ＵＮＩＣＯＤＥなんて）</a>
+<span class="score" id="comment_score_33465">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33465); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~oku/index.html">oku (4610)</a>
+<span class="otherdetails" id="comment_otherdetails_33465">on 2001年10月29日  1時37分
+			 (<a href="../../../../../../srad.jp/comment/33465.html">#33465</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~oku/journal/index.html" title="2021年09月19日 11時30分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33465">英語だけなので locale.h 自体が
+なかったりするのではありませんか？ :-)</div>
+</div>
+</div>
+<div id="replyto_33465"></div>
+<ul class="comment-group" id="group_33465">
+<li class="hide" id="hiddens_33465"></li>
+</ul></li><li class="comment full contain" id="tree_33525"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33525"></div>
+<div class="comment-item" id="comment_33525">
+<div class="commentTop comment-top newcomment" id="comment_top_33525">
+<div class="title">
+<h4><a href="../../../../../comments.pl_053c57e8.html" id="comment_link_33525" name="comment_link_33525" onclick="return D2.setFocusComment(33525)">Re:i18n の範疇ならば</a>
+<span class="score" id="comment_score_33525">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33525); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~brake-handle/index.html">brake-handle (5065)</a>
+<span class="otherdetails" id="comment_otherdetails_33525">on 2001年10月29日  9時46分
+			 (<a href="../../../../../../srad.jp/comment/33525.html">#33525</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33525"><p>
+どこにshiftが入るかわからない素の文字列でgrepするとひどいことになるのは事実です。しかし、
+</p>
+<ul>
+<li>shiftで区切られる部分文字列について、minimum charsetを用いる(iso-8859-1など)
+<li>shiftの連続について、最後のshift以外を除去
+</li></li></ul>
+<p>
+ぐらいをやってやれば、uniqueなエンコーディング(同時に最簡形でもある)を得ることができるのでは?
+</p>
+<p>
+この手の需要はすでにIntenet message headerなどで存在し、かつ実装もあります(From: の内容で検索できるなど)。
+</p></div>
+</div>
+</div>
+<div id="replyto_33525"></div>
+<ul class="comment-group" id="group_33525">
+<li class="hide" id="hiddens_33525"></li>
+</ul></li><li class="comment full contain" id="tree_33528"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33528"></div>
+<div class="comment-item" id="comment_33528">
+<div class="commentTop comment-top newcomment" id="comment_top_33528">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e796f539.html" id="comment_link_33528" name="comment_link_33528" onclick="return D2.setFocusComment(33528)">Re:初心者の敵だ</a>
+<span class="score" id="comment_score_33528">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33528); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~brake-handle/index.html">brake-handle (5065)</a>
+<span class="otherdetails" id="comment_otherdetails_33528">on 2001年10月29日 10時00分
+			 (<a href="../../../../../../srad.jp/comment/33528.html">#33528</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33528"><p>
+うーん、私の近くにもJavaを勉強している人がいるんで(私自身は使ってない)いろいろ話が聞けるんですが...
+</p>
+<p>
+文字列というのは現代の(あるいは昔から?)計算機では数え切れないほど多くの場面で使われています。とならば、ある局所的な部分だけで高い機能を実現しても、現実に存在するほかの部分との整合性をとらなければオモチャで終わってしまいます。Javaが世の中の全てになればいいですが、おそらくそうはならないでしょう(C当たりは永遠に残る可能性が高い、こいつがないとOSが書けないので仕事にならん)。
+</p>
+<p>
+ところで、複数localeは何に対して定義しているんでしょうか? UTF-16じゃlocaleなんて概念は要らないし、もし部分文字列に対して定義できるというんだったらiso-2022と全く変わらない。あるいはlocale情報を持つオブジェクトがあるのかも知れないが、localeを切り換えるやり方とどう違うのかよくわからない...
+</p></div>
+</div>
+</div>
+<div id="replyto_33528"></div>
+<ul class="comment-group" id="group_33528">
+<li class="hide" id="hiddens_33528"></li>
+</ul></li><li class="comment full contain" id="tree_33542"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33542"></div>
+<div class="comment-item" id="comment_33542">
+<div class="commentTop comment-top newcomment" id="comment_top_33542">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0f5f8472.html" id="comment_link_33542" name="comment_link_33542" onclick="return D2.setFocusComment(33542)">Re:初心者の敵だ</a>
+<span class="score" id="comment_score_33542">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33542); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_33542">on 2001年10月29日 10時41分
+			 (<a href="../../../../../../srad.jp/comment/33542.html">#33542</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33542"><p>
+Locale とエンコーディングは本来は直交した概念だよ。
+C ロケールではロケールにエンコーディングわりふってる
+けどね。仮にすべてで UTF-16 をつかってても Locale 
+的な考え方は必須。
+
+<p>
+んで、Javaでは、Locale関連情報を扱うクラスが
+あって、任意にオブジェクトを生成できます。
+それを引数にとることで、日付とか数値の書式とか
+メッセージ処理とか、文字種判定とか、メッセージ
+境界判定とかとか、文字列の比較処理とか、GUIで
+扱うフォントとかの挙動を部分的に変更できるわけ。
+もちろんC的にデフォルトロケール指定もできますが、
+もし、Cのように系全体での変更しかできないと、
+アプリケーションの動的な追従ができないのね。
+
+ストリームのエンコード指定はロケールとは別に
+できます。Cではこの種の処理はロケール非依存の
+従来のストリームとiconv 使えばある程度は
+いけるけど、書いてると死ねるし環境依存が激しい
+から使いたくならんですな。
+
+C/C++の少なくともエンコード処理周りを java 並に
+しようと思うなら、IBM がJava と機能的に同等の
+クラスライブラリを提供してるので、それを使うと
+いいんじゃないかな。
+
+局所的に高機能でも･･･のくだりなんだけど、現実では
+他と整合とる必要なんてないと思うよ。局面に応じて
+必要十分な能力が発揮できる言語をつかえばよいだけ
+のこと。Javaがすべてになればなんて考える
+こと自体ナンセンス。</p></p></div>
+</div>
+</div>
+<div id="replyto_33542"></div>
+<ul class="comment-group" id="group_33542">
+<li class="hide" id="hiddens_33542"></li>
+</ul></li><li class="comment full contain" id="tree_33560"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33560"></div>
+<div class="comment-item" id="comment_33560">
+<div class="commentTop comment-top newcomment" id="comment_top_33560">
+<div class="title">
+<h4><a href="../../../../../comments.pl_95667170.html" id="comment_link_33560" name="comment_link_33560" onclick="return D2.setFocusComment(33560)">Re:Unicode がもたらすものは</a>
+<span class="score" id="comment_score_33560">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33560); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~redbrick/index.html">redbrick (4865)</a>
+<span class="otherdetails" id="comment_otherdetails_33560">on 2001年10月29日 12時07分
+			 (<a href="../../../../../../srad.jp/comment/33560.html">#33560</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~redbrick/journal/index.html" title="2005年06月23日 16時29分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33560">なんでこのコメントがScore:-1なんですか？<br/>
+＃非常に参考になったと思ったんですけど・・・。<br/>
+<br/>
+ちゃんと目開けて、頭動かして見てます？＞モデレータ諸氏<br/></div>
+<div class="sig" id="comment_sig_33560">-- <br/>----
+redbrick</div>
+</div>
+</div>
+<div id="replyto_33560"></div>
+<ul class="comment-group" id="group_33560">
+<li class="hide" id="hiddens_33560"></li>
+</ul></li><li class="comment full contain" id="tree_33580"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33580"></div>
+<div class="comment-item" id="comment_33580">
+<div class="commentTop comment-top newcomment" id="comment_top_33580">
+<div class="title">
+<h4><a href="../../../../../comments.pl_27f6f2f1.html" id="comment_link_33580" name="comment_link_33580" onclick="return D2.setFocusComment(33580)">wchar_t (Re:i18n の範疇ならば)</a>
+<span class="score" id="comment_score_33580">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33580); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~rug/index.html">rug (55)</a>
+<span class="otherdetails" id="comment_otherdetails_33580">on 2001年10月29日 13時37分
+			 (<a href="../../../../../../srad.jp/comment/33580.html">#33580</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~rug/journal/index.html" title="2016年10月29日 15時47分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33580"><blockquote>
+何も iconv や Unicode に関わらずとも wchar_t⇔char + メッセージカタログで 十分ではありませんか？
+</blockquote>
+
+これってportabilityあるのですか? 今でもOpenBSDみたいにmultibyte localeに対応していないシステムがあるし、そもそもwchar_tが1 byteしかない環境さえある。WindowsもNTは問題ないけど9xはmbからwcに変換できなかったと思う。</div>
+</div>
+</div>
+<div id="replyto_33580"></div>
+<ul class="comment-group" id="group_33580">
+<li class="hide" id="hiddens_33580"></li>
+</ul></li><li class="comment full contain" id="tree_33581"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33581"></div>
+<div class="comment-item" id="comment_33581">
+<div class="commentTop comment-top newcomment" id="comment_top_33581">
+<div class="title">
+<h4><a href="../../../../../comments.pl_47deb3e6.html" id="comment_link_33581" name="comment_link_33581" onclick="return D2.setFocusComment(33581)">技術者の負け</a>
+<span class="score" id="comment_score_33581">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33581); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~wawawa/index.html">wawawa (3653)</a>
+<span class="otherdetails" id="comment_otherdetails_33581">on 2001年10月29日 13時38分
+			 (<a href="../../../../../../srad.jp/comment/33581.html">#33581</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33581">若かりし頃、わたしも「英語でいいじゃーん」な人だったんで<br/>お気持ちは分かります。<br/> <br/>でもね<br/> <br/>学校で子供たちがWebページ作りを学ぶ、という実習で、<br/>現在のWebインフラでは、安心して日本語のディレクトリ名や<br/>ファイル名を扱えない。結局子供にローマ字でディレクトリ/<br/>ファイル名をつけるよう指導した。<br/> <br/>こんな話を聞くと、ソフト屋の端くれとして、悲しくなります。<br/> <br/># もちろん特定環境に限定すれば日本語OKですよ。 <br/># IIS + IEとかね、でも、本件は Apache <br/> <br/>これ自体はURLのエンコードの話なんで、直接UNICODEの話題<br/>ではないし、UNICODEが全てを解決するとは思わないけど、<br/>世界中の人が自分の言語で普通にコンピューティング可能な<br/>環境を作るってのは崇高かつ重要な目標だと思いますよ。<br/> <br/>できれば美しい機構がいいけど、現実に困っている人がいるの<br/>なら、ベタな方法だろうとその解法を提示するのも、また<br/>必要な事です。</div>
+</div>
+</div>
+<div id="replyto_33581"></div>
+<ul class="comment-group" id="group_33581">
+<li class="hide" id="hiddens_33581"></li>
+</ul></li><li class="comment full contain" id="tree_33584"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33584"></div>
+<div class="comment-item" id="comment_33584">
+<div class="commentTop comment-top newcomment" id="comment_top_33584">
+<div class="title">
+<h4><a href="../../../../../comments.pl_52b3c80a.html" id="comment_link_33584" name="comment_link_33584" onclick="return D2.setFocusComment(33584)">Unicodeは避けて通れない</a>
+<span class="score" id="comment_score_33584">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33584); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~rug/index.html">rug (55)</a>
+<span class="otherdetails" id="comment_otherdetails_33584">on 2001年10月29日 13時47分
+			 (<a href="../../../../../../srad.jp/comment/33584.html">#33584</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~rug/journal/index.html" title="2016年10月29日 15時47分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33584">MS Office文書やXML文書を扱おうと思ったらUnicodeは避けて通れないと思いますが。</div>
+</div>
+</div>
+<div id="replyto_33584"></div>
+<ul class="comment-group" id="group_33584">
+<li class="hide" id="hiddens_33584"></li>
+</ul></li><li class="comment full contain" id="tree_33655"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33655"></div>
+<div class="comment-item" id="comment_33655">
+<div class="commentTop comment-top newcomment" id="comment_top_33655">
+<div class="title">
+<h4><a href="../../../../../comments.pl_dc6e332b.html" id="comment_link_33655" name="comment_link_33655" onclick="return D2.setFocusComment(33655)">off topic</a>
+<span class="score" id="comment_score_33655">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33655); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~rug/index.html">rug (55)</a>
+<span class="otherdetails" id="comment_otherdetails_33655">on 2001年10月29日 17時10分
+			 (<a href="../../../../../../srad.jp/comment/33655.html">#33655</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~rug/journal/index.html" title="2016年10月29日 15時47分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33655"><blockquote>
+私は内容よりも表現の仕方の方が重要だと思いますが。
+やはりいくら素晴らしくても相手に届かないと。
+</blockquote>
+
+相手にもよると思いますが。というか、どんな表現でもそれが届かない相手というのは存在し得るでしょう。いちいち気にしていたら何も書けなくなると思いますが。<br/> <br/>
+
+それに、表現をどうとらえるかというのは読み手自身の問題だと思いますが。ある文字列を見てカッとなったことがモデレートに影響を及ぼすなんて愚の骨頂です。</div>
+</div>
+</div>
+<div id="replyto_33655"></div>
+<ul class="comment-group" id="group_33655">
+<li class="hide" id="hiddens_33655"></li>
+</ul></li><li class="comment full contain" id="tree_33692"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33692"></div>
+<div class="comment-item" id="comment_33692">
+<div class="commentTop comment-top newcomment" id="comment_top_33692">
+<div class="title">
+<h4><a href="../../../../../comments.pl_94218cde.html" id="comment_link_33692" name="comment_link_33692" onclick="return D2.setFocusComment(33692)">Re:ISO-2022とISO-2022-JP(いわゆるJIS)</a>
+<span class="score" id="comment_score_33692">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33692); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~nekopon/index.html">nekopon (1483)</a>
+<span class="otherdetails" id="comment_otherdetails_33692">on 2001年10月29日 19時27分
+			 (<a href="../../../../../../srad.jp/comment/33692.html">#33692</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~nekopon/journal/index.html" title="2023年08月16日  8時57分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33692"><blockquote>Unicodeの利点って</blockquote>
+<p>日本語でも中国語でも毛沢東が一発検さ(もういい</p>
+<p># というネタはともかく、↑がうれしいかどうかは、大いに疑問に感じています。必要ならシソーラス用意すればいい話でしょうに。</p></div>
+</div>
+</div>
+<div id="replyto_33692"></div>
+<ul class="comment-group" id="group_33692">
+<li class="hide" id="hiddens_33692"></li>
+</ul></li><li class="comment full contain" id="tree_33738"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33738"></div>
+<div class="comment-item" id="comment_33738">
+<div class="commentTop comment-top newcomment" id="comment_top_33738">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1bc6e605.html" id="comment_link_33738" name="comment_link_33738" onclick="return D2.setFocusComment(33738)">Re:wchar_t (Re:i18n の範疇ならば)</a>
+<span class="score" id="comment_score_33738">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33738); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~oku/index.html">oku (4610)</a>
+<span class="otherdetails" id="comment_otherdetails_33738">on 2001年10月29日 22時00分
+			 (<a href="../../../../../../srad.jp/comment/33738.html">#33738</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~oku/journal/index.html" title="2021年09月19日 11時30分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33738">OpenBSD だと、昔の Linux (libc5) みたいに
+X の locale を代替品に使えないんでしょうか？
+<br/>
+# 実は自宅の Slackware を OpenBSD に差替えようかと<br/>
+# 妄想してたんですが...</div>
+</div>
+</div>
+<div id="replyto_33738"></div>
+<ul class="comment-group" id="group_33738">
+<li class="hide" id="hiddens_33738"></li>
+</ul></li><li class="comment full contain" id="tree_33769"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33769"></div>
+<div class="comment-item" id="comment_33769">
+<div class="commentTop comment-top newcomment" id="comment_top_33769">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1623cdc6.html" id="comment_link_33769" name="comment_link_33769" onclick="return D2.setFocusComment(33769)">Re:Java V.S. C (Re:初心者の敵だ)</a>
+<span class="score" id="comment_score_33769">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33769); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~zeissmania/index.html">zeissmania (3689)</a>
+<span class="otherdetails" id="comment_otherdetails_33769">on 2001年10月29日 22時48分
+			 (<a href="../../../../../../srad.jp/comment/33769.html">#33769</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33769">＞ライブラリ／実装なんかはいくらでもある訳だし<br/>だから問題なんじゃないかと思いますけど (^^;;;<br/>統一したライブラリ/実装にならないと「解決」にはならないでしょう。<br/>そういう意味では「選択肢のない」方がましな気もしますよ。<br/>＃Unicodeがましな選択とは思いませんけどね。</div>
+</div>
+</div>
+<div id="replyto_33769"></div>
+<ul class="comment-group" id="group_33769">
+<li class="hide" id="hiddens_33769"></li>
+</ul></li><li class="comment full contain" id="tree_33773"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33773"></div>
+<div class="comment-item" id="comment_33773">
+<div class="commentTop comment-top newcomment" id="comment_top_33773">
+<div class="title">
+<h4><a href="../../../../../comments.pl_84fa2102.html" id="comment_link_33773" name="comment_link_33773" onclick="return D2.setFocusComment(33773)">Re:英語なんて所詮ヤンキーの言葉さ</a>
+<span class="score" id="comment_score_33773">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33773); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~char/index.html">char (1245)</a>
+<span class="otherdetails" id="comment_otherdetails_33773">on 2001年10月29日 23時01分
+			 (<a href="../../../../../../srad.jp/comment/33773.html">#33773</a>)
+			<small>
+<a class="user_homepage_display" href="../../../../../../srad.jp/~char/journal/index.html" title="http://srad.jp/~char/journal/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~char/journal/index.html" title="2015年07月16日  0時01分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33773"><blockquote>人口からいうと、中国語だと思う</blockquote> <br/>北京語と広東語の違いは方言の域を超えているという話だ。<br/>「中国語」としてひとまとめにするのは乱暴ではないかな。</div>
+<div class="sig" id="comment_sig_33773">-- <br/>
+char *A;<br/>
+<a href="http://slashdot.jp/comments.pl?sid=129488&amp;cid=422185" title="slashdot.jp">モータースポーツ部</a> [slashdot.jp]</div>
+</div>
+</div>
+<div id="replyto_33773"></div>
+<ul class="comment-group" id="group_33773">
+<li class="hide" id="hiddens_33773"></li>
+</ul></li><li class="comment full contain" id="tree_33877"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33877"></div>
+<div class="comment-item" id="comment_33877">
+<div class="commentTop comment-top newcomment" id="comment_top_33877">
+<div class="title">
+<h4><a href="../../../../../comments.pl_169187e8.html" id="comment_link_33877" name="comment_link_33877" onclick="return D2.setFocusComment(33877)">Re:i18n の範疇ならば</a>
+<span class="score" id="comment_score_33877">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33877); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~oku/index.html">oku (4610)</a>
+<span class="otherdetails" id="comment_otherdetails_33877">on 2001年10月30日  5時17分
+			 (<a href="../../../../../../srad.jp/comment/33877.html">#33877</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~oku/journal/index.html" title="2021年09月19日 11時30分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33877">確かに ISO-10646 を指示するための
+ISO-2022 エスケープシーケンスが
+ISO-10646 <b>側の</b>文書で定義されていたような
+記憶はありますけど...
+<br/>
+あれって使用は推奨されないんではありませんでした？</div>
+</div>
+</div>
+<div id="replyto_33877"></div>
+<ul class="comment-group" id="group_33877">
+<li class="hide" id="hiddens_33877"></li>
+</ul></li><li class="comment full contain" id="tree_34252"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34252"></div>
+<div class="comment-item" id="comment_34252">
+<div class="commentTop comment-top newcomment" id="comment_top_34252">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d61079e2.html" id="comment_link_34252" name="comment_link_34252" onclick="return D2.setFocusComment(34252)">Re:ISO-2022とISO-2022-JP(いわゆるJIS)</a>
+<span class="score" id="comment_score_34252">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 34252); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~argon/index.html">argon (3541)</a>
+<span class="otherdetails" id="comment_otherdetails_34252">on 2001年10月31日  0時01分
+			 (<a href="../../../../../../srad.jp/comment/34252.html">#34252</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~argon/journal/index.html" title="2020年01月01日 17時40分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_34252">日本語でも中国語でも「花子」が一発検索。<br/> <br/>さて、モデレートはどうくるかな？<br/></div>
+</div>
+</div>
+<div id="replyto_34252"></div>
+<ul class="comment-group" id="group_34252">
+<li class="hide" id="hiddens_34252"></li>
+</ul><ul id="commtree_34252"><li class="comment hidden" id="tree_35180"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_35180"></div>
+<div class="comment-item" id="comment_35180">
+</div>
+<div id="replyto_35180"></div>
+<ul class="comment-group" id="group_35180">
+<li class="hide" id="hiddens_35180"></li>
+</ul><ul id="commtree_35180"><li class="comment full contain" id="tree_36333"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_36333"></div>
+<div class="comment-item" id="comment_36333">
+<div class="commentTop comment-top newcomment" id="comment_top_36333">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0d2b4315.html" id="comment_link_36333" name="comment_link_36333" onclick="return D2.setFocusComment(36333)">Re:ISO-2022とISO-2022-JP(いわゆるJIS)</a>
+<span class="score" id="comment_score_36333">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 36333); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~argon/index.html">argon (3541)</a>
+<span class="otherdetails" id="comment_otherdetails_36333">on 2001年11月07日 15時41分
+			 (<a href="../../../../../../srad.jp/comment/36333.html">#36333</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~argon/journal/index.html" title="2020年01月01日 17時40分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_36333">＞「意味が違うのに，字面が同じだからといって，違うものが一緒になってしまうのはおかしい」という話だと思います．<br/> <br/>おかしいと思うのは、言語を指定しないナンセンスを無視して字面で検索しようとすることに意味があるのだろうかという点です。<br/>grep 毛沢東 が嬉しい方は、英字「Ａ」ギリシャ文字「Α」ロシア文字「А」が統合されていないことをどう考えるのか、<br/>Unicode の豊富な「空白文字」はどう考えるのか、というあたりが気になります。<br/> <br/></div>
+</div>
+<div class="commentSub" id="comment_sub_36333">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ISO-2022とISO-2022-JP(いわゆるJIS)')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=36333'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=36333'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=36333'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_d0484e90.html" onclick="return D2.selectParent(35180)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_36333"></div>
+<ul class="comment-group" id="group_36333">
+<li class="hide" id="hiddens_36333"></li>
+</ul><ul id="commtree_36333"><li class="comment hidden" id="tree_36397"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_36397"></div>
+<div class="comment-item" id="comment_36397">
+</div>
+<div id="replyto_36397"></div>
+<ul class="comment-group" id="group_36397">
+<li class="hide" id="hiddens_36397"></li>
+</ul><ul id="commtree_36397"><li class="comment full contain" id="tree_36414"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_36414"></div>
+<div class="comment-item" id="comment_36414">
+<div class="commentTop comment-top newcomment" id="comment_top_36414">
+<div class="title">
+<h4><a href="../../../../../comments.pl_bd3df5eb.html" id="comment_link_36414" name="comment_link_36414" onclick="return D2.setFocusComment(36414)">Re:ISO-2022とISO-2022-JP(いわゆるJIS)</a>
+<span class="score" id="comment_score_36414">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 36414); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~argon/index.html">argon (3541)</a>
+<span class="otherdetails" id="comment_otherdetails_36414">on 2001年11月07日 23時08分
+			 (<a href="../../../../../../srad.jp/comment/36414.html">#36414</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~argon/journal/index.html" title="2020年01月01日 17時40分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_36414">詳しい説明ありがとうございます。<br/><blockquote> <br/>漢字は言語によらず同じ script と見なされているので統合されています． (そこで，日本語と中国語を同じ script と見なすかどうかで意見が分かれるのです．)<br/></blockquote> <br/>「ラテン文字とギリシャ文字とキリル文字」を分けるように、日本漢字、簡体字、繁体字を分けるという話であったらよかったのに。<br/>16bits に収めようとして Unification が行われたそうですが、日本も中国も文字追加の提案をしているそうですし、これでは UTF-16 は I18N の選択肢にしかならないような。<br/></div>
+</div>
+<div class="commentSub" id="comment_sub_36414">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ISO-2022とISO-2022-JP(いわゆるJIS)')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=36414'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=36414'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=36414'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_51417e0e.html" onclick="return D2.selectParent(36397)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_36414"></div>
+<ul class="comment-group" id="group_36414">
+<li class="hide" id="hiddens_36414"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_33444"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33444"></div>
+<div class="comment-item" id="comment_33444">
+<div class="commentTop comment-top newcomment" id="comment_top_33444">
+<div class="title">
+<h4><a href="../../../../../comments.pl_320d3b2b.html" id="comment_link_33444" name="comment_link_33444" onclick="return D2.setFocusComment(33444)">他人に売れる物が作れるか</a>
+<span class="score" id="comment_score_33444">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33444); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~naka64/index.html">naka64 (4590)</a>
+<span class="otherdetails" id="comment_otherdetails_33444">on 2001年10月29日  0時31分
+			 (<a href="../../../../../../srad.jp/comment/33444.html">#33444</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~naka64/journal/index.html" title="2009年07月23日  0時08分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33444">ということを念頭に置くと、<a href="http://www.super-computing.org/index-j.html">金田研究室</a>ならいざ知らず、国内の顧客の連絡先を蓄積するような用途で「英語だけ」を扱うプログラムというのはその出力を結局人間が手作業で解釈し直さなければならない欠陥を持つため、十分な利益を得られないと言う意味で「他人に売れる物は作れない」ということになるでしょう。<br/>日本語処理については「避けて通れない時にどうするか」という仮定を置かないと収拾がつかないと思う。<br/>Unicodeも、Ext-Bあたりのレパートリに対する要求は決して少なくないレベルに来ていると思う。ただ、まだ日本語処理でUnicode以外の手段を取る余地はあると思う。<br/>というわけで、親コメントには「んなもの売れない。だからご提案は謹んで無視させていただく。」としかならないと思う。以上。</div>
+</div>
+</div>
+<div id="replyto_33444"></div>
+<ul class="comment-group" id="group_33444">
+<li class="hide" id="hiddens_33444"></li>
+</ul></li><li class="comment full contain" id="tree_33464"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33464"></div>
+<div class="comment-item" id="comment_33464">
+<div class="commentTop comment-top newcomment" id="comment_top_33464">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1936c7af.html" id="comment_link_33464" name="comment_link_33464" onclick="return D2.setFocusComment(33464)">Re:i18n の範疇ならば</a>
+<span class="score" id="comment_score_33464">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33464); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kyle/index.html">kyle (3923)</a>
+<span class="otherdetails" id="comment_otherdetails_33464">on 2001年10月29日  1時35分
+			 (<a href="../../../../../../srad.jp/comment/33464.html">#33464</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~kyle/journal/index.html" title="2009年04月30日 11時56分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33464"><p>同意。Linux の各ディストリビューションでも、
+UTF 化のモチベーションが高まりきらないのは、
+現状で足りているからだと思います。
+
+<p>i18n で足りている人に UTF 化の
+モチベーションを与える論理を、だれか頼む！
+お願い、マジで。移行したいんだもん。</p></p></div>
+</div>
+</div>
+<div id="replyto_33464"></div>
+<ul class="comment-group" id="group_33464">
+<li class="hide" id="hiddens_33464"></li>
+</ul></li><li class="comment full contain" id="tree_33468"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33468"></div>
+<div class="comment-item" id="comment_33468">
+<div class="commentTop comment-top newcomment" id="comment_top_33468">
+<div class="title">
+<h4><a href="../../../../../comments.pl_492dbbaa.html" id="comment_link_33468" name="comment_link_33468" onclick="return D2.setFocusComment(33468)">Re:あなたには（Re:ＵＮＩＣＯＤＥなんて）</a>
+<span class="score" id="comment_score_33468">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33468); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_33468">on 2001年10月29日  1時44分
+			 (<a href="../../../../../../srad.jp/comment/33468.html">#33468</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33468">locale.h がないと、Single UNIX Specification に準拠できませんので、準拠するためだけに存在する可能性は高いです。</div>
+</div>
+</div>
+<div id="replyto_33468"></div>
+<ul class="comment-group" id="group_33468">
+<li class="hide" id="hiddens_33468"></li>
+</ul></li><li class="comment full contain" id="tree_33472"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33472"></div>
+<div class="comment-item" id="comment_33472">
+<div class="commentTop comment-top newcomment" id="comment_top_33472">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1d809200.html" id="comment_link_33472" name="comment_link_33472" onclick="return D2.setFocusComment(33472)">Re:i18n の範疇ならば</a>
+<span class="score" id="comment_score_33472">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33472); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kyle/index.html">kyle (3923)</a>
+<span class="otherdetails" id="comment_otherdetails_33472">on 2001年10月29日  2時01分
+			 (<a href="../../../../../../srad.jp/comment/33472.html">#33472</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~kyle/journal/index.html" title="2009年04月30日 11時56分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33472"><p>（シフトを用いる 7bit 符合の
+ISO-2022 エンコーディングに
+話を限らせてもらうと）
+grep ができません。</p></div>
+</div>
+</div>
+<div id="replyto_33472"></div>
+<ul class="comment-group" id="group_33472">
+<li class="hide" id="hiddens_33472"></li>
+</ul></li><li class="comment full contain" id="tree_33479"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33479"></div>
+<div class="comment-item" id="comment_33479">
+<div class="commentTop comment-top newcomment" id="comment_top_33479">
+<div class="title">
+<h4><a href="../../../../../comments.pl_458a99d5.html" id="comment_link_33479" name="comment_link_33479" onclick="return D2.setFocusComment(33479)">fixed width iso2022</a>
+<span class="score" id="comment_score_33479">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33479); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_33479">on 2001年10月29日  2時30分
+			 (<a href="../../../../../../srad.jp/comment/33479.html">#33479</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33479">NetBSD current の iso2022 rune みたいに、iso2022 の実用上十分なサブセットを作って、wchar_t にマッピングする方法論が実用的です。<br/># 日本では、割と昔からやってるんだけどなぁ。<br/># 上の rune の元になってる nvi-m17n とか、<br/># XMulti の HTML モジュールとか。<br/></div>
+</div>
+</div>
+<div id="replyto_33479"></div>
+<ul class="comment-group" id="group_33479">
+<li class="hide" id="hiddens_33479"></li>
+</ul></li><li class="comment full contain" id="tree_33486"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33486"></div>
+<div class="comment-item" id="comment_33486">
+<div class="commentTop comment-top newcomment" id="comment_top_33486">
+<div class="title">
+<h4><a href="../../../../../comments.pl_61819e02.html" id="comment_link_33486" name="comment_link_33486" onclick="return D2.setFocusComment(33486)">Re:i18n の範疇ならば</a>
+<span class="score" id="comment_score_33486">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33486); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~redbrick/index.html">redbrick (4865)</a>
+<span class="otherdetails" id="comment_otherdetails_33486">on 2001年10月29日  3時22分
+			 (<a href="../../../../../../srad.jp/comment/33486.html">#33486</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~redbrick/journal/index.html" title="2005年06月23日 16時29分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33486">&gt;ISO-2022-JP は、エスケープシーケンスがうっとおしくて、<br/>
+&gt;内部処理（切ったり貼ったり）に向きません。伝送用です。<br/>
+<br/>
+あのー・・・EUCはエスケープコード使ってないって、ご自分で示された<br/>
+リンク先に書いてあるんですけど(汗)。<br/>
+<br/>
+ISO-2022という大きなくくりで考えるなら、もっと実際に使われる<br/>
+encoding側に話の焦点を移さないと論点がぼやけませんか？<br/>
+<br/>
+＃個人的には、内部コードに特定のencodingをそのまま使うのって<br/>
+＃意味のないことだと思ってます。<br/>
+＃現状はencoding方式間の変換からは逃れられないし、<br/>
+＃Unicodeで世界統一なんて、現状は夢のまた夢だし。<br/>
+＃それに、真の意味でのm17n文書なんて作るとき<br/>
+＃(英語と中文と日本語が混じった文書など)に、Unicodeって、<br/>
+＃それらをテキストレベルできっちり識別して表示できるんですかね？<br/>
+＃それができなけりゃ、「単なるもうひとつの選択肢」ってだけで、<br/>
+＃Unicode使う意味なんて見いだせないのだけど・・・。<br/></div>
+<div class="sig" id="comment_sig_33486">-- <br/>----
+redbrick</div>
+</div>
+</div>
+<div id="replyto_33486"></div>
+<ul class="comment-group" id="group_33486">
+<li class="hide" id="hiddens_33486"></li>
+</ul></li><li class="comment full contain" id="tree_33487"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33487"></div>
+<div class="comment-item" id="comment_33487">
+<div class="commentTop comment-top newcomment" id="comment_top_33487">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e852d6f2.html" id="comment_link_33487" name="comment_link_33487" onclick="return D2.setFocusComment(33487)">M17N 化がどれくらい必要ですか？</a>
+<span class="score" id="comment_score_33487">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33487); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_33487">on 2001年10月29日  3時26分
+			 (<a href="../../../../../../srad.jp/comment/33487.html">#33487</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33487">&gt; UCS-4はいささかオーバースペックに見えます<br/> <br/>素晴らしい洞察 :D<br/>Unicode の筋の悪すぎるところはここなんですよねー。<br/> <br/>世の中文書ごとに 1 言語しか使わないことのほうが多くて、せいぜい文書ごとに言語が切り替えられれば十分な場合がほとんどなんで、M17N 化に伴うコストは、M17N という、使用頻度が非常に低いものが必要な奴らが極力背負うべきなんですが、Unicode は I18N のレベルで十分な人々にも大きな負担を背負わせるコード構造なんですね。<br/>新しく M17N 向きのシステムを作るとしたら、M17N も見据えつつ、でも、一番使用頻度の高い 単一言語下での利用がなるべく軽く行えるように熟慮するべきなんですが(その分、M17N が必要な時に要求リソースが余計に大きくなったとしても許す)、Unicode はそうなってませんねー。<br/> <br/>で、組み込みだとこれはそれなりに重大。あと、UNIX 限定の話をすれば、Unicode べたべたにしたいんなら、今の X のフォントの仕組みを棄てないと辛い。</div>
+</div>
+</div>
+<div id="replyto_33487"></div>
+<ul class="comment-group" id="group_33487">
+<li class="hide" id="hiddens_33487"></li>
+</ul></li><li class="comment full contain" id="tree_33493"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33493"></div>
+<div class="comment-item" id="comment_33493">
+<div class="commentTop comment-top newcomment" id="comment_top_33493">
+<div class="title">
+<h4><a href="../../../../../comments.pl_dc208f76.html" id="comment_link_33493" name="comment_link_33493" onclick="return D2.setFocusComment(33493)">Re:あなたには（Re:ＵＮＩＣＯＤＥなんて）</a>
+<span class="score" id="comment_score_33493">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33493); return false">スコア:1</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_33493">on 2001年10月29日  3時39分
+			 (<a href="../../../../../../srad.jp/comment/33493.html">#33493</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33493">&gt; LANG=ja_JP.romaji を使う覚悟があるのですか？<br/> <br/>それは英語ではない :D<br/># 用字と言語は別です。</div>
+</div>
+</div>
+<div id="replyto_33493"></div>
+<ul class="comment-group" id="group_33493">
+<li class="hide" id="hiddens_33493"></li>
+</ul></li><li class="comment full contain" id="tree_33540"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33540"></div>
+<div class="comment-item" id="comment_33540">
+<div class="commentTop comment-top newcomment" id="comment_top_33540">
+<div class="title">
+<h4><a href="../../../../../comments.pl_443b47ea.html" id="comment_link_33540" name="comment_link_33540" onclick="return D2.setFocusComment(33540)">Re:i18n の範疇ならば</a>
+<span class="score" id="comment_score_33540">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33540); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_33540">on 2001年10月29日 10時30分
+			 (<a href="../../../../../../srad.jp/comment/33540.html">#33540</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33540">&gt; ＃(英語と中文と日本語が混じった文書など)に、Unicodeって、<br/>&gt; ＃それらをテキストレベルできっちり識別して表示できるんですかね？<br/> <br/>Unicode の言語タグを使えばできますよね。<br/>言語情報を入れられない ISO-2022 よりはかなりマシかと。<br/></div>
+</div>
+</div>
+<div id="replyto_33540"></div>
+<ul class="comment-group" id="group_33540">
+<li class="hide" id="hiddens_33540"></li>
+</ul></li><li class="comment full contain" id="tree_33546"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33546"></div>
+<div class="comment-item" id="comment_33546">
+<div class="commentTop comment-top newcomment" id="comment_top_33546">
+<div class="title">
+<h4><a href="../../../../../comments.pl_cbc73bcc.html" id="comment_link_33546" name="comment_link_33546" onclick="return D2.setFocusComment(33546)">枕は高くして寝たいものだ</a>
+<span class="score" id="comment_score_33546">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33546); return false">スコア:1</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_33546">on 2001年10月29日 10時57分
+			 (<a href="../../../../../../srad.jp/comment/33546.html">#33546</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33546"><p>
+1 <a href="http://www.unicode.org/unicode/uni2book/aboutbook.html">The Unicode Standard, Version 3.0</a> を買う<br/>
+2 <a href="http://www.amazon.com/exec/obidos/ASIN/0201483459/">The Unicode Standard, Version 2.0</a> を古本屋で買う<br/>
+3 <a href="http://www.amazon.com/exec/obidos/ASIN/0201567881/">The Unicode Standard Worldwide Character Encoding. Version 1.0</a> の 2 冊本を根性で入手する<br/>
+4 <a href="http://www.jsa.or.jp/catalog/catj/d007858.html">JIS X 0221-1:2001 の規格票</a>を買う<br/>
+5 <a href="http://www.jsa.or.jp/catalog/catj/wd005618.html">JIS X 0221-1995 の規格票</a>を入手する<br/>
+6 <a href="http://www.iec.ch/cgi-bin/procgi.pl/www/iecwww.p?wwwlang=E&amp;wwwprog=cat-det.p&amp;wartnum=026454">ISO/IEC-10646-1:2000</a>を取り寄せる<br/>
+7 ISO/IEC-10646-1:1993 を図書館で借りる<br/>
+</p>
+<p>
+で、こいつらを枕にして寝る悪夢を見てさらに<a href="http://www.unicode.org/unicode/standard/versions/enumeratedversions.html">unicode.org のこんな頁</a>を見ちゃったりして結局 <a href="http://www.csl.sony.co.jp/rfc/mirror/rfc1815.txt">RFC 1815</a> しかないんぢゃない ? とかうそぶく。
+</p>
+<p>
+はい。というわけで規格オタクの出来上がり (^^;
+</p></div>
+</div>
+</div>
+<div id="replyto_33546"></div>
+<ul class="comment-group" id="group_33546">
+<li class="hide" id="hiddens_33546"></li>
+</ul></li><li class="comment full contain" id="tree_33547"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33547"></div>
+<div class="comment-item" id="comment_33547">
+<div class="commentTop comment-top newcomment" id="comment_top_33547">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c5f131ab.html" id="comment_link_33547" name="comment_link_33547" onclick="return D2.setFocusComment(33547)">Re:i18n の範疇ならば</a>
+<span class="score" id="comment_score_33547">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33547); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~redbrick/index.html">redbrick (4865)</a>
+<span class="otherdetails" id="comment_otherdetails_33547">on 2001年10月29日 11時01分
+			 (<a href="../../../../../../srad.jp/comment/33547.html">#33547</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~redbrick/journal/index.html" title="2005年06月23日 16時29分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33547">&gt;Unicode の言語タグを使えばできますよね。<br/>
+<br/>
+ふーむ、やはりそういったシステムは作られているのですね。<br/>
+＃ちょっと安心・・・。<br/>
+<br/>
+ちなみに、現状の8bitコード体系でどうやってそのような追加情報<br/>
+(ですよね? 本来encodingに関わらない、地域、言語範疇の情報の追加だし)<br/>
+を入れているのか、方式等について、ポインタだけでもお教え願えませんか？<br/>
+＃Unicode規格書読んだら載ってます？<br/>
+＃それともISO-2022の最新の規格書にあるのかな？<br/>
+＃UnicodeもISO-2022の規格に入るはずだったと思うけど、違ったかな(汗)？<br/></div>
+<div class="sig" id="comment_sig_33547">-- <br/>----
+redbrick</div>
+</div>
+</div>
+<div id="replyto_33547"></div>
+<ul class="comment-group" id="group_33547">
+<li class="hide" id="hiddens_33547"></li>
+</ul></li><li class="comment full contain" id="tree_33550"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33550"></div>
+<div class="comment-item" id="comment_33550">
+<div class="commentTop comment-top newcomment" id="comment_top_33550">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0eeffdfa.html" id="comment_link_33550" name="comment_link_33550" onclick="return D2.setFocusComment(33550)">Re:ＵＮＩＣＯＤＥなんて</a>
+<span class="score" id="comment_score_33550">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33550); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~baby_face/index.html">baby_face (5007)</a>
+<span class="otherdetails" id="comment_otherdetails_33550">on 2001年10月29日 11時24分
+			 (<a href="../../../../../../srad.jp/comment/33550.html">#33550</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33550">でも、真剣に英語を地球人の公用語にすれば<br/>いろいろ便利でいいのになぁ、なんてことは<br/>ありますね。<br/> <br/>んで、我々にとって日本語は、第二国語。<br/></div>
+</div>
+</div>
+<div id="replyto_33550"></div>
+<ul class="comment-group" id="group_33550">
+<li class="hide" id="hiddens_33550"></li>
+</ul></li><li class="comment full contain" id="tree_33555"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33555"></div>
+<div class="comment-item" id="comment_33555">
+<div class="commentTop comment-top newcomment" id="comment_top_33555">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1eb32806.html" id="comment_link_33555" name="comment_link_33555" onclick="return D2.setFocusComment(33555)">ここはひとつ……</a>
+<span class="score" id="comment_score_33555">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33555); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Dark%20Knight/index.html">Dark Knight (5476)</a>
+<span class="otherdetails" id="comment_otherdetails_33555">on 2001年10月29日 11時38分
+			 (<a href="../../../../../../srad.jp/comment/33555.html">#33555</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33555"><p>　<a href="http://www.chokanji.com/">超漢字</a>を標準にしてしまうのダ。</p>
+<p>＃もちろんオープンソースで。<br/>＃でもUNIX用がないのね(^^;)</p></div>
+<div class="sig" id="comment_sig_33555">-- <br/>/* Written by Takayuki Masuda */</div>
+</div>
+</div>
+<div id="replyto_33555"></div>
+<ul class="comment-group" id="group_33555">
+<li class="hide" id="hiddens_33555"></li>
+</ul></li><li class="comment full contain" id="tree_33559"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33559"></div>
+<div class="comment-item" id="comment_33559">
+<div class="commentTop comment-top newcomment" id="comment_top_33559">
+<div class="title">
+<h4><a href="../../../../../comments.pl_be056a05.html" id="comment_link_33559" name="comment_link_33559" onclick="return D2.setFocusComment(33559)">ユーザーを見ないプロダクトに</a>
+<span class="score" id="comment_score_33559">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33559); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Nowake/index.html">Nowake (5100)</a>
+<span class="otherdetails" id="comment_otherdetails_33559">on 2001年10月29日 12時03分
+			 (<a href="../../../../../../srad.jp/comment/33559.html">#33559</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33559">意味はない．<br/>
+何のためにプログラムを作ってるの？</div>
+</div>
+</div>
+<div id="replyto_33559"></div>
+<ul class="comment-group" id="group_33559">
+<li class="hide" id="hiddens_33559"></li>
+</ul></li><li class="comment full contain" id="tree_33561"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33561"></div>
+<div class="comment-item" id="comment_33561">
+<div class="commentTop comment-top newcomment" id="comment_top_33561">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8d73d0bf.html" id="comment_link_33561" name="comment_link_33561" onclick="return D2.setFocusComment(33561)">アルファベットならいいけれど</a>
+<span class="score" id="comment_score_33561">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33561); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Pooh/index.html">Pooh (4850)</a>
+<span class="otherdetails" id="comment_otherdetails_33561">on 2001年10月29日 12時13分
+			 (<a href="../../../../../../srad.jp/comment/33561.html">#33561</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33561">アルファベットだけ字形が同じでも元の言語が違えば別コードを割り振ってるわけですが、<br/> モンゴル文字とかは字形が同じならunicode的には同じコードですよね。<br/> 「wa」とよむ「は」と「ha」と読む「は」は日本語の場合なぜか字形ベースで同じコード番号なのですが<br/>「ha」は文頭に来ないからソートとか助かってますよね。<br/> これがあっちこっちにある言語の処理は泣き泣きです。<br/> デバナガリというかインド系文字も中途半端に文字合成が前提ですが<br/>合成規則はタミル語とか使用言語によって違うのでアルファベットなみに別にコードが欲しいな。<br/> 言語タグだとタグ位置をフォローしないと切り張りできないからiso2022以上のメリットないし。<br/> 昔、部首から漢字を合成するフォント処理系がありましたが、漢字ですらこけたわけで。<br/> いっそunicode＝フォントメーカー用字形カタログコードと定義してくれた方が楽です。<br/> pdfなんかは内部処理コードと字形コードは全く別ですね。</div>
+</div>
+</div>
+<div id="replyto_33561"></div>
+<ul class="comment-group" id="group_33561">
+<li class="hide" id="hiddens_33561"></li>
+</ul></li><li class="comment full contain" id="tree_33579"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33579"></div>
+<div class="comment-item" id="comment_33579">
+<div class="commentTop comment-top newcomment" id="comment_top_33579">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e3574b57.html" id="comment_link_33579" name="comment_link_33579" onclick="return D2.setFocusComment(33579)">記事の体裁？</a>
+<span class="score" id="comment_score_33579">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 33579); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~redbrick/index.html">redbrick (4865)</a>
+<span class="otherdetails" id="comment_otherdetails_33579">on 2001年10月29日 13時29分
+			 (<a href="../../../../../../srad.jp/comment/33579.html">#33579</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~redbrick/journal/index.html" title="2005年06月23日 16時29分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_33579">オフトピに反応してすみませんが(汗)、ご説明いただきどうもありがとうございます。<br/>
+＃わたしとしては、もっとi18n/m17nの話を進めたい/読みたいんですけど・・・。<br/>
+＃Unicodeの話も結局そこが一つの大きな話題の焦点だと思うし。<br/>
+<br/>
+&gt;真相はわからんけど、文章の最後が 2chの吉野屋ネタだったので、<br/>
+&gt;それを嫌った人がいたのかもね。<br/>
+&gt;あるいは、ネタの体裁を取るなら、もっとうまくやれ。<br/>
+&gt;ってことかも。 <br/>
+<br/>
+つまりは、内容吟味せず表層だけ見て判断したというわけですか・・・。<br/>
+＃質低すぎ(汗)＞さっきのモデレーション<br/>
+<br/>
+わたしは2ch利用者じゃないんで、元コメントの何がどう悪いか、<br/>
+何に対して過敏反応したのか、はっきり言って理解できなかったんです。<br/>
+情報量や参考意見としてなら、評価に値するものではないかと思ったのです。<br/>
+<br/>
+ま、納得できない意見の表明に対しては、わたしは積極的に批判するつもりですし、<br/>
+他の方がモデレーション上書きし直したみたいですね。<br/>
+＃しかし、メタモデレーションは時間が経ちすぎててあまり意味をなしてないよなぁ。<br/></div>
+<div class="sig" id="comment_sig_33579">-- <br/>----
+redbrick</div>
+</div>
+</div>
+<div id="replyto_33579"></div>
+<ul class="comment-group" id="group_33579">
+<li class="hide" id="hiddens_33579"></li>
+</ul></li><li class="comment hidden" id="tree_33918"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33918"></div>
+<div class="comment-item" id="comment_33918">
+</div>
+<div id="replyto_33918"></div>
+<ul class="comment-group" id="group_33918">
+<li class="hide" id="hiddens_33918"></li>
+</ul><ul id="commtree_33918"><li class="comment full contain" id="tree_34260"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34260"></div>
+<div class="comment-item" id="comment_34260">
+<div class="commentTop comment-top newcomment" id="comment_top_34260">
+<div class="title">
+<h4><a href="../../../../../comments.pl_57a9631b.html" id="comment_link_34260" name="comment_link_34260" onclick="return D2.setFocusComment(34260)">Re:i18n の範疇ならば</a>
+<span class="score" id="comment_score_34260">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 34260); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~argon/index.html">argon (3541)</a>
+<span class="otherdetails" id="comment_otherdetails_34260">on 2001年10月31日  0時25分
+			 (<a href="../../../../../../srad.jp/comment/34260.html">#34260</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~argon/journal/index.html" title="2020年01月01日 17時40分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_34260">IBM DOS 2000 の売り文句に ユーロ記号対応とあったような。<br/>あれは Unicode ではないと思いますが。<br/></div>
+</div>
+<div class="commentSub" id="comment_sub_34260">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:i18n の範疇ならば')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34260'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34260'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34260'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_e5411ff9.html" onclick="return D2.selectParent(33918)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_34260"></div>
+<ul class="comment-group" id="group_34260">
+<li class="hide" id="hiddens_34260"></li>
+</ul></li></ul></li><li class="comment hidden" id="tree_33970"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33970"></div>
+<div class="comment-item" id="comment_33970">
+</div>
+<div id="replyto_33970"></div>
+<ul class="comment-group" id="group_33970">
+<li class="hide" id="hiddens_33970"></li>
+</ul><ul id="commtree_33970"><li class="comment hidden" id="tree_34199"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34199"></div>
+<div class="comment-item" id="comment_34199">
+</div>
+<div id="replyto_34199"></div>
+<ul class="comment-group" id="group_34199">
+<li class="hide" id="hiddens_34199"></li>
+</ul><ul id="commtree_34199"><li class="comment full contain" id="tree_34371"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34371"></div>
+<div class="comment-item" id="comment_34371">
+<div class="commentTop comment-top newcomment" id="comment_top_34371">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6209604c.html" id="comment_link_34371" name="comment_link_34371" onclick="return D2.setFocusComment(34371)">日本における辞書順</a>
+<span class="score" id="comment_score_34371">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 34371); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kMak/index.html">kMak (6359)</a>
+<span class="otherdetails" id="comment_otherdetails_34371">on 2001年10月31日 10時02分
+			 (<a href="../../../../../../srad.jp/comment/34371.html">#34371</a>)
+			<small>
+<a class="user_homepage_display" href="../../../../../../srad.jp/users.pl_6561915a.html" title="http://srad.jp/users.pl?op=userinfo&amp;nick=kMak">ホームページ</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_34371"><blockquote> <p>＞スラッシュドットって<br/>＞トップページからはずれても発言が続くんですね。</p> </blockquote>
+<p>いや、モデレーション全然付かないあたりからして、大多数には忘れ去られてる。</p>
+<blockquote> <p>＞国語辞典では熟語の記載は文字順でなくて５０音順ですよね。<br/>＞「有明」と「有名」は全然別のページです。</p> </blockquote>
+<p>考え方が微妙に間違ってます。<br/>手元の「新明解国語事典・第三版」の「編集方針」を見たら明記はなかったんですが、国語事典の排列は、暗黙の『大前提』として、見出し語の見出しへの表記は仮名で正規化し、(その仮名による) 見出しに従って配列を決定する、ことになっています。この新明解には先頭に「漢字索引」という、漢字から索ける索引が付いてますが (^^;</p>
+<p>ちなみに、ありとあらゆる、ありうる読みに対して重複コーディングし、コードに従ってソートすれば読みによるソートが完了 ! という凶悪な技もあります。つまり、コード順に文字を見ていくと「荒→有→或」というような並びがあって、さらに「唯→有→床」というような並びがある、というように。つまり、入力する時には正しい読みに合ったコードが入るようにしないといけない、ということ。OCR には文章認識が必要ですね。熟字訓もうまくコードを振ってやれば対応できます。</p>
+<p>日本語でやろうとするのは事実上不可能ですが、この世には既にそのようにして作られた重複のある規格が実在します (KS X 1001・既に TRON コードに既収録。どうすんだ ?)</p></div>
+<div class="sig" id="comment_sig_34371">-- <br/>640K バイトはだれにとっても十分と思われたそうな</div>
+</div>
+<div class="commentSub" id="comment_sub_34371">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('日本における辞書順')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34371'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34371'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34371'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_1935ae98.html" onclick="return D2.selectParent(34199)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_34371"></div>
+<ul class="comment-group" id="group_34371">
+<li class="hide" id="hiddens_34371"></li>
+</ul></li></ul></li></ul></li><li class="comment hidden" id="tree_33915"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_33915"></div>
+<div class="comment-item" id="comment_33915">
+</div>
+<div id="replyto_33915"></div>
+<ul class="comment-group" id="group_33915">
+<li class="hide" id="hiddens_33915"></li>
+</ul><ul id="commtree_33915"><li class="comment hidden" id="tree_34158"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34158"></div>
+<div class="comment-item" id="comment_34158">
+</div>
+<div id="replyto_34158"></div>
+<ul class="comment-group" id="group_34158">
+<li class="hide" id="hiddens_34158"></li>
+</ul><ul id="commtree_34158"><li class="comment hidden" id="tree_34164"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34164"></div>
+<div class="comment-item" id="comment_34164">
+</div>
+<div id="replyto_34164"></div>
+<ul class="comment-group" id="group_34164">
+<li class="hide" id="hiddens_34164"></li>
+</ul><ul id="commtree_34164"><li class="comment hidden" id="tree_34178"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34178"></div>
+<div class="comment-item" id="comment_34178">
+</div>
+<div id="replyto_34178"></div>
+<ul class="comment-group" id="group_34178">
+<li class="hide" id="hiddens_34178"></li>
+</ul><ul id="commtree_34178"><li class="comment hidden" id="tree_34280"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34280"></div>
+<div class="comment-item" id="comment_34280">
+</div>
+<div id="replyto_34280"></div>
+<ul class="comment-group" id="group_34280">
+<li class="hide" id="hiddens_34280"></li>
+</ul><ul id="commtree_34280"><li class="comment hidden" id="tree_34360"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34360"></div>
+<div class="comment-item" id="comment_34360">
+</div>
+<div id="replyto_34360"></div>
+<ul class="comment-group" id="group_34360">
+<li class="hide" id="hiddens_34360"></li>
+</ul><ul id="commtree_34360"><li class="comment hidden" id="tree_34418"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34418"></div>
+<div class="comment-item" id="comment_34418">
+</div>
+<div id="replyto_34418"></div>
+<ul class="comment-group" id="group_34418">
+<li class="hide" id="hiddens_34418"></li>
+</ul></li><li class="comment full contain" id="tree_34475"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_34475"></div>
+<div class="comment-item" id="comment_34475">
+<div class="commentTop comment-top newcomment" id="comment_top_34475">
+<div class="title">
+<h4><a href="../../../../../comments.pl_5fd3702a.html" id="comment_link_34475" name="comment_link_34475" onclick="return D2.setFocusComment(34475)">Re:各国語でのファイル名のあり方は？</a>
+<span class="score" id="comment_score_34475">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 34475); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kubota/index.html">kubota (64)</a>
+<span class="otherdetails" id="comment_otherdetails_34475">on 2001年10月31日 13時29分
+			 (<a href="../../../../../../srad.jp/comment/34475.html">#34475</a>)
+			<small>
+<a class="user_homepage_display" href="http://www.debian.or.jp/~kubota/" title="http://www.debian.or.jp/~kubota/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~kubota/journal/index.html" title="2003年12月12日 23時19分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_34475"><blockquote><div><p>＃ここでのEBCDICって、文脈に合わない気がするんですけど(汗)、</p></div>
+</blockquote><p>いえ、そうではありません。現在、EBCDIC を使っている人が非常に少なく、ASCII (およびその上位互換なエンコーディング) を使っている人がほとんどなので、ASCII 以外を無視してものごとを進めることが多いわけです (たとえば、ASCII をファイル名に使い、それを誰かに送っても構わない、ということ)。日本語がファイル名として利用可能になるには、同じように、日本語を含むエンコーディング (たとえば、EUC-JP、UTF-8 など) が現在の ASCII と同じような地位に立つことが必要です。日本語を含むエンコーディングの中で、将来世界中で使われるようになる可能性があるのは Unicode でしょう、ということです。ただ、いまの議論ではそれを実装する手段が Unicode かどうかというのはどうでもいいことで、仮に世界が ISO-2022 でまとまりそうな気配であれば、ぼくは ISO-2022 を推したことでしょう。</p><blockquote><div><p>それに、多くの小学生が、何の疑問もなく日本語名のファイルを使うような事態は、
+わたしはむしろ避けるべきだと思ってます。</p><p>
+＃最低でも、日本語実装ありで、理由とマナーを一緒に教えないとダメ。</p><p>
+ただ、日本語名のファイルが作れるから取っつきやすさが上がるってのは、完全に同意です。</p><p>
+＃しかし・・・、日本語圏だけでそんな限定された環境作るみたいな事してていいんですかね？<br/>
+＃かえって、子供が触れる世界を狭めてしまってないか、ちょっと不安も感じます。</p></div>
+</blockquote><p>この件については、ファイル名とファイル内容との区別は意味をなさないです。ファイルは内容が見えてこそ意味があるのですから。ファイル名とファイル内容とが決定的に違うのは、削除やコピーができるかどうか、というだけであって、しかもそれは「間違って」送られたときに限ります。日本語が読めない相手に配慮して英文字のファイル名をつけた、日本語の内容のファイルを故意に送るなんてことはありえません。</p><p>で、日本語でファイル名やファイル内容を書くことができれば、世界が狭まりますか? 日本語で書くことを強制されれば、狭まるでしょうが、それだと、ファイル内容を日本語で書くのも「マナーが悪い」としなければなりません。ぼくは日本語のファイル名も Windows 上なら使いますが (UTF-8 に移行すれば Linux 上でも使い始めたいと思ってます)、ぼくは狭い世界に生きているのでしょうか。日本語を使うと英語能力が低下する、なんてことでもない限り、そんなことはありません。</p><blockquote><div><p>比率がわずかというのは、何に対して想定していますか？</p></div>
+</blockquote><p>世の中のあらゆるファイルを、以下のように分類したとします。
+</p><ul>
+<li>まったく個人利用のファイル</li>
+<li>同じ言語圏の他人と共有するファイル</li>
+<li>違う言語圏の他人と共有するファイル</li>
+</ul><p>
+問題になるのはこの 3 番目だけですが、その割合が小さい、というつもりです。日本語を使うのは確かに世界の 1/50 くらいの人口ですが、中国語を使うのは世界の 1/5 くらいですし、ほかにもいろんな言語があります。かれらにもかれら自身の「個人利用」「国内利用」のファイルがあるので、全世界を見ても、上記分類の 3 番目が少数なのは同じです。
+</p><blockquote><div><p>nativeがascii文字であるファイルシステム上で日本語を使うってのは
+そういった制度上の制限に逆らっているようなものだと、ふと思ったんですが・・・。</p></div>
+</blockquote><p>nativeがascii文字であるファイルシステムというのがどういう意味かわかりませんが、ascii文字以外も使えるように拡張しようというのが、ぼくが何度も書いてきた「開発」の意味です。ですので、その「制度」そのものの改変を目指していると考えてください。</p><blockquote><div><p>いえ、そこまで考えておられたとはわからなかったので、先のコメントを書きましたが、
+そういった方法があれば、基本的な部分では問題ないと思います。</p><p>
+＃ただ、その方法をどうやって日本語圏以外に広めるか、が一番の問題だと思いますけど・・・。<br/>
+＃用意してあっても、使い方が普及しないと意味ないし・・・。<br/>
+＃少なくとも、日本語圏以外にも旨味を保たせないといけないですよね？</p></div>
+</blockquote><p>そんな、日本語だけなんてケチなことはこれっぽっちも考えてません。世界各国の人が自分自身の好きな文字を使えるようになればいいなと思います。ですので、日本語圏から外に広める、ということが課題になるとは考えていません。日本語のためだけの仕組みを考えてそれを世界中の人に使ってもらおうなんて、そんな不公平な考えは持っていません。</p><p>ただし、ワイルドカードの拡張、とかについては、べつに具体的なアイディアがあるわけでもないし、ぼく自身は特に必要性を感じていません。ないよりは、あるほう</p></div>
+<div class="commentshrunk" id="comment_shrunk_34475"><a class="readrest" href="../../../../../comments.pl_5fd3702a.html" onclick="return D2.readRest(34475)">続きを読む...</a></div>
+</div>
+<div class="commentSub" id="comment_sub_34475">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:各国語でのファイル名のあり方は？')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34475'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34475'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=1397&amp;cid=34475'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_af242740.html" onclick="return D2.selectParent(34418)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_34475"></div>
+<ul class="comment-group" id="group_34475">
+<li class="hide" id="hiddens_34475"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li></ul></li></ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 0;
+		D2.currents()['full']     = 50;
+		D2.currents()['oneline']  = 0;
+		// D2.currents_total(50);
+
+		D2.abbrev_comments({});
+		D2.noshow_comments([34119,35180,36397,33918,33970,34199,33915,34158,34164,34178,34280,34360,34418]);
+		D2.pieces_comments([]);
+		D2.init_hiddens([]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">50</span>/<span class="totalcommentcnt">160</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>日本発のオープンソースソフトウェアは42件 -- ある官僚<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../../srad.jp/about.html">About</a></li>
+<li><a href="../../../../../../srad.jp/faq/index.html">FAQ</a></li>
+<li><a href="../../../../../../srad.jp/story/index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../../srad.jp/hof.html">殿堂入り</a></li>
+<li><a href="../../../../../../srad.jp/authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../../srad.jp/topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../../srad.jp/index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

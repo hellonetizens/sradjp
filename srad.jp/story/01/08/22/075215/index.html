@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/01/08/22/075215.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>Glibc2.2.4におけるFSFの内輪もめ | スラド</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="Glibc2.2.4におけるFSFの内輪もめ | スラド" property="og:title">
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '522187639557662084',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content='tezzy 曰く，"glibc 2.2.4 に関するFSFの内輪もめの話については、本場の Slashdotでも盛り上がっていました。ここの文章の、一番最後のところに、glibc 2.2.4 に関する詳しい話しがあります。以下は、tezzy による超意訳' name="description"/>
+<meta content='tezzy 曰く，"glibc 2.2.4 に関するFSFの内輪もめの話については、本場の Slashdotでも盛り上がっていました。ここの文章の、一番最後のところに、glibc 2.2.4 に関する詳しい話しがあります。以下は、tezzy による超意訳' property="og:description"/>
+<meta content="Glibc2.2.4におけるFSFの内輪もめ | スラド" itemprop="name"/>
+<meta content='tezzy 曰く，"glibc 2.2.4 に関するFSFの内輪もめの話については、本場の Slashdotでも盛り上がっていました。ここの文章の、一番最後のところに、glibc 2.2.4 に関する詳しい話しがあります。以下は、tezzy による超意訳' itemprop="description"/>
+<link href="../../../../../index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../sradjp.rss" rel="alternate" title="スラド RSS" type="application/rss+xml"/>
+<link href="../../../../../static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/01/08/22/075215/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'mainpage';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/01/08/22/075215.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="874" data-fhtype="story" id="firehose-874">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">874</span>
+<span class="type">story</span>
+</span>
+<header>
+<h2 class="story">
+<span id="title-874"> <a href="index.html">Glibc2.2.4におけるFSFの内輪もめ</a></span>
+<span class="comments commentcnt-874">24</span>
+</h2>
+<div class="details" id="details-874">ストーリー by <a href="https://shujisado.com/">kazekiri</a>
+<time datetime="2001-08-22T15:58+09:00" id="fhtime-874">2001年08月22日 15時58分</time><br/>Ulrich-Drepper、RMSステ 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "Glibc2.2.4におけるFSFの内輪もめ",
+  "datePublished": "2001-08-22T15:58+09:00",
+  "articleBody": "tezzy 曰く，\"glibc 2.2.4 に関するFSFの内輪もめの話については、本場の Slashdotでも盛り上がっていました。ここの文章の、一番最後のところに、glibc 2.2.4 に関する詳しい話しがあります。以下は、tezzy による超意訳",
+  "image": "https://srad.jp/static/topics/"
+}
+</script>
+<div class="body" id="fhbody-874">
+<div class="contents_text p" id="text-874">
+<a href="mailto:kamihira@rainbow.plala.or.jp">tezzy</a> 曰く，
+"glibc 2.2.4 に関する<b>FSFの内輪もめ</b>の話については、
+本場の Slashdotでも盛り上がっていました。
+
+<a href="http://news.linuxprogramming.com/news_story.php3?ltsn=2001-08-16-002-06-LT">
+ここ</a>の文章の、一番最後のところに、glibc 2.2.4 に関する詳しい話しがあります。
+以下は、tezzy による<b>超</b>意訳
+
+        </div>
+<div class="bodytext p"><p>
+・glibc 2.2.4 release notes
+</p><p>
+　　・・・(省略)・・・
+</p><p>
+And now for some not so nice things.
+</p><p>
+そして、あんまり良くない話しがあります。
+</p><p>
+Stallman recently tried what I would call a hostile takeover of the
+glibc development.  He tried to conspire behind my back and persuade
+the other main developers to take control so that in the end he is in
+control and can dictate whatever pleases him.  This attempt failed but
+he kept on pressuring people everywhere and it got really ugly.  In
+the end I agreed to the creation of a so-called "steering committee"
+(SC).  The SC is different from the SC in projects like gcc in that it
+does not make decisions.  On this front nothing changed.  The only
+difference is that Stallman now has no right to complain anymore since
+the SC he wanted acknowledged the status quo.  I hope he will now shut
+up forever.
+</p>
+<p>
+ストールマンは最近、glibc の開発において、私が「のっとり」と表現
+したいようなことをしようとしました。彼は、私の背後で共謀して、他の
+主な開発者をコントロールすることで、最後には、彼が支配し、彼が望む
+あらゆることをすることができるように説得しようとしました。この試みは
+失敗しましたが、彼はそこらじゅうの人たちに圧力を加え続け、それは本当に
+醜いものでした。最後には、私は、SC と呼ぶ組織を作ることに合意しました。
+SC は、gcc のようなプロジェクトの SC とは違っていて、決定行為はしません。
+表面的には何も変化はありません。唯一の違いは、ストールマンはこれ以上
+何も不平を言う権利を持たなくなったことで、それは、彼の望んだ SC が、
+現状を承認したためです。私は彼が永遠に口をつぐめばいいと思っています。
+</p>
+<p>
+The morale of this is that people will hopefully realize what a
+control freak and raging manic Stallman is.  Don't trust him.  As soon
+as something isn't in line with his view he'll stab you in the back.
+NEVER voluntarily put a project you work on under the GNU umbrella
+since this means in Stallman's opinion that he has the right to make
+decisions for the project.
+</p>
+<p>
+この件の教訓はは、みんなに、ストールマンがどんなに支配好きで、怒りっ
+ぽい躁病者かということを知ってほしいということです。彼を信じては
+いけません。何かが彼の思うようにいっていない場合、すぐに彼はあなたの
+後ろであなたをいじめるでしょう。GNU の傘の下での、どんなプロジェクトにも
+無償で参加してはいけません。と、いうのは、それはストールマンの考えに
+よれば、プロジェクトに対して彼が決定する権利を持っているということを
+意味するからです。
+</p>
+<p>
+The glibc situation is even more frightening if one realizes the story
+behind it.  When I started porting glibc 1.09 to Linux (which
+eventually became glibc 2.0) Stallman threatened me and tried to force
+me to contribute rather to the work on the Hurd.  Work on Linux would
+be counter-productive to the Free Software course.  Then came, what
+would be called embrace-and-extend if performed by the Evil of the
+North-West, and his claim for everything which lead to Linux's
+success.
+</p>
+<p>
+glibc の状況は、もし裏話を知ったなら、もっと怖いものだと言えます。
+私が glibc 1.09 を Linux に移植しはじめたとき(これは glibc 2.0 と
+なりました) ストールマンは私を脅して、Hurd の開発に貢献するように
+強制しようとしました。Linux 上の仕事は、フリーソフトの流れのなかでは
+反生産的であるというのです。そして、North-West の悪魔がやったんだと
+したら、embrace-and-extend とても呼ばれるような方法でやってきて、
+Linux を成功に導くようなすべてのものに対してクレームを言いました。
+(なんか、このへん、うまく訳せん・・・)
+</p>
+<p>
+Which brings us to the second point.  One change the SC forced to
+happen against my will was to use LGPL 2.1 instead of LGPL 2.  The
+argument was that the poor lawyers cannot see that LGPL 2 is
+sufficient.  Guess who were the driving forces behind this.
+</p>
+<p>
+これは、第二の点にわれわれを導きます。私の意思に反して SC が強制された
+変更は、LGPL2 のかわりに、LGPL 2.1 を使うことでした。その議論は、
+馬鹿な法律家は、LGPL 2 を十分に理解できないだろうということでした。
+この背後に、誰のどんな力が働いていたか考えてみてください。
+</p>
+<p>
+The most remarkable thing is that Stallman was all for this despite
+the clear motivation of commercialization.  The reason: he finally got
+the provocative changes he made to the license through.  In case you
+forgot or haven't heard, here's an excerpt:
+</p>
+<p>
+一番はっきりしていることは、ストールマンははっきりした商業化の動機に
+反してそのようにしたということです。理由は、かれはライセンスに対する
+修正によって挑発的な変更を手にいれたということです。忘れたり聞いたこと
+がないと
+いけないので、その部分を抜粋します。
+</p><p>
+  [...] For example, permission to use the GNU C Library in non-free
+  programs enables many more people to use the whole GNU operating
+  system, as well as its variant, the GNU/Linux operating system.
+</p>
+<p>
+　たとえば、フリーではないプログラム中での GNU C ライブラリの使用は
+  さらに多くの人たちが GNU/Linux という変種と同じくらい GNU オペレーティング
+  システムの全体を利用することができるようになるということです。
+</p>
+<p>
+This $&amp;%$&amp; demands everything to be labeled in a way which credits him
+and he does not stop before making completely wrong statements like
+"its variant".  I find this completely unacceptable and can assure
+everybody that I consider none of the code I contributed to glibc
+(which is quite a lot) to be as part of the GNU project and so a major
+part of what Stallman claims credit for is simply going away.
+</p>
+<p>
+これは、すべてが、彼を信用しなくてはならないという形で呼ばれることを
+要求するものであり、"その変種" というような完全に間違った言い回しを
+やめることはないということです。私は、これは完全に受け入れがたいことであり、
+すべての人に以下のことを約束できます。それは、glibc に対する私の
+貢献部分のソースコードは、GNU プロジェクトの一部としてやったつもりのものでは
+まったくなく、ストールマンが保証している大部分は、単に意味のないものだと
+考えているということです。
+</p>
+<p>
+This part has a morale, too, and it is almost the same: don't trust
+this person.  Read the licenses carefully and rip out parts which give
+Stallman any possibility to influence your future.  Phrases like
+</p>
+<p>
+この部分も教訓があり、それはほとんど同じです。
+この人を信じてはいけません。ライセンスを注意深く読んでストールマンが
+あなたの未来に対して影響を与えるような可能性のある部分を取り除きなさい。
+以下のような部分は、
+</p>
+<p>
+   [...] GNU Lesser General Public License as published by the Free
+   Software Foundation; either version 2.1 of the License, or (at your
+   option) any later version.
+</p>
+<p>
+just invites him to screw you when it pleases him.  Rip out the "any
+later version" part and make your own decisions when to use a
+different license since otherwise he can potentially do you or your
+work harm.
+</p>
+<p>
+彼が満足するようにあなたを押さえつけるようにしているだけです。
+"今後の一切のバージョン" という部分をとっぱらって、別のライセンスを
+利用するという決定をあなた自身でしてください。でなければ、彼はあたな
+とその仕事に害を与える可能性があります。
+</p>
+<p>
+In case you are interested why the SC could make this decision I'll
+give a bit more background.  When this SC idea came up I wanted to
+fork glibc (out of Stallman's control) or resign from any work.  The
+former was not welcome this it was feared to cause fragmentation.  I
+didn't agree but if nobody would use a fork it's of no use.  There
+also wasn't much interest in me resigning so we ended up with the SC
+arrangement where the SC does nothing except the things I am not doing
+myself at all: handling political issues.  All technical discussions
+happens as before on the mailing list of the core developers and I
+reserve the right of the final decision.
+</p>
+<p>
+なぜ SC がこの決定をしたのがにもっと興味があるなら、私はもう少し裏話
+をすることができます。この SC のアイディアがもちあがったとき、私は
+(ストールマンの支配から逃れるために) glibc を分離させるか、どんな仕事
+からも手を引きたいと思いました。前者は、コードが断片化する恐れがあるので
+望ましくありませんでした。誰かが分離したら、使い物にならなくなるだろう
+ということだけは同意しました。やめることにもあまり興味がなかったので、
+私ひとりで全部できないことを除いては、SC は何もしないという取り決めに
+よって、議論を終えました。私ひとりでできないこととは、政治的な問題を
+扱うことです。すべての技術的な議論は前もっと開発者のメーリングリスト上で
+なされ、私には最終決定の権利が残りました。
+</p>
+<p>
+The LGPL 2.1 issue was declared political and therefore in scope of
+the SC.  I didn't feel this was reason enough to leave the project for
+good so I tolerated the changes.  Especially since I didn't realize
+the mistake with the wording of the copyright statements which allow
+applying later license versions before.
+</p>
+<p>
+LGPL 2.1 の文章は、政治的なものとして宣言されたのであり、そのため、
+SC の担当の範囲にあります。私はこれはプロジェクトを抜ける十分な理由
+だとは思えませんでしたので、この変更に対して寛容であることにしました。
+特に、私はコピーライトに関する文章の言葉が、今後のライセンスのバージョンに
+対して前もって適用されるという間違いに気が付かなかったのです。
+</p>
+<p>
+I cannot see this repeating, though.  Despite what Stallman believes,
+maintaining a GNU project is NOT a privilege.  It's a burden, and
+the bigger the project the bigger the burden.  I have no interest to
+allow somebody else to tell me what to do and not to do if this is
+part of my free time.  There are plenty of others interesting things to
+do and I'll immediately walk away from glibc if I see a situation like
+this coming up again.  I will always be able to fix my own system (and
+if the company I work for wants it, their systems).
+</p>
+<p>
+でも、これが繰り返されるのはもう見たくありません。ストールマンが信じて
+いるのとは反対に、GNU プロジェクトのメンテナンスは、特権でもなんでも
+ないです。それは、仕事です。そして、プロジェクトが大きくなればなるほど
+それは、重い仕事になります。私は誰かが私に、もし自分の自由な時間の一部
+だとしたら、何をし、何をしないか、と聞くことに興味はありません。もっと
+面白いことはたくさんあるし、もし、このようなことがまた起きるようなら
+私はすぐに glibc の保守をやめようと思います。私はいつでも自分自身の
+システムを直すことができるんです。(そしてもし、私が働いている会社が
+望むのなら、彼らのシステムを直すことも。)
+</p>
+<p>
+Ulrich Drepper Red Hat drepper at redhat.com   
+"</p>
+</div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //srad.jp/story/01/08/22/075215/ -->
+<!-- http://srad.jp/story/01/08/22/075215/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://srad.jp/story/01/08/22/075215/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://srad.jp/story/01/08/22/075215/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/srad.jp/story/01/08/22/075215/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">24</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-874"><a class="popular popular topic tag" href="../../../../../tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../tag/os.html" rel="statictag" target="_blank">os</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../0550251/index.html" id="hrefns">分散計算能力配給網テラグリッド</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../../../../it.srad.jp/story/21/06/17/1724219/index.html">GNU C Library、Y2038対策でレガシーABIに64ビット時刻のサポートが追加</a></h3><h3><a href="../../../../../../it.srad.jp/story/15/02/11/0421233/index.html">RMS、GNU EmacsのGud.elでのLLVMデバッガサポートに反対</a></h3><h3><a href="../../../../../../opensource.srad.jp/story/14/01/25/206242/index.html">RMS曰く、LLVMはフリーソフトウェアに対する大きな障害</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="Glibc2.2.4におけるFSFの内輪もめのストーリーへ戻る">Glibc2.2.4におけるFSFの内輪もめ</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//srad.jp/story/01/08/22/075215/';
+var parent_item_title = 'Glibc2.2.4におけるFSFの内輪もめ';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「Glibc2.2.4におけるFSFの内輪もめ」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//srad.jp/search.pl?op=comments&amp;sid=876" class="btn"><span class="totalcommentcnt">24</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//srad.jp/comments.pl?sid=876"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_3f4e7779.html"><span>検索</span><span class="totalcommentcnt">24</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 16010: { uid: 2058, pid: 0, read: 0, points: 4, kids: [  ], opid: 0 }, 15926: { uid: 4698, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 16099: { uid: 1, pid: 0, read: 0, points: 0, kids: [  ], opid: 0 }, 16011: { uid: 557, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 15952: { uid: 4274, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 15918: { uid: 3404, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 15920: { uid: 3191, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 16067: { uid: 4753, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 16065: { uid: 3445, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 15930: { uid: 1169, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 15964: { uid: 2972, pid: 0, read: 0, points: 4, kids: [  ], opid: 0 }, 16118: { uid: 2972, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 16012: { uid: 1, pid: 0, read: 0, points: 0, kids: [  ], opid: 0 }, 15931: { uid: 1, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 15943: { uid: 3191, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 15923: { uid: 2403, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 16095: { uid: 1, pid: 0, read: 0, points: 0, kids: [  ], opid: 0 }, 15934: { uid: 1225, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 16124: { uid: 1311, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 15941: { uid: 1, pid: 0, read: 0, points: 0, kids: [  ], opid: 0 }, 15938: { uid: 2391, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 15957: { uid: 1, pid: 0, read: 0, points: 0, kids: [  ], opid: 0 }, 15913: { uid: 2972, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 15916: { uid: 2403, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 } });
+
+D2.thresh_totals({6:{6:{1:24,3:0,2:0}},4:{6:{1:22,3:0,2:2},4:{1:22,3:2,2:0},5:{1:22,3:2,2:0}},1:{6:{1:5,3:0,2:19},4:{1:5,3:2,2:17},1:{1:5,3:19,2:0},3:{1:5,3:12,2:7},2:{1:5,3:19,2:0},5:{1:5,3:2,2:17}},3:{6:{1:22,3:0,2:2},4:{1:22,3:2,2:0},3:{1:22,3:2,2:0},5:{1:22,3:2,2:0}},0:{6:{1:0,3:0,2:24},4:{1:0,3:2,2:22},1:{1:0,3:24,2:0},3:{1:0,3:12,2:12},0:{1:0,3:24,2:0},2:{1:0,3:19,2:5},5:{1:0,3:2,2:22}},2:{6:{1:12,3:0,2:12},4:{1:12,3:2,2:10},3:{1:12,3:12,2:0},2:{1:12,3:12,2:0},5:{1:12,3:2,2:10}},5:{6:{1:24,3:0,2:0},5:{1:24,3:0,2:0}},"-1":{6:{1:0,3:0,2:24},4:{1:0,3:2,2:22},1:{1:0,3:24,2:0},3:{1:0,3:12,2:12},0:{1:0,3:24,2:0},2:{1:0,3:19,2:5},5:{1:0,3:2,2:22},"-1":{1:0,3:24,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([15964,16010,15913,15916,15918,15920,15930,15934,15938,16011,16065,16118,15923,15926,15931,15943,15952,16067,16124,15941,15957,16012,16095,16099]);
+D2.root_comments_hash({15926:1,16010:1,16099:1,16011:1,15952:1,15918:1,15920:1,16067:1,16065:1,15930:1,16012:1,16118:1,15964:1,15931:1,15943:1,16095:1,15923:1,15941:1,16124:1,15934:1,15938:1,15957:1,15916:1,15913:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(876);
+
+D2.d2_seen('15913,3,2,2,3,3,4,1,3,4,3,2,9,5,7,46,1,1,53,2,28,4,19,6');
+D2.more_comments_num(0);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_15964"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15964"></div>
+<div class="comment-item" id="comment_15964">
+<div class="commentTop comment-top newcomment" id="comment_top_15964">
+<div class="title">
+<h4><a href="../../../../../comments.pl_de5021ae.html" id="comment_link_15964" name="comment_link_15964" onclick="return D2.setFocusComment(15964)">Re:ソフトウェアの保守は苦痛であり権限ではない</a>
+<span class="score" id="comment_score_15964">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15964); return false">スコア:4</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~gniibe/index.html">gniibe (2972)</a>
+<span class="otherdetails" id="comment_otherdetails_15964">on 2001年08月22日 19時18分
+			 (<a href="../../../../../comment/15964.html">#15964</a>)
+			<small>
+<a class="user_homepage_display" href="https://www.gniibe.org/" title="https://www.gniibe.org/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~gniibe/journal/index.html" title="2017年06月08日 19時50分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15964">Ulrichの貢献は非常に大きいと思います。なによりもGlibcを動くものとした。
+ただし、GNUプロジェクトの立場ではメンテナーとして適切かというと、困っちゃったと思います。
+単に優先順位がGNUプロジェクトと異なるというだけなら、大きな問題ではなかったと思いますが、GNUプロジェクトの方向性はは「知らんもんね。」というのだと、プロジェクトリーダのRMSとしては、その技量は高く買い貢献は評価しても、何らかの解決を図るという必要があったでしょう。
+一番の問題は、GNUプロジェクトの方向性を実装する開発者が少なかったということでしょう。
+それで、落ち着いたところがGNUプロジェクトから見るとSC（ステアリングコミッティー）があって、Ulrichは
+これまでどおり（好きなように）働くということで、
+良かったのではないでしょうか。
+そういうわけで、僕はこれをRMS批判として読むことは適切ではなく、「ソフトウェア開発と保守ってこういうぶつかりあるよねぇ。」という読み方が適切だと考えています。
+みなさんは、どうでしょうか。</div>
+</div>
+</div>
+<div id="replyto_15964"></div>
+<ul class="comment-group" id="group_15964">
+<li class="hide" id="hiddens_15964"></li>
+</ul></li><li class="comment full contain" id="tree_16010"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_16010"></div>
+<div class="comment-item" id="comment_16010">
+<div class="commentTop comment-top newcomment" id="comment_top_16010">
+<div class="title">
+<h4><a href="../../../../../comments.pl_aefda19b.html" id="comment_link_16010" name="comment_link_16010" onclick="return D2.setFocusComment(16010)">GNUプロジェクトを理解するためには</a>
+<span class="score" id="comment_score_16010">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 16010); return false">スコア:4</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~HIRONOBU_SUZUKI/index.html">HIRONOBU_SUZUKI (2058)</a>
+<span class="otherdetails" id="comment_otherdetails_16010">on 2001年08月22日 23時37分
+			 (<a href="../../../../../comment/16010.html">#16010</a>)
+			<small>
+<a class="user_homepage_display" href="http://h2np.net" title="http://h2np.net">ホームページ</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_16010">確固たる原則を持ち、リーダーシップを発揮できる人間だからこそ、この１７年という時間を経てGNUプロジェクトをここまで引っ張ってこれたのです。私が初めてGNUに染まった１９８５、６年当時から見ると、隔絶の感があります。
+
+そもそもGNUプロジェクトは思想運動です。
+
+<p>
+<ul><li>自由にソフトウェアを作り・使う権利があると主張することである。
+
+<p>
+<li>自由なソフトウェアを作るのは、
+その権利の主張のための手段に過ぎない。
+
+<p>
+この２点を理解しないと、GNUプロジェクト自体を理解できません。
+ある日、あるとき、「ソフトウェアを自由に使い、作り、改良し、そして再配布を万民に許す法」なんてものが
+できるとすると、その時点でGNUプロジェクトは目的を達成したわけですから解散となるでしょう。もっとも、そんな法律は某社が何十億ドルかけてでも潰すでしょうが。
+
+<p>それから <strong> "Freedom is NOT free"</strong>という言葉も覚えておく必要があるかも知れません。これは<a href="http://www.eff.org">EFF</a>が
+よく使う言葉です。自由であるためのコストは、それなりにかかります。オフトピですが先週ワシントンDCでEFF主催のチャリティーディナーに出席したのですが、そのチャリティーフィーは最低２５０ドルからでした。
+<p></p></p></p></li></p></li></ul></p></div>
+<div class="sig" id="comment_sig_16010">-- <br/>
+すずきひろのぶ
+</div>
+</div>
+</div>
+<div id="replyto_16010"></div>
+<ul class="comment-group" id="group_16010">
+<li class="hide" id="hiddens_16010"></li>
+</ul></li><li class="comment full contain" id="tree_15913"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15913"></div>
+<div class="comment-item" id="comment_15913">
+<div class="commentTop comment-top newcomment" id="comment_top_15913">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3c1532f6.html" id="comment_link_15913" name="comment_link_15913" onclick="return D2.setFocusComment(15913)">FSFの内輪もめというタイトルは？？</a>
+<span class="score" id="comment_score_15913">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15913); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~gniibe/index.html">gniibe (2972)</a>
+<span class="otherdetails" id="comment_otherdetails_15913">on 2001年08月22日 16時31分
+			 (<a href="../../../../../comment/15913.html">#15913</a>)
+			<small>
+<a class="user_homepage_display" href="https://www.gniibe.org/" title="https://www.gniibe.org/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~gniibe/journal/index.html" title="2017年06月08日 19時50分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15913">昨年、UlrichとRMSの間に入ってどうにか収拾を試みました。
+まぁ、文句もあると思うけこれで終わりになればいいとおもってます。
+UlrichはFSFではないのでFSFの内輪もめではないことを書いておきます。
+
+ソフトウェアの保守は苦痛であり権限ではないというのは至言でしょう。</div>
+</div>
+</div>
+<div id="replyto_15913"></div>
+<ul class="comment-group" id="group_15913">
+<li class="hide" id="hiddens_15913"></li>
+</ul></li><li class="comment full contain" id="tree_15916"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15916"></div>
+<div class="comment-item" id="comment_15916">
+<div class="commentTop comment-top newcomment" id="comment_top_15916">
+<div class="title">
+<h4><a href="../../../../../comments.pl_975d715a.html" id="comment_link_15916" name="comment_link_15916" onclick="return D2.setFocusComment(15916)">とっても悪文</a>
+<span class="score" id="comment_score_15916">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15916); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~tarosuke/index.html">tarosuke (2403)</a>
+<span class="otherdetails" id="comment_otherdetails_15916">&lt;<a href="mailto:webmaster%40tarosuke.net">webmaster@tarosuke.net</a>&gt;
+			on 2001年08月22日 16時35分
+			 (<a href="../../../../../comment/15916.html">#15916</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~tarosuke/journal/index.html" title="2014年04月03日 12時23分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15916">気晴らしにちょっと挑戦してみました。<blockquote> <br/>Then came, what would be called embrace-and-extend if <em>(it?)</em> performed by the Evil of the North-West, and his claim for everything which lead to Linux's success. </blockquote> <br/>そして、「実装と拡張」と呼ばれるもの -もし「北東の悪魔」によってなされたのなら- とLinuxの全ての成功へ導く（続く？）彼の犯罪は来た。<br/> <br/>ってな感じでなのかなぁ...</div>
+</div>
+</div>
+<div id="replyto_15916"></div>
+<ul class="comment-group" id="group_15916">
+<li class="hide" id="hiddens_15916"></li>
+</ul></li><li class="comment full contain" id="tree_15918"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15918"></div>
+<div class="comment-item" id="comment_15918">
+<div class="commentTop comment-top newcomment" id="comment_top_15918">
+<div class="title">
+<h4><a href="../../../../../comments.pl_95994470.html" id="comment_link_15918" name="comment_link_15918" onclick="return D2.setFocusComment(15918)">とりあえずＲＭＳ擁護してみます</a>
+<span class="score" id="comment_score_15918">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15918); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Average/index.html">Average (3404)</a>
+<span class="otherdetails" id="comment_otherdetails_15918">on 2001年08月22日 16時37分
+			 (<a href="../../../../../comment/15918.html">#15918</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~Average/journal/index.html" title="2004年07月26日  8時36分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15918">多分、ＲＭＳに対する「ちょっと困ったおじさん」的なコメントが多かろうと思うので、あえて言ってみる。<br/>(いや、私はOS2な人なので大分的外れな意見かもですが）<br/> <br/>確かに、ＲＭＳってのは偏狭で困った人かもしれないがそういう<b>困った性格だからGNUソフトを軌道に乗せ得た</b>という側面は無視できない点だと思います。<br/>LinuxやBSDもGCCが無ければ作れない訳ですし、GNUの恩恵があると思うのですね。<br/>だからＲＭＳはこれで良い、のでは？</div>
+<div class="sig" id="comment_sig_15918">-- <br/>-----------------<br/>
+#そんなワタシはOS/2ユーザー:-)</div>
+</div>
+</div>
+<div id="replyto_15918"></div>
+<ul class="comment-group" id="group_15918">
+<li class="hide" id="hiddens_15918"></li>
+</ul></li><li class="comment full contain" id="tree_15920"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15920"></div>
+<div class="comment-item" id="comment_15920">
+<div class="commentTop comment-top newcomment" id="comment_top_15920">
+<div class="title">
+<h4><a href="../../../../../comments.pl_92243e83.html" id="comment_link_15920" name="comment_link_15920" onclick="return D2.setFocusComment(15920)">Re:とっても悪文</a>
+<span class="score" id="comment_score_15920">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15920); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~at_it/index.html">at_it (3191)</a>
+<span class="otherdetails" id="comment_otherdetails_15920">on 2001年08月22日 16時43分
+			 (<a href="../../../../../comment/15920.html">#15920</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15920">「Evil of the North-West(北西の悪魔)」とはMicrosoft(本社がアメリカ北西部にある)のことで, 「embrace-and-extend」は「取り込みと拡張」, すなわち, 他のプロジェクトからアイデアをパクったものを独自拡張して自分の物にしてしまうことだと思います。<br/> <br/>つまり, 「StallmanがやってることはMSがやってることと同じだよ」ということを主張してるんだと思います。</div>
+</div>
+</div>
+<div id="replyto_15920"></div>
+<ul class="comment-group" id="group_15920">
+<li class="hide" id="hiddens_15920"></li>
+</ul></li><li class="comment full contain" id="tree_15930"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15930"></div>
+<div class="comment-item" id="comment_15930">
+<div class="commentTop comment-top newcomment" id="comment_top_15930">
+<div class="title">
+<h4><a href="../../../../../comments.pl_194877ec.html" id="comment_link_15930" name="comment_link_15930" onclick="return D2.setFocusComment(15930)">Re:とっても悪文</a>
+<span class="score" id="comment_score_15930">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15930); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Dot.Zeile/index.html">Dot.Zeile (1169)</a>
+<span class="otherdetails" id="comment_otherdetails_15930">on 2001年08月22日 17時22分
+			 (<a href="../../../../../comment/15930.html">#15930</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~Dot.Zeile/journal/index.html" title="2002年11月28日 23時01分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15930">わたしもちょっとやってみよう…<br/>
+<blockquote>
+そして、もしも北西部の悪魔どもがやったら「取り込みと独自拡張」戦略と呼ばれるだろうと思われるもの、すなわち、彼の、Linuxを成功に導くもの全てに関する権利の主張、がやってきた。
+</blockquote>
+てな感じ？</div>
+</div>
+</div>
+<div id="replyto_15930"></div>
+<ul class="comment-group" id="group_15930">
+<li class="hide" id="hiddens_15930"></li>
+</ul></li><li class="comment full contain" id="tree_15934"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15934"></div>
+<div class="comment-item" id="comment_15934">
+<div class="commentTop comment-top newcomment" id="comment_top_15934">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4b24bacd.html" id="comment_link_15934" name="comment_link_15934" onclick="return D2.setFocusComment(15934)">しっかりしろ、ぐにゅう</a>
+<span class="score" id="comment_score_15934">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15934); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~bravo/index.html">bravo (1225)</a>
+<span class="otherdetails" id="comment_otherdetails_15934">&lt;<a href="mailto:reversethis-%7Bgro.zecruoser%7D%20%7Bta%7D%20%7Bovarb%7D">reversethis-{gro.zecruoser} {ta} {ovarb}</a>&gt;
+			on 2001年08月22日 17時28分
+			 (<a href="../../../../../comment/15934.html">#15934</a>)
+			<small>
+<a class="user_homepage_display" href="https://twitter.com/bravotan" title="https://twitter.com/bravotan">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~bravo/journal/index.html" title="2018年08月14日 12時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15934"><p>今となってはRMSのGNUではなくて、GPLのGNUであり、MSの最大の敵である。いくらアレゲ世界でも、あんまり有名人になってしまうとこういう独占、または寡占野郎の傾向が出る人って少なくないみたいです。日本人でもチラホラいませんか?</p>
+<p># 初心に返ろうよ(笑)</p>
+<p>glibcって、tar玉を開いて読むとすっごい参考になります。system()関数とか、「ここでfork()してexec()やね」とか。</p></div>
+</div>
+</div>
+<div id="replyto_15934"></div>
+<ul class="comment-group" id="group_15934">
+<li class="hide" id="hiddens_15934"></li>
+</ul></li><li class="comment full contain" id="tree_15938"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15938"></div>
+<div class="comment-item" id="comment_15938">
+<div class="commentTop comment-top newcomment" id="comment_top_15938">
+<div class="title">
+<h4><a href="../../../../../comments.pl_149ac56e.html" id="comment_link_15938" name="comment_link_15938" onclick="return D2.setFocusComment(15938)">Re:とっても悪文</a>
+<span class="score" id="comment_score_15938">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15938); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Vorspiel/index.html">Vorspiel (2391)</a>
+<span class="otherdetails" id="comment_otherdetails_15938">on 2001年08月22日 17時35分
+			 (<a href="../../../../../comment/15938.html">#15938</a>)
+			<small>
+<a class="user_homepage_display" href="http://d.hatena.ne.jp/Vorspiel/" title="http://d.hatena.ne.jp/Vorspiel/">ホームページ</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15938"><p>後半の</p>
+<blockquote>
+[snip] and his claim for everything which lead to Linux's success
+</blockquote> <p>の個所は</p>
+<p>
+Linuxを成功に導いたものはすべて彼の功績であるとの主張
+</p> <p>ぐらいじゃないでしょうか．</p></div>
+</div>
+</div>
+<div id="replyto_15938"></div>
+<ul class="comment-group" id="group_15938">
+<li class="hide" id="hiddens_15938"></li>
+</ul></li><li class="comment full contain" id="tree_16011"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_16011"></div>
+<div class="comment-item" id="comment_16011">
+<div class="commentTop comment-top newcomment" id="comment_top_16011">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7ebc1da9.html" id="comment_link_16011" name="comment_link_16011" onclick="return D2.setFocusComment(16011)">Re:ソフトウェアの保守は苦痛であり権限ではない</a>
+<span class="score" id="comment_score_16011">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 16011); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~dai75/index.html">dai75 (557)</a>
+<span class="otherdetails" id="comment_otherdetails_16011">on 2001年08月22日 23時42分
+			 (<a href="../../../../../comment/16011.html">#16011</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~dai75/journal/index.html" title="2002年03月05日 22時25分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_16011"> <br/>開発者が管理しなくちゃいけないって風潮を何とかしてほしいと切に思う。開発に貢献しなくていいからさー、管理やってくれよ(^^;　ただし管理を権威と考える人は失敗するだろうから、そのへん弁えている人。<br/> <br/>日々たくさんのプロジェクトが生まれて消えて行きますが、手を貸してあげれば発展するのたくさんあるだろうに。<br/></div>
+<div class="sig" id="comment_sig_16011">-- <br/>-- wanna be the biggest dreamer</div>
+</div>
+</div>
+<div id="replyto_16011"></div>
+<ul class="comment-group" id="group_16011">
+<li class="hide" id="hiddens_16011"></li>
+</ul></li><li class="comment full contain" id="tree_16065"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_16065"></div>
+<div class="comment-item" id="comment_16065">
+<div class="commentTop comment-top newcomment" id="comment_top_16065">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9e4aabf9.html" id="comment_link_16065" name="comment_link_16065" onclick="return D2.setFocusComment(16065)">Re:名創業者必ずしも名経営者ならず</a>
+<span class="score" id="comment_score_16065">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 16065); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~AKIT/index.html">AKIT (3445)</a>
+<span class="otherdetails" id="comment_otherdetails_16065">on 2001年08月23日  3時27分
+			 (<a href="../../../../../comment/16065.html">#16065</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_16065">　どの写真見てもRMSさんって薄汚いよな～、ってのがずっ<br/>と気になっていました。実際は結構なお金稼いでいると思<br/>うので(この辺まったくの憶測です)、むしろいい服を着て<br/>フェラーリ乗り回しているとかバブリーなイメージでいて<br/>くれた方が後続の励みになって良いと思うんですけどね。<br/>　普通の人が見たら、やっぱマイナスのイメージしか持て<br/>ないですよね。<br/>　ちなみに私にとってRMSさんは偉人である上に恩人です。<br/>　emacsなかったら仕事になりません。足向けて寝られな<br/>いです。<br/></div>
+<div class="sig" id="comment_sig_16065">-- <br/>-- 
+ＡＫＩ・Ｔ</div>
+</div>
+</div>
+<div id="replyto_16065"></div>
+<ul class="comment-group" id="group_16065">
+<li class="hide" id="hiddens_16065"></li>
+</ul></li><li class="comment full contain" id="tree_16118"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_16118"></div>
+<div class="comment-item" id="comment_16118">
+<div class="commentTop comment-top newcomment" id="comment_top_16118">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b1a9487d.html" id="comment_link_16118" name="comment_link_16118" onclick="return D2.setFocusComment(16118)">GNU/Hurdに対する実装は大変</a>
+<span class="score" id="comment_score_16118">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 16118); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~gniibe/index.html">gniibe (2972)</a>
+<span class="otherdetails" id="comment_otherdetails_16118">on 2001年08月23日 11時13分
+			 (<a href="../../../../../comment/16118.html">#16118</a>)
+			<small>
+<a class="user_homepage_display" href="https://www.gniibe.org/" title="https://www.gniibe.org/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~gniibe/journal/index.html" title="2017年06月08日 19時50分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_16118">追加としてテクニカルな話を書きます。
+GNU/Hurdはいわゆるマイクロカーネルをもとにしていますから、Cライブラリで実装するべきことが多くなります。
+Linuxならば単にシステムコールを呼べばいいところが、いろいろと実装する必要があるわけです。
+その大変なところを中心に進めてほしいというのは、妥当な指示といえると思いますし、そんないつになるかわからないことよりも、今動くところを中心に開発を進めていきたいというのも理解できる意見です。</div>
+</div>
+</div>
+<div id="replyto_16118"></div>
+<ul class="comment-group" id="group_16118">
+<li class="hide" id="hiddens_16118"></li>
+</ul></li><li class="comment full contain" id="tree_15923"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15923"></div>
+<div class="comment-item" id="comment_15923">
+<div class="commentTop comment-top newcomment" id="comment_top_15923">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4b193ec4.html" id="comment_link_15923" name="comment_link_15923" onclick="return D2.setFocusComment(15923)">Re:とっても悪文</a>
+<span class="score" id="comment_score_15923">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15923); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~tarosuke/index.html">tarosuke (2403)</a>
+<span class="otherdetails" id="comment_otherdetails_15923">&lt;<a href="mailto:webmaster%40tarosuke.net">webmaster@tarosuke.net</a>&gt;
+			on 2001年08月22日 16時52分
+			 (<a href="../../../../../comment/15923.html">#15923</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~tarosuke/journal/index.html" title="2014年04月03日 12時23分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15923">そういやembrace-and-extendとか北西の悪魔とかって、GNU関係のいろいろな文書に出てきてたような...<br/>すっかり忘れてた。<br/># もしかして、俺、北東って書いてた？あぅぅ...バカ丸出し。</div>
+</div>
+</div>
+<div id="replyto_15923"></div>
+<ul class="comment-group" id="group_15923">
+<li class="hide" id="hiddens_15923"></li>
+</ul></li><li class="comment full contain" id="tree_15926"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15926"></div>
+<div class="comment-item" id="comment_15926">
+<div class="commentTop comment-top newcomment" id="comment_top_15926">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e1b12f73.html" id="comment_link_15926" name="comment_link_15926" onclick="return D2.setFocusComment(15926)">Re:とりあえずＲＭＳ擁護してみます</a>
+<span class="score" id="comment_score_15926">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15926); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~slime/index.html">slime (4698)</a>
+<span class="otherdetails" id="comment_otherdetails_15926">on 2001年08月22日 17時00分
+			 (<a href="../../../../../comment/15926.html">#15926</a>)
+			<small>
+<a class="user_homepage_display" href="../../../../../index.html" title="http://srad.jp/">ホームページ</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15926">RMS氏が偉人であることについては、異論はないと思います<br/>
+で、これを機に、商用利用に関して寛容な団体が、派閥を作ってスピンアウトして、新たなものを作り始めて<br/>くれたりして。<br/>
+<br/>
+内紛(じゃないにしても)、論争、分派があると、今よりなお面白くなるかも、というのは野次馬根性かな？ B^)</div>
+</div>
+</div>
+<div id="replyto_15926"></div>
+<ul class="comment-group" id="group_15926">
+<li class="hide" id="hiddens_15926"></li>
+</ul></li><li class="comment full contain" id="tree_15931"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15931"></div>
+<div class="comment-item" id="comment_15931">
+<div class="commentTop comment-top newcomment" id="comment_top_15931">
+<div class="title">
+<h4><a href="../../../../../comments.pl_bee0b19e.html" id="comment_link_15931" name="comment_link_15931" onclick="return D2.setFocusComment(15931)">名創業者必ずしも名経営者ならず</a>
+<span class="score" id="comment_score_15931">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15931); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_15931">on 2001年08月22日 17時23分
+			 (<a href="../../../../../comment/15931.html">#15931</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15931"> <br/>企業でもそうだけど、すぐれた創業者が、必ずしも組織の維持や発展の名人とは限りません。ましてや「営利」という縛りのない組織であればなおさら、ここいらへんのことは曖昧模糊としていると思います。<br/> <br/>自分はFounderであってManagerではない、という自覚があるのであれば、Founderの役割が終われば、舞台から自ら退く、ということが必要なことです。そうでないと、みんなに迷惑がかかる。<br/> <br/>自分のことばかり考えるのではなく、周りのことも考慮に入れて自分の行動は考えるべきですね。<br/> <br/>まぁ、それにしても「言うは易く行うは難し」だからなぁ、とくにこういうことは。でも、そういう認識と判断と行動がないと自滅するよ。ほんとに。<br/> <br/></div>
+</div>
+</div>
+<div id="replyto_15931"></div>
+<ul class="comment-group" id="group_15931">
+<li class="hide" id="hiddens_15931"></li>
+</ul></li><li class="comment full contain" id="tree_15943"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15943"></div>
+<div class="comment-item" id="comment_15943">
+<div class="commentTop comment-top newcomment" id="comment_top_15943">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3c74eb83.html" id="comment_link_15943" name="comment_link_15943" onclick="return D2.setFocusComment(15943)">Re:とっても悪文</a>
+<span class="score" id="comment_score_15943">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15943); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~at_it/index.html">at_it (3191)</a>
+<span class="otherdetails" id="comment_otherdetails_15943">on 2001年08月22日 18時03分
+			 (<a href="../../../../../comment/15943.html">#15943</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15943">私が思うには, <br/> <br/>「"Linux上で成功したものは全て, Hurdに移植せよ"と主張した(そのやり方はおいしいとこだけ持ってくMSのようだった)」<br/> <br/>という意味のような気がする。(全然自信なし)<br/></div>
+</div>
+</div>
+<div id="replyto_15943"></div>
+<ul class="comment-group" id="group_15943">
+<li class="hide" id="hiddens_15943"></li>
+</ul></li><li class="comment full contain" id="tree_15952"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15952"></div>
+<div class="comment-item" id="comment_15952">
+<div class="commentTop comment-top newcomment" id="comment_top_15952">
+<div class="title">
+<h4><a href="../../../../../comments.pl_55c37fd5.html" id="comment_link_15952" name="comment_link_15952" onclick="return D2.setFocusComment(15952)">ソフトウェアの保守は苦痛であり権限ではない</a>
+<span class="score" id="comment_score_15952">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15952); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~rtfm/index.html">rtfm (4274)</a>
+<span class="otherdetails" id="comment_otherdetails_15952">on 2001年08月22日 18時38分
+			 (<a href="../../../../../comment/15952.html">#15952</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15952"><p>&gt;ソフトウェアの保守は苦痛であり権限ではないというのは至言</p>
+<p>私もそう思いますね。ソフトウエアの開発って、最初はいいんですけど、そのうち保守とかくだらないこと(政治的な何かとか)に割かれる時間が多くなってきて……。でも、それが続けられるのって、楽しいとか興味があるからなんですよね。</p>
+<p>それに、以前から個人的な興味でglibcのロケール関係を見ているんですけど、<a href="http://www.linet.gr.jp/ML/pod/19990717/364.html">NLS分科会とUlrichさんとの当時のやりとり</a>を今になって見返しても、Ulrichさんの日本語環境に対する貢献はとても大きいと思いますよ。</p></div>
+</div>
+</div>
+<div id="replyto_15952"></div>
+<ul class="comment-group" id="group_15952">
+<li class="hide" id="hiddens_15952"></li>
+</ul></li><li class="comment full contain" id="tree_16067"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_16067"></div>
+<div class="comment-item" id="comment_16067">
+<div class="commentTop comment-top newcomment" id="comment_top_16067">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6f4fdce9.html" id="comment_link_16067" name="comment_link_16067" onclick="return D2.setFocusComment(16067)">Re:GNUプロジェクトを理解するためには</a>
+<span class="score" id="comment_score_16067">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 16067); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~r69/index.html">r69 (4753)</a>
+<span class="otherdetails" id="comment_otherdetails_16067">on 2001年08月23日  4時48分
+			 (<a href="../../../../../comment/16067.html">#16067</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_16067">ストールマンってGNU/Hurdが見捨てられてることにかなり怒ってない？ これ、思想とは別問題な気が。</div>
+</div>
+</div>
+<div id="replyto_16067"></div>
+<ul class="comment-group" id="group_16067">
+<li class="hide" id="hiddens_16067"></li>
+</ul></li><li class="comment full contain" id="tree_16124"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_16124"></div>
+<div class="comment-item" id="comment_16124">
+<div class="commentTop comment-top newcomment" id="comment_top_16124">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f959e1ae.html" id="comment_link_16124" name="comment_link_16124" onclick="return D2.setFocusComment(16124)">いよいよ</a>
+<span class="score" id="comment_score_16124">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 16124); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~jvm16/index.html">jvm16 (1311)</a>
+<span class="otherdetails" id="comment_otherdetails_16124">on 2001年08月23日 11時27分
+			 (<a href="../../../../../comment/16124.html">#16124</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_16124">かねてから RMS とゆーひとには，ロベスピエールとゆーかサンジュストとゆーか，サンシモン主義的とゆうか，<br/>そのようなもののにおいがつきまとっていました（オレのなかでは）．<br/>ソフトウェア共産主義者（これはほめ言葉）としての評価より，むしろそっちのほうがずーっと気になっていたのですが，<br/>今回の話はそのような文脈で眺めていたわたくしにとっては<br/> <br/>　　やっぱそうですか<br/> <br/>という感じでございました．<br/>すべての革命の後にはなぜにテロがあらねばならないのか，という古典的かつ<br/>歴史的な命題の今日的な演習といった気分でございます．<br/> <br/>むー．</div>
+</div>
+</div>
+<div id="replyto_16124"></div>
+<ul class="comment-group" id="group_16124">
+<li class="hide" id="hiddens_16124"></li>
+</ul></li><li class="comment full contain" id="tree_15941"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15941"></div>
+<div class="comment-item" id="comment_15941">
+<div class="commentTop comment-top newcomment" id="comment_top_15941">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1b85f84b.html" id="comment_link_15941" name="comment_link_15941" onclick="return D2.setFocusComment(15941)">Re:とっても悪文</a>
+<span class="score" id="comment_score_15941">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15941); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_15941">on 2001年08月22日 17時52分
+			 (<a href="../../../../../comment/15941.html">#15941</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15941">&gt;Linuxを成功に導いたものはすべて彼の功績であるとの主張 <br/> <br/>「LinuxではなくGNU/Linuxだ」というRMSの主張を指すのではないかと。<br/> <br/>がいしゅつ？<br/></div>
+</div>
+</div>
+<div id="replyto_15941"></div>
+<ul class="comment-group" id="group_15941">
+<li class="hide" id="hiddens_15941"></li>
+</ul></li><li class="comment full contain" id="tree_15957"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_15957"></div>
+<div class="comment-item" id="comment_15957">
+<div class="commentTop comment-top newcomment" id="comment_top_15957">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c744ce81.html" id="comment_link_15957" name="comment_link_15957" onclick="return D2.setFocusComment(15957)">Re:しっかりしろ、ぐにゅう</a>
+<span class="score" id="comment_score_15957">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 15957); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_15957">on 2001年08月22日 18時53分
+			 (<a href="../../../../../comment/15957.html">#15957</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_15957"> どうもどのようなことでもめたのか，いまひとつわかりませんが，
+ GNUやFSFの目的は，「独占的 (18k キャラクタ) なソフトウェア を使用する必要性を無くす」ことですが，
+この事でもめたのではないのですか?
+　だとすれば，とうぜんですし，人が変わろうが，GNUやFSFがある限り，有形無形の圧力(といっていいのか)を，GNUやFSFは行うでしょう。団体の目的ですから。</div>
+</div>
+</div>
+<div id="replyto_15957"></div>
+<ul class="comment-group" id="group_15957">
+<li class="hide" id="hiddens_15957"></li>
+</ul></li><li class="comment full contain" id="tree_16012"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_16012"></div>
+<div class="comment-item" id="comment_16012">
+<div class="commentTop comment-top newcomment" id="comment_top_16012">
+<div class="title">
+<h4><a href="../../../../../comments.pl_41505b17.html" id="comment_link_16012" name="comment_link_16012" onclick="return D2.setFocusComment(16012)">Re:しっかりしろ、ぐにゅう</a>
+<span class="score" id="comment_score_16012">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 16012); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_16012">on 2001年08月22日 23時44分
+			 (<a href="../../../../../comment/16012.html">#16012</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_16012">良く読んでいないのですが、私も上の人の意見に賛成です。ただプログラムをつくるひとたちじゃないんですよ。ビシッと筋が通っているんです。</div>
+</div>
+</div>
+<div id="replyto_16012"></div>
+<ul class="comment-group" id="group_16012">
+<li class="hide" id="hiddens_16012"></li>
+</ul></li><li class="comment full contain" id="tree_16095"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_16095"></div>
+<div class="comment-item" id="comment_16095">
+<div class="commentTop comment-top newcomment" id="comment_top_16095">
+<div class="title">
+<h4><a href="../../../../../comments.pl_beefcc6d.html" id="comment_link_16095" name="comment_link_16095" onclick="return D2.setFocusComment(16095)">Re:名創業者必ずしも名経営者ならず</a>
+<span class="score" id="comment_score_16095">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 16095); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_16095">on 2001年08月23日  9時33分
+			 (<a href="../../../../../comment/16095.html">#16095</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_16095">RMS さんは仕事は何してんの？(マジ)</div>
+</div>
+</div>
+<div id="replyto_16095"></div>
+<ul class="comment-group" id="group_16095">
+<li class="hide" id="hiddens_16095"></li>
+</ul></li><li class="comment full contain" id="tree_16099"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_16099"></div>
+<div class="comment-item" id="comment_16099">
+<div class="commentTop comment-top newcomment" id="comment_top_16099">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0f07b9ce.html" id="comment_link_16099" name="comment_link_16099" onclick="return D2.setFocusComment(16099)">Re:名創業者必ずしも名経営者ならず</a>
+<span class="score" id="comment_score_16099">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 16099); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_16099">on 2001年08月23日  9時42分
+			 (<a href="../../../../../comment/16099.html">#16099</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_16099">こんさるたんと。</div>
+</div>
+</div>
+<div id="replyto_16099"></div>
+<ul class="comment-group" id="group_16099">
+<li class="hide" id="hiddens_16099"></li>
+</ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 0;
+		D2.currents()['full']     = 24;
+		D2.currents()['oneline']  = 0;
+		// D2.currents_total(24);
+
+		D2.abbrev_comments({});
+		D2.noshow_comments([]);
+		D2.pieces_comments([]);
+		D2.init_hiddens([]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">24</span>/<span class="totalcommentcnt">24</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>日々是ハック也 -- あるハードコアバイナリアン<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../about.html">About</a></li>
+<li><a href="../../../../../faq/index.html">FAQ</a></li>
+<li><a href="../../../../index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../hof.html">殿堂入り</a></li>
+<li><a href="../../../../../authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

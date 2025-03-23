@@ -1,0 +1,3395 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/03/11/07/0259211.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>Linux 2.6 のソースコードにバックドアが仕掛けられかける | スラド</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="Linux 2.6 のソースコードにバックドアが仕掛けられかける | スラド" property="og:title">
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '660452534282343311',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content='yosshy 曰く、 "KernelTrap より。何者かが kernel.bkbits.net に侵入し、開発中の Linux 2.6 のソースコードの一部にバックドアを仕掛けた事が Larry McVoy により報告された。Linux 2.6 がなかなかリリースされないのはこいつの仕業か？"ざっと読んだが、BitKeeperからミラーされているCVSツリーが狙われた形になってい...' name="description"/>
+<meta content='yosshy 曰く、 "KernelTrap より。何者かが kernel.bkbits.net に侵入し、開発中の Linux 2.6 のソースコードの一部にバックドアを仕掛けた事が Larry McVoy により報告された。Linux 2.6 がなかなかリリースされないのはこいつの仕業か？"ざっと読んだが、BitKeeperからミラーされているCVSツリーが狙われた形になってい...' property="og:description"/>
+<meta content="Linux 2.6 のソースコードにバックドアが仕掛けられかける | スラド" itemprop="name"/>
+<meta content='yosshy 曰く、 "KernelTrap より。何者かが kernel.bkbits.net に侵入し、開発中の Linux 2.6 のソースコードの一部にバックドアを仕掛けた事が Larry McVoy により報告された。Linux 2.6 がなかなかリリースされないのはこいつの仕業か？"ざっと読んだが、BitKeeperからミラーされているCVSツリーが狙われた形になってい...' itemprop="description"/>
+<link href="../../../../../index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../sradjp.rss" rel="alternate" title="スラド RSS" type="application/rss+xml"/>
+<link href="../../../../../static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/03/11/07/0259211/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'mainpage';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/03/11/07/0259211.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="6838" data-fhtype="story" id="firehose-6838">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">6838</span>
+<span class="type">story</span>
+</span>
+<header>
+<h2 class="story">
+<span id="title-6838"> <a href="index.html">Linux 2.6 のソースコードにバックドアが仕掛けられかける</a></span>
+<span class="comments commentcnt-6838">149</span>
+</h2>
+<div class="details" id="details-6838">ストーリー by <a href="http://d.hatena.ne.jp/wakatono/">wakatono</a>
+<time datetime="2003-11-07T11:59+09:00" id="fhtime-6838">2003年11月07日 11時59分</time><br/>カーネルハッカーとクラッカーの攻防 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "Linux 2.6 のソースコードにバックドアが仕掛けられかける",
+  "datePublished": "2003-11-07T11:59+09:00",
+  "articleBody": "yosshy 曰く、 \"KernelTrap より。何者かが kernel.bkbits.net に侵入し、開発中の Linux 2.6 のソースコードの一部にバックドアを仕掛けた事が Larry McVoy により報告された。Linux 2.6 がなかなかリリースされないのはこいつの仕業か？\"ざっと読んだが、BitKeeperからミラーされているCVSツリーが狙われた形になっているようだ。2003/11/7 14:00 JST 追記 by W:結局、改ざんはBitKeeper側で早期に検知され、CVSリポジトリの修正というようなところに落ち着いている。確かに「改ざん」だけでなく、その修正について触れなかったのはこちらの落ち度。指摘ありがとうございます。",
+  "image": "https://srad.jp/static/topics/"
+}
+</script>
+<div class="body" id="fhbody-6838">
+<div class="contents_text p" id="text-6838">
+<p><a href="mailto:yosshy@debian.or.jp">yosshy</a> 曰く、 "<a href="http://kerneltrap.org/node/view/1584">KernelTrap</a> より。何者かが kernel.bkbits.net に侵入し、開発中の Linux 2.6 のソースコードの一部にバックドアを仕掛けた事が Larry McVoy により<a href="http://marc.theaimsgroup.com/?l=linux-kernel&amp;m=106806542227844&amp;w=2">報告</a>された。Linux 2.6 がなかなかリリースされないのはこいつの仕業か？"</p>
+<p>ざっと読んだが、BitKeeperからミラーされているCVSツリーが狙われた形になっているようだ。</p>
+
+2003/11/7 14:00 JST 追記 by <strong>W</strong>:結局、改ざんはBitKeeper側で早期に検知され、CVSリポジトリの修正というようなところに落ち着いている。確かに「改ざん」だけでなく、その修正について触れなかったのはこちらの落ち度。<a href="../../../../../comments.pl_87744448.html">指摘</a>ありがとうございます。
+        </div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //srad.jp/story/03/11/07/0259211/ -->
+<!-- http://srad.jp/story/03/11/07/0259211/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://srad.jp/story/03/11/07/0259211/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://srad.jp/story/03/11/07/0259211/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/srad.jp/story/03/11/07/0259211/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">149</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-6838"><a class="popular topic tag" href="../../../../../tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../tag/linux.html" rel="statictag" target="_blank">linux</a>
+<a class="popular tag" href="../../../../../tag/os.html" rel="statictag" target="_blank">os</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../../06/2241246/index.html" id="hrefns">お知らせ：DDI-Pの新規開局予定エリア</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../../../../opensource.srad.jp/story/16/05/15/0457249/index.html">OSSコミュニティとの対立から11年、BitKeeperがオープンソース化される</a></h3><h3><a href="../../../../../../security.srad.jp/story/10/12/15/082257/index.html">FBI、OpenBSDのIPSEC開発者に金銭を送りバックドアを仕込んでいた？</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="Linux 2.6 のソースコードにバックドアが仕掛けられかけるのストーリーへ戻る">Linux 2.6 のソースコードにバックドアが仕掛けられかける</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//srad.jp/story/03/11/07/0259211/';
+var parent_item_title = 'Linux 2.6 のソースコードにバックドアが仕掛けられかける';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「Linux 2.6 のソースコードにバックドアが仕掛けられかける」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//srad.jp/search.pl?op=comments&amp;sid=132127" class="btn"><span class="totalcommentcnt">149</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//srad.jp/comments.pl?sid=132127"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_d71e44ec.html"><span>検索</span><span class="totalcommentcnt">149</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 429154: { uid: undefined, pid: 429069, read: 0, points: -2, kids: [ 429283 ], opid: undefined }, 429147: { uid: undefined, pid: 429133, read: 0, points: -2, kids: [ 429157 ], opid: undefined }, 429262: { uid: 12057, pid: 429112, read: 0, points: 1, kids: [  ], opid: 429112 }, 429081: { uid: 4383, pid: 0, read: 0, points: 2, kids: [ 429126 ], opid: 0 }, 429246: { uid: 135, pid: 429157, read: 0, points: 1, kids: [  ], opid: 429157 }, 429764: { uid: 12783, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 429024: { uid: 1, pid: 429012, read: 0, points: 2, kids: [ 429128 ], opid: 429012 }, 429353: { uid: 8009, pid: 429274, read: 0, points: 1, kids: [  ], opid: 429274 }, 429186: { uid: 1, pid: 428996, read: 0, points: 2, kids: [  ], opid: 428996 }, 429115: { uid: 13976, pid: 429093, read: 0, points: 1, kids: [ 429161, 429240, 429354, 429443 ], opid: 429093 }, 429151: { uid: 1, pid: 429082, read: 0, points: 2, kids: [  ], opid: 429082 }, 429021: { uid: 5126, pid: 428996, read: 0, points: 1, kids: [ 429074 ], opid: 428996 }, 429402: { uid: 14233, pid: 429047, read: 0, points: 1, kids: [  ], opid: 429047 }, 429090: { uid: undefined, pid: 429009, read: 0, points: -2, kids: [ 429200 ], opid: undefined }, 429029: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 429034, 429040, 429044, 429063, 429069, 429084, 429110, 429133, 429230, 429907 ], opid: undefined }, 429161: { uid: 1, pid: 429115, read: 0, points: 1, kids: [  ], opid: 429115 }, 429079: { uid: 16843, pid: 429047, read: 0, points: 2, kids: [ 429093 ], opid: 429047 }, 429035: { uid: 1, pid: 429030, read: 0, points: 1, kids: [ 429075 ], opid: 429030 }, 429354: { uid: 13976, pid: 429115, read: 0, points: 1, kids: [  ], opid: 429161 }, 429074: { uid: 1, pid: 429021, read: 0, points: 1, kids: [  ], opid: 429021 }, 429040: { uid: undefined, pid: 429029, read: 0, points: -2, kids: [ 429087 ], opid: undefined }, 429082: { uid: 1, pid: 429070, read: 0, points: 1, kids: [ 429151, 429164 ], opid: 429070 }, 429063: { uid: 1, pid: 429029, read: 0, points: 2, kids: [  ], opid: 429029 }, 429133: { uid: undefined, pid: 429029, read: 0, points: -2, kids: [ 429147 ], opid: undefined }, 429197: { uid: 10330, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 429152: { uid: 7719, pid: 429047, read: 0, points: 1, kids: [  ], opid: 429047 }, 429047: { uid: 1, pid: 429034, read: 0, points: 2, kids: [ 429064, 429079, 429152, 429402 ], opid: 429034 }, 429000: { uid: 16343, pid: 0, read: 0, points: 3, kids: [ 429071 ], opid: 0 }, 429087: { uid: 135, pid: 429040, read: 0, points: 2, kids: [  ], opid: 429040 }, 429075: { uid: 737, pid: 429035, read: 0, points: 1, kids: [  ], opid: 429035 }, 429172: { uid: 3689, pid: 429164, read: 0, points: 1, kids: [  ], opid: 429170 }, 429112: { uid: undefined, pid: 428996, read: 0, points: -2, kids: [ 429262 ], opid: undefined }, 429071: { uid: 1, pid: 429000, read: 0, points: 2, kids: [  ], opid: 429000 }, 429044: { uid: 1, pid: 429029, read: 0, points: 2, kids: [  ], opid: 429029 }, 429012: { uid: 3689, pid: 428996, read: 0, points: 5, kids: [ 429024 ], opid: 428996 }, 429177: { uid: undefined, pid: 429167, read: 0, points: -2, kids: [ 429192 ], opid: undefined }, 429274: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 429353 ], opid: undefined }, 428996: { uid: 1, pid: 0, read: 0, points: 2, kids: [ 429009, 429012, 429021, 429026, 429030, 429112, 429186 ], opid: 0 }, 429164: { uid: 3689, pid: 429082, read: 0, points: 1, kids: [ 429170, 429172, 429610 ], opid: 429082 }, 429064: { uid: 1, pid: 429047, read: 0, points: 4, kids: [  ], opid: 429047 }, 429230: { uid: 1, pid: 429029, read: 0, points: 1, kids: [  ], opid: 429029 }, 429210: { uid: 10541, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 429030: { uid: undefined, pid: 428996, read: 0, points: -2, kids: [ 429035 ], opid: undefined }, 429034: { uid: undefined, pid: 429029, read: 0, points: -2, kids: [ 429047 ], opid: undefined }, 429110: { uid: 1, pid: 429029, read: 0, points: 1, kids: [  ], opid: 429029 }, 429192: { uid: 13040, pid: 429177, read: 0, points: 2, kids: [ 430053 ], opid: 429177 }, 430023: { uid: 1, pid: 429283, read: 0, points: 1, kids: [  ], opid: 429283 }, 429009: { uid: undefined, pid: 428996, read: 0, points: -2, kids: [ 429090 ], opid: undefined }, 430220: { uid: 13040, pid: 430053, read: 0, points: 1, kids: [  ], opid: 430053 }, 429283: { uid: 1, pid: 429154, read: 0, points: 1, kids: [ 430023 ], opid: 429154 }, 429191: { uid: 1, pid: 429157, read: 0, points: 2, kids: [  ], opid: 429157 }, 429126: { uid: 1690, pid: 429081, read: 0, points: 1, kids: [ 429167 ], opid: 429081 }, 429069: { uid: 1, pid: 429029, read: 0, points: 1, kids: [ 429154 ], opid: 429029 }, 429042: { uid: 1, pid: 429026, read: 0, points: 1, kids: [ 429070 ], opid: 429026 }, 429200: { uid: 1, pid: 429090, read: 0, points: 1, kids: [  ], opid: 429090 }, 429443: { uid: 1, pid: 429115, read: 0, points: 1, kids: [  ], opid: 429161 }, 429128: { uid: 3689, pid: 429024, read: 0, points: 1, kids: [  ], opid: 429024 }, 429084: { uid: 1, pid: 429029, read: 0, points: 2, kids: [  ], opid: 429029 }, 429167: { uid: undefined, pid: 429126, read: 0, points: -2, kids: [ 429177 ], opid: undefined }, 429157: { uid: 135, pid: 429147, read: 0, points: 2, kids: [ 429191, 429246 ], opid: 429147 }, 430053: { uid: undefined, pid: 429192, read: 0, points: -2, kids: [ 430220 ], opid: undefined }, 429170: { uid: undefined, pid: 429164, read: 0, points: -2, kids: [  ], opid: undefined }, 429240: { uid: 1, pid: 429115, read: 0, points: 1, kids: [  ], opid: 429161 }, 429907: { uid: 4948, pid: 429029, read: 0, points: 1, kids: [  ], opid: 429029 }, 429070: { uid: undefined, pid: 429042, read: 0, points: -2, kids: [ 429082 ], opid: undefined }, 429610: { uid: 1, pid: 429164, read: 0, points: 1, kids: [  ], opid: 429164 }, 429093: { uid: undefined, pid: 429079, read: 0, points: -2, kids: [ 429115 ], opid: undefined }, 429026: { uid: undefined, pid: 428996, read: 0, points: -2, kids: [ 429042 ], opid: undefined } });
+
+D2.thresh_totals({6:{6:{1:50,3:0,2:0}},4:{6:{1:48,3:0,2:2},4:{1:48,3:2,2:0},5:{1:48,3:1,2:1}},1:{6:{1:0,3:0,2:50},4:{1:0,3:3,2:47},1:{1:0,3:50,2:0},3:{1:0,3:6,2:44},2:{1:0,3:21,2:29},5:{1:0,3:1,2:49}},3:{6:{1:47,3:0,2:3},4:{1:47,3:3,2:0},3:{1:47,3:3,2:0},5:{1:47,3:1,2:2}},0:{6:{1:0,3:0,2:50},4:{1:0,3:3,2:47},1:{1:0,3:50,2:0},3:{1:0,3:6,2:44},0:{1:0,3:50,2:0},2:{1:0,3:21,2:29},5:{1:0,3:1,2:49}},2:{6:{1:31,3:0,2:19},4:{1:31,3:3,2:16},3:{1:31,3:6,2:13},2:{1:31,3:19,2:0},5:{1:31,3:1,2:18}},5:{6:{1:49,3:0,2:1},5:{1:49,3:1,2:0}},"-1":{6:{1:0,3:0,2:50},4:{1:0,3:3,2:47},1:{1:0,3:50,2:0},3:{1:0,3:6,2:44},0:{1:0,3:50,2:0},2:{1:0,3:21,2:29},5:{1:0,3:1,2:49},"-1":{1:0,3:50,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([429000,428996,429081,429210,429197,429764,429029,429274]);
+D2.root_comments_hash({429081:1,429274:1,429764:1,428996:1,429210:1,429029:1,429197:1,429000:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(132127);
+
+D2.d2_seen('428996,4,12,9,3,11,7,2,3,16,1,5,2,3,1,4,2,1,2,3,23,5,11,2,23,1,5,4,3,8,14,5,1,5,3,10,20,10,6,16,21,70,1,48,41,167,154,143,116,197');
+D2.more_comments_num(99);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_429000"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429000"></div>
+<div class="comment-item" id="comment_429000">
+<div class="commentTop comment-top newcomment" id="comment_top_429000">
+<div class="title">
+<h4><a href="../../../../../comments.pl_04c1cbc6.html" id="comment_link_429000" name="comment_link_429000" onclick="return D2.setFocusComment(429000)">日本語記事</a>
+<span class="score" id="comment_score_429000">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429000); return false">スコア:3</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Anal%20Cunt/index.html">Anal Cunt (16343)</a>
+<span class="otherdetails" id="comment_otherdetails_429000">on 2003年11月07日 12時21分
+			 (<a href="../../../../../comment/429000.html">#429000</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~Anal%20Cunt/journal/index.html" title="2005年10月27日 22時39分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429000"><a href="http://japan.cnet.com/news/ent/story/0,2000047623,20061830,00.htm">CNET Japan</a> [cnet.com] <br/> <a href="http://www.zdnet.co.jp/enterprise/0311/07/epn03.html">ZDNN</a> [zdnet.co.jp] <br/> <br/>たれこみ文章を長々と書いてたら出遅れた…</div>
+</div>
+</div>
+<div id="replyto_429000"></div>
+<ul class="comment-group" id="group_429000">
+<li class="hide" id="hiddens_429000"></li>
+</ul><ul id="commtree_429000"><li class="comment full contain" id="tree_429071"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429071"></div>
+<div class="comment-item" id="comment_429071">
+<div class="commentTop comment-top newcomment" id="comment_top_429071">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d053d8fa.html" id="comment_link_429071" name="comment_link_429071" onclick="return D2.setFocusComment(429071)">Re:日本語記事</a>
+<span class="score" id="comment_score_429071">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429071); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429071">on 2003年11月07日 13時39分
+			 (<a href="../../../../../comment/429071.html">#429071</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429071">CNET Japan　：<blockquote>Linuxカーネルデータベースに侵入者--コードの改ざんには失敗</blockquote>ZDNN　：<blockquote>Linuxカーネルを狙った攻撃が発覚</blockquote>/.J　：<blockquote>Linux 2.6 のソースコードにバックドアが仕掛けられる</blockquote> <br/>同じことだけど、ずいぶん印象が違う感じ。<br/> <br/>侵入され、バックドアも仕掛けられたが、守るべきものは守られた。<br/> <br/>同様のことが住基ネットに起こったら、どうだろう。<br/>大問題に、なるような気がするけど。</div>
+</div>
+<div class="commentSub" id="comment_sub_429071">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:日本語記事')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429071'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429071'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429071'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_b9f29afa.html" onclick="return D2.selectParent(429000)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429071"></div>
+<ul class="comment-group" id="group_429071">
+<li class="hide" id="hiddens_429071"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_428996"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_428996"></div>
+<div class="comment-item" id="comment_428996">
+<div class="commentTop comment-top newcomment" id="comment_top_428996">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ed1a9df9.html" id="comment_link_428996" name="comment_link_428996" onclick="return D2.setFocusComment(428996)">これって</a>
+<span class="score" id="comment_score_428996">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 428996); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_428996">on 2003年11月07日 12時15分
+			 (<a href="../../../../../comment/428996.html">#428996</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_428996">ソースコードをオープンにしているからトラップが仕掛けられたのか、ソースコードをオープンにしてからこそ発見できたのか、で、いつもの論争が始まりそうですね。<br/>トラップが仕掛けられた時間を特定して、解決までにどれだけかかったかが検証できれば、評価に決着がつきそうですが。</div>
+</div>
+</div>
+<div id="replyto_428996"></div>
+<ul class="comment-group" id="group_428996">
+<li class="hide" id="hiddens_428996"></li>
+</ul><ul id="commtree_428996"><li class="comment full contain" id="tree_429012"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429012"></div>
+<div class="comment-item" id="comment_429012">
+<div class="commentTop comment-top newcomment" id="comment_top_429012">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0544f601.html" id="comment_link_429012" name="comment_link_429012" onclick="return D2.setFocusComment(429012)">Re:これって</a>
+<span class="score" id="comment_score_429012">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429012); return false">スコア:5</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~zeissmania/index.html">zeissmania (3689)</a>
+<span class="otherdetails" id="comment_otherdetails_429012">on 2003年11月07日 12時34分
+			 (<a href="../../../../../comment/429012.html">#429012</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429012">＞ソースコードをオープンにしてからこそ発見できたのか<br/>発見されたのは、BitKeeperの自動チェックにより、不正なコード変更があったことが検知されたためだそうです。<br/>CVSしか使ってなかったら、発見は大幅に遅れた可能性が大きいです。<br/> <br/>＞解決までにどれだけかかったかが検証できれば<br/>自動チェックは24時間毎に実行されているので、異常通知は不正な変更から24時間以内に行われるそうです。今回はその通知を受けて調査を始めて、５分で不正な変更箇所を特定したそうです。</div>
+</div>
+<div class="commentSub" id="comment_sub_429012">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429012'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429012'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429012'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_47b16208.html" onclick="return D2.selectParent(428996)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429012"></div>
+<ul class="comment-group" id="group_429012">
+<li class="hide" id="hiddens_429012"></li>
+</ul><ul id="commtree_429012"><li class="comment full contain" id="tree_429024"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429024"></div>
+<div class="comment-item" id="comment_429024">
+<div class="commentTop comment-top newcomment" id="comment_top_429024">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9b89790e.html" id="comment_link_429024" name="comment_link_429024" onclick="return D2.setFocusComment(429024)">Re:これって</a>
+<span class="score" id="comment_score_429024">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429024); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429024">on 2003年11月07日 12時54分
+			 (<a href="../../../../../comment/429024.html">#429024</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429024">これって、BitKeeperのレポジトリから<br/>反映されているCVSツリーが直接変更されたので<br/>BitKeeperとの齟齬が検出できたんですよね？<br/> <br/>CVSのコメントに(Logical change X.YZ)っていう識別子が<br/>なかったことが不正発見の決め手のようですが<br/>狙われたのが、CVSじゃなくBitKeeperのレポジトリだったら<br/>さらに発見は遅れたんでしょうかね？<br/># 直接アクセスは難しそうですが・・・<br/>あと偽の識別子が入ってたり・・・</div>
+</div>
+<div class="commentSub" id="comment_sub_429024">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429024'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429024'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429024'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_d69dee26.html" onclick="return D2.selectParent(429012)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429024"></div>
+<ul class="comment-group" id="group_429024">
+<li class="hide" id="hiddens_429024"></li>
+</ul><ul id="commtree_429024"><li class="comment full contain" id="tree_429128"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429128"></div>
+<div class="comment-item" id="comment_429128">
+<div class="commentTop comment-top newcomment" id="comment_top_429128">
+<div class="title">
+<h4><a href="../../../../../comments.pl_53ba5c1e.html" id="comment_link_429128" name="comment_link_429128" onclick="return D2.setFocusComment(429128)">Re:これって</a>
+<span class="score" id="comment_score_429128">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429128); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~zeissmania/index.html">zeissmania (3689)</a>
+<span class="otherdetails" id="comment_otherdetails_429128">on 2003年11月07日 14時43分
+			 (<a href="../../../../../comment/429128.html">#429128</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429128">うーん、セキュリティの仕組みがどうなってるかとか、BitKeeperがどういう仕組みになっているかは知らないのですが、<a href="http://japan.cnet.com/news/ent/story/0,2000047623,20061830,00.htm">CNET JapanのLinus氏のインタビュー</a> [cnet.com]を読む限りでは、ちゃんと検知されて、不正コードはすぐに見付けられるようになっているみたいです。</div>
+</div>
+<div class="commentSub" id="comment_sub_429128">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429128'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429128'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429128'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_8d8999eb.html" onclick="return D2.selectParent(429024)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429128"></div>
+<ul class="comment-group" id="group_429128">
+<li class="hide" id="hiddens_429128"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_429186"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429186"></div>
+<div class="comment-item" id="comment_429186">
+<div class="commentTop comment-top newcomment" id="comment_top_429186">
+<div class="title">
+<h4><a href="../../../../../comments.pl_045772ca.html" id="comment_link_429186" name="comment_link_429186" onclick="return D2.setFocusComment(429186)">オープン開発である以上はリスクは高いのは仕方ない。</a>
+<span class="score" id="comment_score_429186">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429186); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429186">on 2003年11月07日 16時03分
+			 (<a href="../../../../../comment/429186.html">#429186</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429186">&gt;ースコードをオープンにしているからトラップが仕掛けられたのか、<p>
+オープン開発である以上はリスクは高いのは仕方ないのだけど、やっぱりやられたってお話でしょう。<p>
+&gt;ソースコードをオープンにしてからこそ発見できたのか、<p>
+オープンだかどうかは関係無く、とりあえずチェックに引っかかった、と。<p>
+&gt;トラップが仕掛けられた時間を特定して、解決までにどれだけかかったかが検証できれば、<br/>
+&gt;評価に決着がつきそうですが。<p>
+無意味では？判断はそれぞれですから。<br/>
+人によっては「最悪２４時間で済んだ」だし、他だと「もしかしたら２４時間も公開してたの？酷いな」だろうし。<p>
+別にこんな所でオープンソースマンせーなんて言う気は無いから。<br/>
+問題はこの事実に対してどう改善を行いうるか、それだけ。<br/>
+無理に比較論に持っていく必要は無いよ。<p></p></p></p></p></p></p></p></div>
+</div>
+<div class="commentSub" id="comment_sub_429186">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('オープン開発である以上はリスクは高いのは仕方ない。')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429186'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429186'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429186'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_47b16208.html" onclick="return D2.selectParent(428996)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429186"></div>
+<ul class="comment-group" id="group_429186">
+<li class="hide" id="hiddens_429186"></li>
+</ul></li><li class="comment full contain" id="tree_429021"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429021"></div>
+<div class="comment-item" id="comment_429021">
+<div class="commentTop comment-top newcomment" id="comment_top_429021">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2146166b.html" id="comment_link_429021" name="comment_link_429021" onclick="return D2.setFocusComment(429021)">Re:これって</a>
+<span class="score" id="comment_score_429021">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429021); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~togawa/index.html">togawa (5126)</a>
+<span class="otherdetails" id="comment_otherdetails_429021">on 2003年11月07日 12時46分
+			 (<a href="../../../../../comment/429021.html">#429021</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429021">「ソースコードをオープンにしている」というのと<br/>「開発途中のコードが誰からもアクセスできる」というのは<br/>意味合いとしてイコールではないと思う．<br/> <br/>「開発途中のコードは公開してないけど，リリース毎のソースコードは公開している」<br/>というのであれば，今回の問題は発生しなかったかもしれないけど，それでもいわゆる<br/>「オープンソース」なわけだし．</div>
+</div>
+<div class="commentSub" id="comment_sub_429021">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429021'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429021'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429021'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_47b16208.html" onclick="return D2.selectParent(428996)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429021"></div>
+<ul class="comment-group" id="group_429021">
+<li class="hide" id="hiddens_429021"></li>
+</ul><ul id="commtree_429021"><li class="comment full contain" id="tree_429074"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429074"></div>
+<div class="comment-item" id="comment_429074">
+<div class="commentTop comment-top newcomment" id="comment_top_429074">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4f592c64.html" id="comment_link_429074" name="comment_link_429074" onclick="return D2.setFocusComment(429074)">Re:これって</a>
+<span class="score" id="comment_score_429074">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429074); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429074">on 2003年11月07日 13時43分
+			 (<a href="../../../../../comment/429074.html">#429074</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429074">&gt;「開発途中のコードは公開してないけど，リリース毎のソースコードは公開している」 <br/>&gt;というのであれば，今回の問題は発生しなかったかもしれないけど，それでもいわゆる <br/>&gt;「オープンソース」なわけだし．<br/> <br/>なぜ発生しなかったかもしれないと思うのですか？<br/>最近、オープンソースのソースコードにバックドアが仕掛けられて<br/>公開させられる事件が複数発生していますよね。<br/> <br/>GNUなんて、仕掛けられてはいなかったものの、大量に仕掛けられても<br/>おかしくない状況でしたし。</div>
+</div>
+<div class="commentSub" id="comment_sub_429074">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429074'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429074'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429074'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_24ab42ce.html" onclick="return D2.selectParent(429021)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429074"></div>
+<ul class="comment-group" id="group_429074">
+<li class="hide" id="hiddens_429074"></li>
+</ul></li></ul></li><li class="comment hidden" id="tree_429030"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429030"></div>
+<div class="comment-item" id="comment_429030">
+</div>
+<div id="replyto_429030"></div>
+<ul class="comment-group" id="group_429030">
+<li class="hide" id="hiddens_429030"></li>
+</ul><ul id="commtree_429030"><li class="comment full contain" id="tree_429035"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429035"></div>
+<div class="comment-item" id="comment_429035">
+<div class="commentTop comment-top newcomment" id="comment_top_429035">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a8e1bcae.html" id="comment_link_429035" name="comment_link_429035" onclick="return D2.setFocusComment(429035)">Re:これって</a>
+<span class="score" id="comment_score_429035">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429035); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429035">on 2003年11月07日 13時10分
+			 (<a href="../../../../../comment/429035.html">#429035</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429035">クローズドソースの非公開リポジトリだと位置も分からなくて<br/>侵入が難しいという意味では公開リポジトリはハイリスクだと言える気がする。</div>
+</div>
+<div class="commentSub" id="comment_sub_429035">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429035'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429035'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429035'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_c5da0ff0.html" onclick="return D2.selectParent(429030)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429035"></div>
+<ul class="comment-group" id="group_429035">
+<li class="hide" id="hiddens_429035"></li>
+</ul><ul id="commtree_429035"><li class="comment full contain" id="tree_429075"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429075"></div>
+<div class="comment-item" id="comment_429075">
+<div class="commentTop comment-top newcomment" id="comment_top_429075">
+<div class="title">
+<h4><a href="../../../../../comments.pl_32e35283.html" id="comment_link_429075" name="comment_link_429075" onclick="return D2.setFocusComment(429075)">Re:これって</a>
+<span class="score" id="comment_score_429075">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429075); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~mishima/index.html">mishima (737)</a>
+<span class="otherdetails" id="comment_otherdetails_429075">on 2003年11月07日 13時43分
+			 (<a href="../../../../../comment/429075.html">#429075</a>)
+			<small>
+<a class="user_homepage_display" href="http://opentechpress.jp/~mishima/journal/" title="http://opentechpress.jp/~mishima/journal/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~mishima/journal/index.html" title="2019年08月20日 10時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429075">関係者の数が多くなると、セキュリティ面でのリスクは大きくなるね。<br/>そういう意味でもオープンソースがハイリスクだというのは同意。<br/> <br/>クローズドなコードの場合、社外からのアクセスには強いけど、<br/>社内からのアクセスには甘かったりするのが問題になるんだよね…<br/>かくいう自分も、リポジトリへのアクセス監視を毎日やったほうが<br/>いいかなと思案中。</div>
+<div class="sig" id="comment_sig_429075">-- <br/># mishimaは本田透先生を熱烈に応援しています</div>
+</div>
+<div class="commentSub" id="comment_sub_429075">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429075'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429075'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429075'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_174e735c.html" onclick="return D2.selectParent(429035)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429075"></div>
+<ul class="comment-group" id="group_429075">
+<li class="hide" id="hiddens_429075"></li>
+</ul></li></ul></li></ul></li><li class="comment hidden" id="tree_429026"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429026"></div>
+<div class="comment-item" id="comment_429026">
+</div>
+<div id="replyto_429026"></div>
+<ul class="comment-group" id="group_429026">
+<li class="hide" id="hiddens_429026"></li>
+</ul><ul id="commtree_429026"><li class="comment full contain" id="tree_429042"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429042"></div>
+<div class="comment-item" id="comment_429042">
+<div class="commentTop comment-top newcomment" id="comment_top_429042">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8bbf2351.html" id="comment_link_429042" name="comment_link_429042" onclick="return D2.setFocusComment(429042)">Re:これって</a>
+<span class="score" id="comment_score_429042">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429042); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429042">on 2003年11月07日 13時17分
+			 (<a href="../../../../../comment/429042.html">#429042</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429042">&gt;被害は24時間以内にこのソースコードを利用した開発者のみに限られてますし。<br/> <br/>二次利用者が存在する可能性はないですか？<br/> <br/>このソースコードを持っていって、それを利用して自社製品に使い、<br/>それを購入する人がいるとか。<br/>まあ、取得した開発者がこのニュースに気づいて完成する前には<br/>直すかと思いますけど。<br/> <br/>しかし、今回の検知方法を考えれば、オープンソースであろうが<br/>クローズドソースであろうが関係ないですよね。<br/>検知が早かったからオープンソースがすばらしい、とは言えないかと。<br/>むしろ…。</div>
+</div>
+<div class="commentSub" id="comment_sub_429042">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429042'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429042'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429042'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_6353b485.html" onclick="return D2.selectParent(429026)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429042"></div>
+<ul class="comment-group" id="group_429042">
+<li class="hide" id="hiddens_429042"></li>
+</ul><ul id="commtree_429042"><li class="comment hidden" id="tree_429070"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429070"></div>
+<div class="comment-item" id="comment_429070">
+</div>
+<div id="replyto_429070"></div>
+<ul class="comment-group" id="group_429070">
+<li class="hide" id="hiddens_429070"></li>
+</ul><ul id="commtree_429070"><li class="comment full contain" id="tree_429082"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429082"></div>
+<div class="comment-item" id="comment_429082">
+<div class="commentTop comment-top newcomment" id="comment_top_429082">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1d5a4bbf.html" id="comment_link_429082" name="comment_link_429082" onclick="return D2.setFocusComment(429082)">Re:これって</a>
+<span class="score" id="comment_score_429082">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429082); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429082">on 2003年11月07日 13時52分
+			 (<a href="../../../../../comment/429082.html">#429082</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429082">&gt;仮にこれがクローズドだったら、絶対に公表されないと思います。 <br/>&gt;ユーザはそれを見て選べば良いわけで、これを知ってLinuxを <br/>&gt;選びたくなくなった、という人にとってもメリットです。<br/> <br/>一般論から言って、公表されない＝不正改造がないという建前　の<br/>商品のほうをユーザは選択しますよ。<br/>たとえ大きな被害が出る前に発見できたからといって、不正にソースが<br/>改変されたという不安感は小さくないです。<br/>このニュースを聞いて「Linuxって安心だ」と思う人もいるでしょうけど、<br/>「Linuxって大丈夫なのか？」と不安に思った人のほうが多いと思います。</div>
+</div>
+<div class="commentSub" id="comment_sub_429082">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429082'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429082'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429082'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_c766fd16.html" onclick="return D2.selectParent(429070)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429082"></div>
+<ul class="comment-group" id="group_429082">
+<li class="hide" id="hiddens_429082"></li>
+</ul><ul id="commtree_429082"><li class="comment full contain" id="tree_429151"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429151"></div>
+<div class="comment-item" id="comment_429151">
+<div class="commentTop comment-top newcomment" id="comment_top_429151">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6b999e22.html" id="comment_link_429151" name="comment_link_429151" onclick="return D2.setFocusComment(429151)">Re:これって</a>
+<span class="score" id="comment_score_429151">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429151); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429151">on 2003年11月07日 15時10分
+			 (<a href="../../../../../comment/429151.html">#429151</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429151">大切なのは「大丈夫なのか？」と思われるまさにその点であって、<br/>きちんと情報が提供されて、ユーザが選ぶ立場にある、ということ。<br/> <br/>漠然とした（根拠の無い）安心感ではなく、、、<br/> <br/>だから、Linuxが大衆に使われるためには、他の点で向上されれば良いのでは。<br/>例えばIBMや他のメーカのサポートが充実するとか。それなら<br/>「IBMがサポートしてるんだから、このOSは安心だ」って一般の人も<br/>思えるでしょうから。<br/> <br/>今回の場合は、そのIBMや他開発者の人間が<br/>「果たしてLinuxを選択して問題ないだろうか」と考えるのに<br/>役に立つことだと思うのです。</div>
+</div>
+<div class="commentSub" id="comment_sub_429151">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429151'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429151'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429151'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_fe069ca6.html" onclick="return D2.selectParent(429082)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429151"></div>
+<ul class="comment-group" id="group_429151">
+<li class="hide" id="hiddens_429151"></li>
+</ul></li><li class="comment full contain" id="tree_429164"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429164"></div>
+<div class="comment-item" id="comment_429164">
+<div class="commentTop comment-top newcomment" id="comment_top_429164">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1eec37a6.html" id="comment_link_429164" name="comment_link_429164" onclick="return D2.setFocusComment(429164)">Re:これって</a>
+<span class="score" id="comment_score_429164">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429164); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~zeissmania/index.html">zeissmania (3689)</a>
+<span class="otherdetails" id="comment_otherdetails_429164">on 2003年11月07日 15時29分
+			 (<a href="../../../../../comment/429164.html">#429164</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429164">＞公表されない＝不正改造がないという建前　の商品のほうをユーザは選択しますよ<br/>ということは、キチンとリコールして不具合を公表するメーカーの車ではなく、リコールすべき不具合をひた隠しするメーカーの車を、あなたは買っているわけですね。</div>
+</div>
+<div class="commentSub" id="comment_sub_429164">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429164'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429164'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429164'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_fe069ca6.html" onclick="return D2.selectParent(429082)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429164"></div>
+<ul class="comment-group" id="group_429164">
+<li class="hide" id="hiddens_429164"></li>
+</ul><ul id="commtree_429164"><li class="comment full contain" id="tree_429610"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429610"></div>
+<div class="comment-item" id="comment_429610">
+<div class="commentTop comment-top newcomment" id="comment_top_429610">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3b033276.html" id="comment_link_429610" name="comment_link_429610" onclick="return D2.setFocusComment(429610)">Re:これって</a>
+<span class="score" id="comment_score_429610">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429610); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429610">on 2003年11月08日  0時37分
+			 (<a href="../../../../../comment/429610.html">#429610</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429610">＞ということは、キチンとリコールして不具合を公表するメーカー<br/>
+＞の車ではなく、リコールすべき不具合をひた隠しするメーカーの<br/>
+＞車を、あなたは買っているわけですね。
+<p>
+その不具合が永久にばれることが無ければ当然そうするわな。
+<p>
+千里眼の持ち主でもなければ後者を選ぶに決まってる。だからこそ不具合を必死に隠したがる奴は後を断たないわけであって。
+<p>
+なんでもかんでも正直に公表することが売り上げ増につながるなら誰だってそうするわな。
+<p>
+「悪はばれなきゃ悪ではない」
+<p>
+あまりいい言葉じゃないが、これ真理。</p></p></p></p></p></div>
+</div>
+<div class="commentSub" id="comment_sub_429610">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429610'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429610'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429610'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_4847a737.html" onclick="return D2.selectParent(429164)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429610"></div>
+<ul class="comment-group" id="group_429610">
+<li class="hide" id="hiddens_429610"></li>
+</ul></li><li class="comment hidden" id="tree_429170"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429170"></div>
+<div class="comment-item" id="comment_429170">
+</div>
+<div id="replyto_429170"></div>
+<ul class="comment-group" id="group_429170">
+<li class="hide" id="hiddens_429170"></li>
+</ul></li><li class="comment full contain" id="tree_429172"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429172"></div>
+<div class="comment-item" id="comment_429172">
+<div class="commentTop comment-top newcomment" id="comment_top_429172">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a9317d50.html" id="comment_link_429172" name="comment_link_429172" onclick="return D2.setFocusComment(429172)">Re:これって</a>
+<span class="score" id="comment_score_429172">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429172); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~zeissmania/index.html">zeissmania (3689)</a>
+<span class="otherdetails" id="comment_otherdetails_429172">on 2003年11月07日 15時39分
+			 (<a href="../../../../../comment/429172.html">#429172</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429172">ってことは#429082は間違いってことですよね？</div>
+</div>
+<div class="commentSub" id="comment_sub_429172">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429172'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429172'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429172'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a10f8ad1.html" onclick="return D2.selectParent(429170)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429172"></div>
+<ul class="comment-group" id="group_429172">
+<li class="hide" id="hiddens_429172"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment hidden" id="tree_429009"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429009"></div>
+<div class="comment-item" id="comment_429009">
+</div>
+<div id="replyto_429009"></div>
+<ul class="comment-group" id="group_429009">
+<li class="hide" id="hiddens_429009"></li>
+</ul><ul id="commtree_429009"><li class="comment hidden" id="tree_429090"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429090"></div>
+<div class="comment-item" id="comment_429090">
+</div>
+<div id="replyto_429090"></div>
+<ul class="comment-group" id="group_429090">
+<li class="hide" id="hiddens_429090"></li>
+</ul><ul id="commtree_429090"><li class="comment full contain" id="tree_429200"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429200"></div>
+<div class="comment-item" id="comment_429200">
+<div class="commentTop comment-top newcomment" id="comment_top_429200">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c1fca1b4.html" id="comment_link_429200" name="comment_link_429200" onclick="return D2.setFocusComment(429200)">Re:これって</a>
+<span class="score" id="comment_score_429200">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429200); return false">スコア:1</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429200">on 2003年11月07日 16時19分
+			 (<a href="../../../../../comment/429200.html">#429200</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429200">&gt; で、犯人探しはしてるのか？するのか？ <br/> <br/>これは未だBitKeeper採用への疑問の声が消えないことに業を煮やしたLinus氏の仕業です。<br/>ですから、犯人探しは決して本気では行われません。あしからず。</div>
+</div>
+<div class="commentSub" id="comment_sub_429200">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429200'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429200'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429200'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_7e23b6af.html" onclick="return D2.selectParent(429090)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429200"></div>
+<ul class="comment-group" id="group_429200">
+<li class="hide" id="hiddens_429200"></li>
+</ul></li></ul></li></ul></li><li class="comment hidden" id="tree_429112"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429112"></div>
+<div class="comment-item" id="comment_429112">
+</div>
+<div id="replyto_429112"></div>
+<ul class="comment-group" id="group_429112">
+<li class="hide" id="hiddens_429112"></li>
+</ul><ul id="commtree_429112"><li class="comment full contain" id="tree_429262"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429262"></div>
+<div class="comment-item" id="comment_429262">
+<div class="commentTop comment-top newcomment" id="comment_top_429262">
+<div class="title">
+<h4><a href="../../../../../comments.pl_900ed922.html" id="comment_link_429262" name="comment_link_429262" onclick="return D2.setFocusComment(429262)">Re:これって</a>
+<span class="score" id="comment_score_429262">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429262); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~miri/index.html">miri (12057)</a>
+<span class="otherdetails" id="comment_otherdetails_429262">on 2003年11月07日 17時18分
+			 (<a href="../../../../../comment/429262.html">#429262</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~miri/journal/index.html" title="2005年11月15日 14時15分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429262">オープンソースに限らず、再配布可能なものはリスクが大きいんではないかと思います。どこか弱いサーバがクラックされて改ざんが発覚しただけで、そのソフトウェア、あるいはコミュニティ全体の風評に影響します。<br/> <br/>しかし、分散しておくことの副作用として、今回のように複数のサーバ間での整合性チェックで改ざんを発見することも可能なので、やりようによっては一元配布より安全であることを証明することもできるのではないかと思います。<br/> <br/>一般に誤解されやすいのは、これだけがんばっています、こんな仕組みがあるから大丈夫です、というアナウンスが少ないからなんだと思います。（もちろん、それなりの対策をした後の話ですが）</div>
+</div>
+<div class="commentSub" id="comment_sub_429262">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これって')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429262'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429262'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429262'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_44cb417d.html" onclick="return D2.selectParent(429112)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429262"></div>
+<ul class="comment-group" id="group_429262">
+<li class="hide" id="hiddens_429262"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_429081"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429081"></div>
+<div class="comment-item" id="comment_429081">
+<div class="commentTop comment-top newcomment" id="comment_top_429081">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4b63a3ea.html" id="comment_link_429081" name="comment_link_429081" onclick="return D2.setFocusComment(429081)">あったらこわい</a>
+<span class="score" id="comment_score_429081">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429081); return false">スコア:2</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~mark/index.html">mark (4383)</a>
+<span class="otherdetails" id="comment_otherdetails_429081">on 2003年11月07日 13時51分
+			 (<a href="../../../../../comment/429081.html">#429081</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429081">この犯人探しにも懸賞を掛ける Microsoft<br/>…あわせて犯人には雇用を約束<br/> <br/># 冗談ですよ。</div>
+</div>
+</div>
+<div id="replyto_429081"></div>
+<ul class="comment-group" id="group_429081">
+<li class="hide" id="hiddens_429081"></li>
+</ul><ul id="commtree_429081"><li class="comment full contain" id="tree_429126"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429126"></div>
+<div class="comment-item" id="comment_429126">
+<div class="commentTop comment-top newcomment" id="comment_top_429126">
+<div class="title">
+<h4><a href="../../../../../comments.pl_69482786.html" id="comment_link_429126" name="comment_link_429126" onclick="return D2.setFocusComment(429126)">Re:あったらこわい</a>
+<span class="score" id="comment_score_429126">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429126); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~kamuy/index.html">kamuy (1690)</a>
+<span class="otherdetails" id="comment_otherdetails_429126">on 2003年11月07日 14時41分
+			 (<a href="../../../../../comment/429126.html">#429126</a>)
+			<small>
+<a class="user_homepage_display" href="../../../../../~kamuy/journal/index.html" title="http://srad.jp/~kamuy/journal/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~kamuy/journal/index.html" title="2006年11月25日  0時23分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429126">アレ?<br/>今頃MS社内では表彰式が執り行われているのではないのですか?<br/> <br/>#「MSの工作員が作戦成功した」という妄想のテスト。</div>
+<div class="sig" id="comment_sig_429126">-- <br/>-+- 想像力を超え｢創造力｣をも凌駕する、それが『妄想力』!! -+-</div>
+</div>
+<div class="commentSub" id="comment_sub_429126">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:あったらこわい')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429126'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429126'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429126'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a67d342b.html" onclick="return D2.selectParent(429081)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429126"></div>
+<ul class="comment-group" id="group_429126">
+<li class="hide" id="hiddens_429126"></li>
+</ul><ul id="commtree_429126"><li class="comment hidden" id="tree_429167"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429167"></div>
+<div class="comment-item" id="comment_429167">
+</div>
+<div id="replyto_429167"></div>
+<ul class="comment-group" id="group_429167">
+<li class="hide" id="hiddens_429167"></li>
+</ul><ul id="commtree_429167"><li class="comment hidden" id="tree_429177"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429177"></div>
+<div class="comment-item" id="comment_429177">
+</div>
+<div id="replyto_429177"></div>
+<ul class="comment-group" id="group_429177">
+<li class="hide" id="hiddens_429177"></li>
+</ul><ul id="commtree_429177"><li class="comment full contain" id="tree_429192"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429192"></div>
+<div class="comment-item" id="comment_429192">
+<div class="commentTop comment-top newcomment" id="comment_top_429192">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7ca88317.html" id="comment_link_429192" name="comment_link_429192" onclick="return D2.setFocusComment(429192)">Re:再帰</a>
+<span class="score" id="comment_score_429192">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429192); return false">スコア:2</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~NAZZ/index.html">NAZZ (13040)</a>
+<span class="otherdetails" id="comment_otherdetails_429192">on 2003年11月07日 16時11分
+			 (<a href="../../../../../comment/429192.html">#429192</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~NAZZ/journal/index.html" title="2019年10月21日 12時28分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429192">実は共倒れを狙った教授の陰謀･･･</div>
+</div>
+<div class="commentSub" id="comment_sub_429192">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:再帰')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429192'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429192'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429192'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_3ccfe6ae.html" onclick="return D2.selectParent(429177)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429192"></div>
+<ul class="comment-group" id="group_429192">
+<li class="hide" id="hiddens_429192"></li>
+</ul><ul id="commtree_429192"><li class="comment hidden" id="tree_430053"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_430053"></div>
+<div class="comment-item" id="comment_430053">
+</div>
+<div id="replyto_430053"></div>
+<ul class="comment-group" id="group_430053">
+<li class="hide" id="hiddens_430053"></li>
+</ul><ul id="commtree_430053"><li class="comment full contain" id="tree_430220"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_430220"></div>
+<div class="comment-item" id="comment_430220">
+<div class="commentTop comment-top newcomment" id="comment_top_430220">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f4382dd9.html" id="comment_link_430220" name="comment_link_430220" onclick="return D2.setFocusComment(430220)">Re:再帰</a>
+<span class="score" id="comment_score_430220">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 430220); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~NAZZ/index.html">NAZZ (13040)</a>
+<span class="otherdetails" id="comment_otherdetails_430220">on 2003年11月09日  0時42分
+			 (<a href="../../../../../comment/430220.html">#430220</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~NAZZ/journal/index.html" title="2019年10月21日 12時28分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_430220">S教授の方。</div>
+</div>
+<div class="commentSub" id="comment_sub_430220">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:再帰')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=430220'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=430220'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=430220'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_0b21f328.html" onclick="return D2.selectParent(430053)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_430220"></div>
+<ul class="comment-group" id="group_430220">
+<li class="hide" id="hiddens_430220"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_429210"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429210"></div>
+<div class="comment-item" id="comment_429210">
+<div class="commentTop comment-top newcomment" id="comment_top_429210">
+<div class="title">
+<h4><a href="../../../../../comments.pl_97981605.html" id="comment_link_429210" name="comment_link_429210" onclick="return D2.setFocusComment(429210)">本家記事へのリンク</a>
+<span class="score" id="comment_score_429210">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429210); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~DB-researcher/index.html">DB-researcher (10541)</a>
+<span class="otherdetails" id="comment_otherdetails_429210">on 2003年11月07日 16時31分
+			 (<a href="../../../../../comment/429210.html">#429210</a>)
+			<small>
+<a class="user_homepage_display" href="http://mixi.jp/show_profile.pl?id=573340" title="http://mixi.jp/show_profile.pl?id=573340">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~DB-researcher/journal/index.html" title="2005年12月15日  7時01分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429210">本家記事「<a href="http://slashdot.org/article.pl?sid=03/11/06/058249">Linux Kernel Back-Door Hack Attempt Discovered</a> [slashdot.org]」もよろしく。</div>
+<div class="sig" id="comment_sig_429210">-- <br/>_.. ._._._ _... ._._._ ._. ._._._<br/>
+物は試しだ。コメントのしきい値を2にしてごらん</div>
+</div>
+</div>
+<div id="replyto_429210"></div>
+<ul class="comment-group" id="group_429210">
+<li class="hide" id="hiddens_429210"></li>
+</ul></li><li class="comment full contain" id="tree_429197"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429197"></div>
+<div class="comment-item" id="comment_429197">
+<div class="commentTop comment-top newcomment" id="comment_top_429197">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d59875bd.html" id="comment_link_429197" name="comment_link_429197" onclick="return D2.setFocusComment(429197)">題名</a>
+<span class="score" id="comment_score_429197">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429197); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~macyu/index.html">macyu (10330)</a>
+<span class="otherdetails" id="comment_otherdetails_429197">on 2003年11月07日 16時14分
+			 (<a href="../../../../../comment/429197.html">#429197</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429197">Linux 2.6 のソースコードにバックドアが仕掛け<b>られるかける</b> <br/>なんか変だな。<br/>「仕掛けられかける」or「仕掛けられそうになる」<br/>かな。</div>
+</div>
+</div>
+<div id="replyto_429197"></div>
+<ul class="comment-group" id="group_429197">
+<li class="hide" id="hiddens_429197"></li>
+</ul></li><li class="comment full contain" id="tree_429764"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429764"></div>
+<div class="comment-item" id="comment_429764">
+<div class="commentTop comment-top newcomment" id="comment_top_429764">
+<div class="title">
+<h4><a href="../../../../../comments.pl_5e31f43b.html" id="comment_link_429764" name="comment_link_429764" onclick="return D2.setFocusComment(429764)">まうまう</a>
+<span class="score" id="comment_score_429764">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429764); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Taiyakiss/index.html">Taiyakiss (12783)</a>
+<span class="otherdetails" id="comment_otherdetails_429764">on 2003年11月08日  6時11分
+			 (<a href="../../../../../comment/429764.html">#429764</a>)
+			<small>
+<a class="user_homepage_display" href="http://mixi.jp/show_friend.pl?id=3982" title="http://mixi.jp/show_friend.pl?id=3982">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~Taiyakiss/journal/index.html" title="2010年11月22日 10時33分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429764">きっとこれは、アメリカ王の仕業に違いない！<br/>バトルプログラマー白瀬に対策を依頼しなければ！</div>
+</div>
+</div>
+<div id="replyto_429764"></div>
+<ul class="comment-group" id="group_429764">
+<li class="hide" id="hiddens_429764"></li>
+</ul></li><li class="comment hidden" id="tree_429029"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429029"></div>
+<div class="comment-item" id="comment_429029">
+</div>
+<div id="replyto_429029"></div>
+<ul class="comment-group" id="group_429029">
+<li class="hide" id="hiddens_429029"></li>
+</ul><ul id="commtree_429029"><li class="comment full contain" id="tree_429044"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429044"></div>
+<div class="comment-item" id="comment_429044">
+<div class="commentTop comment-top newcomment" id="comment_top_429044">
+<div class="title">
+<h4><a href="../../../../../comments.pl_28ae7980.html" id="comment_link_429044" name="comment_link_429044" onclick="return D2.setFocusComment(429044)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429044">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429044); return false">スコア:2</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429044">on 2003年11月07日 13時20分
+			 (<a href="../../../../../comment/429044.html">#429044</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429044">なんだかんだ言ってみんなWindowsには期待しているのです。<br/># Linuxには期待してないのか？とか何を期待してるんだ？とかは秘密</div>
+</div>
+<div class="commentSub" id="comment_sub_429044">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429044'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429044'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429044'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a7ebb2a7.html" onclick="return D2.selectParent(429029)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429044"></div>
+<ul class="comment-group" id="group_429044">
+<li class="hide" id="hiddens_429044"></li>
+</ul></li><li class="comment full contain" id="tree_429063"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429063"></div>
+<div class="comment-item" id="comment_429063">
+<div class="commentTop comment-top newcomment" id="comment_top_429063">
+<div class="title">
+<h4><a href="../../../../../comments.pl_5d7475b7.html" id="comment_link_429063" name="comment_link_429063" onclick="return D2.setFocusComment(429063)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429063">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429063); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429063">on 2003年11月07日 13時35分
+			 (<a href="../../../../../comment/429063.html">#429063</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429063">オープンソースソフトウェアの大半はインターネットを通して公開されているので、セキュリティ的に相当ハイリスク。だから、問題が発生した時に早期対処できたことは評価される。<br/>クローズドソフトウェアはネットワークを通して外部に公開していないので、物理的にセキュリティが整っていてあたりまえ。だから、進入されたことがたたかれる。<br/> <br/>……とか、言ってみます(w<br/> <br/>でも、今回は、プロジェクトの管理体制がしっかりしていたからこそ、対処できたようですね。そういう意味では、ソースの公開、非公開よりも、プロジェクトとその体制を評価すべきですね。</div>
+</div>
+<div class="commentSub" id="comment_sub_429063">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429063'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429063'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429063'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a7ebb2a7.html" onclick="return D2.selectParent(429029)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429063"></div>
+<ul class="comment-group" id="group_429063">
+<li class="hide" id="hiddens_429063"></li>
+</ul></li><li class="comment full contain" id="tree_429084"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429084"></div>
+<div class="comment-item" id="comment_429084">
+<div class="commentTop comment-top newcomment" id="comment_top_429084">
+<div class="title">
+<h4><a href="../../../../../comments.pl_87744448.html" id="comment_link_429084" name="comment_link_429084" onclick="return D2.setFocusComment(429084)">なんつーか</a>
+<span class="score" id="comment_score_429084">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429084); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429084">on 2003年11月07日 13時52分
+			 (<a href="../../../../../comment/429084.html">#429084</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429084">今回の場合、問題はタレコミ文にあると思います<br/>私自身は既にYahooで翻訳記事を読んでいた(元はC|NETでしたっけ)ので、この件に対するイメージは<br/><i>BitKeeperによって改竄の影響は最小限に食い止められた。よかったよかった</i> <br/>といったものだったのですが、このタレコミ文ではその点には触れず、<br/>ただ侵入されてバックドアを仕掛けられた点のみに触れているので<br/>事実すらちゃんと伝えられていないと思います。<br/>余計な感想を書く前にもう少しニュース部分の強化をして欲しかった。<br/> <br/>編集者さんにはもう少し編集をお願いします…</div>
+</div>
+<div class="commentSub" id="comment_sub_429084">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('なんつーか')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429084'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429084'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429084'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a7ebb2a7.html" onclick="return D2.selectParent(429029)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429084"></div>
+<ul class="comment-group" id="group_429084">
+<li class="hide" id="hiddens_429084"></li>
+</ul></li><li class="comment full contain" id="tree_429069"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429069"></div>
+<div class="comment-item" id="comment_429069">
+<div class="commentTop comment-top newcomment" id="comment_top_429069">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c2687c21.html" id="comment_link_429069" name="comment_link_429069" onclick="return D2.setFocusComment(429069)">表現は正確に</a>
+<span class="score" id="comment_score_429069">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429069); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429069">on 2003年11月07日 13時38分
+			 (<a href="../../../../../comment/429069.html">#429069</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429069">Linuxだけでなく、Macも叩かれない。<br/>指摘すると即、「-1,荒らし」のモデレート。</div>
+</div>
+<div class="commentSub" id="comment_sub_429069">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('表現は正確に')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429069'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429069'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429069'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a7ebb2a7.html" onclick="return D2.selectParent(429029)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429069"></div>
+<ul class="comment-group" id="group_429069">
+<li class="hide" id="hiddens_429069"></li>
+</ul><ul id="commtree_429069"><li class="comment hidden" id="tree_429154"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429154"></div>
+<div class="comment-item" id="comment_429154">
+</div>
+<div id="replyto_429154"></div>
+<ul class="comment-group" id="group_429154">
+<li class="hide" id="hiddens_429154"></li>
+</ul><ul id="commtree_429154"><li class="comment full contain" id="tree_429283"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429283"></div>
+<div class="comment-item" id="comment_429283">
+<div class="commentTop comment-top newcomment" id="comment_top_429283">
+<div class="title">
+<h4><a href="../../../../../comments.pl_eb3a3f94.html" id="comment_link_429283" name="comment_link_429283" onclick="return D2.setFocusComment(429283)">Re:表現は正確に</a>
+<span class="score" id="comment_score_429283">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429283); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429283">on 2003年11月07日 17時38分
+			 (<a href="../../../../../comment/429283.html">#429283</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429283">そうでもないです。<br/> <br/>「今回批判されることは何もない」というレスに「なんで免罪されるんだ？」<br/>という指摘をしたら、フレームの元になってしまいましたよ。<br/> <br/>正論を吐くとフレームに発展することも確かにあり得なくはないですがね。<br/>FUDの一種でしょう。<br/>「正論でも、コミュニティに対して耳が痛いことを言うと批判される」<br/>というFUD。</div>
+</div>
+<div class="commentSub" id="comment_sub_429283">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:表現は正確に')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429283'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429283'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429283'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_cf8b1241.html" onclick="return D2.selectParent(429154)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429283"></div>
+<ul class="comment-group" id="group_429283">
+<li class="hide" id="hiddens_429283"></li>
+</ul><ul id="commtree_429283"><li class="comment full contain" id="tree_430023"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_430023"></div>
+<div class="comment-item" id="comment_430023">
+<div class="commentTop comment-top newcomment" id="comment_top_430023">
+<div class="title">
+<h4><a href="../../../../../comments.pl_77439c5d.html" id="comment_link_430023" name="comment_link_430023" onclick="return D2.setFocusComment(430023)">Re:表現は正確に</a>
+<span class="score" id="comment_score_430023">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 430023); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_430023">on 2003年11月08日 15時56分
+			 (<a href="../../../../../comment/430023.html">#430023</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_430023">さすがに、批判される事は何もないとは言えないだろうよ<br/> <br/>今回批判されるべきポイントは<br/>「悪戯小僧に侵入された事」だな。<br/> <br/>で、評価すべき点は<br/>「問題の発見が早かったことと、対応も早かったこと」だな。<br/> <br/>結果としては<br/>「悪戯小僧に侵入されないように気をつけましょう」だな。<br/> <br/>免罪もなにも意見が食い違ってるんでないの？<br/>A「復旧早かったし実害ないから問題ないよね。問題ないから批判される筋合ない」<br/>B「(侵入された事に)落度はある」<br/>A「(復旧早くて実害ないんだから)問題ない」<br/>C「Linuxは危険だからWindows使おうぜ」<br/>Aは侵入された事の重要性を無視してる<br/>Bは言葉が足りない<br/>Aは相変わらずわかってない<br/>Cは死ね<br/> <br/>まあ、少なくともAは何も解ってなくても<br/>管理者はよくわかっているはずであるので、ちゃんと対策するでしょう。<br/> <br/>批判のポイントをぼかして正論と言うなら、フレームの元扱いされても当然であるとは思うけどね。</div>
+</div>
+<div class="commentSub" id="comment_sub_430023">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:表現は正確に')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=430023'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=430023'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=430023'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_4bc7a8ac.html" onclick="return D2.selectParent(429283)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_430023"></div>
+<ul class="comment-group" id="group_430023">
+<li class="hide" id="hiddens_430023"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_429110"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429110"></div>
+<div class="comment-item" id="comment_429110">
+<div class="commentTop comment-top newcomment" id="comment_top_429110">
+<div class="title">
+<h4><a href="../../../../../comments.pl_33d41dd6.html" id="comment_link_429110" name="comment_link_429110" onclick="return D2.setFocusComment(429110)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429110">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429110); return false">スコア:1</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429110">on 2003年11月07日 14時19分
+			 (<a href="../../../../../comment/429110.html">#429110</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429110">好きなものは擁護するし、好きでないものは攻撃する。<br/>そして好きなものの対抗馬はしばしば好きでないものになる。<br/> <br/>バイアスのかからない主観なんてあるものか。</div>
+</div>
+<div class="commentSub" id="comment_sub_429110">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429110'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429110'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429110'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a7ebb2a7.html" onclick="return D2.selectParent(429029)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429110"></div>
+<ul class="comment-group" id="group_429110">
+<li class="hide" id="hiddens_429110"></li>
+</ul></li><li class="comment full contain" id="tree_429230"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429230"></div>
+<div class="comment-item" id="comment_429230">
+<div class="commentTop comment-top newcomment" id="comment_top_429230">
+<div class="title">
+<h4><a href="../../../../../comments.pl_bfa7bc75.html" id="comment_link_429230" name="comment_link_429230" onclick="return D2.setFocusComment(429230)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429230">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429230); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429230">on 2003年11月07日 16時50分
+			 (<a href="../../../../../comment/429230.html">#429230</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429230">&gt;ここの住人はWindowsに関連する欠陥が見つかると大騒ぎして叩きまくるくせに<br/> <br/>シェア90%超の製品に不具合が盛り沢山 = 世界中がテンテコマイ<br/>MSの対応が遅い = 世界中がイライラ<br/>MSがやっと対応した、でもそれで新しい不具合も追加された = 世界中が激怒<br/>不具合直したやつを新製品として売り出したから買ってね = 世界中が唖然<br/>そのくせ、高性能だの信頼性だのソリューションを提供だの言ってる = 世界中が呆れる<br/> <br/>俺はWindows95からずっとWindowsユーザーだけど、Windowsを擁護するよりも叩いてる方が多いな<br/>何度泣かされてきたかわからんし、何より困るのはWindowsユーザ、一番怒ってるのもWindowsユーザー。<br/>Linuxを擁護するつもりはないが、不具合に関して対応が早いし<br/>不具合を隠したり「仕様です」とか言って誤魔化したりしないので好感を持ってる。<br/> <br/>Windowsを無闇に擁護する奴を見ると、ほんとにWindows使ってんのかと問いつめたい。<br/> <br/>ユーザー数多いんだから、どこかで誰かが叩いててもおかしくないな。<br/>それ相応の欠陥があって、叩かれて当り前の対応しかしてないんだから。</div>
+</div>
+<div class="commentSub" id="comment_sub_429230">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429230'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429230'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429230'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a7ebb2a7.html" onclick="return D2.selectParent(429029)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429230"></div>
+<ul class="comment-group" id="group_429230">
+<li class="hide" id="hiddens_429230"></li>
+</ul></li><li class="comment full contain" id="tree_429907"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429907"></div>
+<div class="comment-item" id="comment_429907">
+<div class="commentTop comment-top newcomment" id="comment_top_429907">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9c22c21a.html" id="comment_link_429907" name="comment_link_429907" onclick="return D2.setFocusComment(429907)">まあ</a>
+<span class="score" id="comment_score_429907">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429907); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~take0m/index.html">take0m (4948)</a>
+<span class="otherdetails" id="comment_otherdetails_429907">on 2003年11月08日 12時50分
+			 (<a href="../../../../../comment/429907.html">#429907</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~take0m/journal/index.html" title="2005年05月30日 17時42分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429907">荒らし = 1, 余計なもの = 1, 過小評価 = 1<br/>これもその一環。<br/> <br/>警察だって身内にあまいですからね。<br/>このサイトはLinuxの領域です。純粋なサイエンスとテクノロジーのサイトではないことを認識しましょう。<br/>郷に入りては従いましょう。<br/>今、両者は戦争中なんですよ。</div>
+</div>
+<div class="commentSub" id="comment_sub_429907">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('まあ')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429907'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429907'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429907'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a7ebb2a7.html" onclick="return D2.selectParent(429029)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429907"></div>
+<ul class="comment-group" id="group_429907">
+<li class="hide" id="hiddens_429907"></li>
+</ul></li><li class="comment hidden" id="tree_429034"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429034"></div>
+<div class="comment-item" id="comment_429034">
+</div>
+<div id="replyto_429034"></div>
+<ul class="comment-group" id="group_429034">
+<li class="hide" id="hiddens_429034"></li>
+</ul><ul id="commtree_429034"><li class="comment full contain" id="tree_429047"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429047"></div>
+<div class="comment-item" id="comment_429047">
+<div class="commentTop comment-top newcomment" id="comment_top_429047">
+<div class="title">
+<h4><a href="../../../../../comments.pl_91e56f5e.html" id="comment_link_429047" name="comment_link_429047" onclick="return D2.setFocusComment(429047)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429047">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429047); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429047">on 2003年11月07日 13時22分
+			 (<a href="../../../../../comment/429047.html">#429047</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429047">釣り人じゃないですけど、コメント。<br/>もしMSが同じように不正にトロイの木馬を仕掛けられたら、それだけで<br/>めちゃくちゃ叩きまくるでしょうね。<br/> <br/>今回の件では「発見が早かった」と褒め称えるレスすら見かけますね。</div>
+</div>
+<div class="commentSub" id="comment_sub_429047">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429047'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429047'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429047'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_7d054e22.html" onclick="return D2.selectParent(429034)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429047"></div>
+<ul class="comment-group" id="group_429047">
+<li class="hide" id="hiddens_429047"></li>
+</ul><ul id="commtree_429047"><li class="comment full contain" id="tree_429064"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429064"></div>
+<div class="comment-item" id="comment_429064">
+<div class="commentTop comment-top newcomment" id="comment_top_429064">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4e701177.html" id="comment_link_429064" name="comment_link_429064" onclick="return D2.setFocusComment(429064)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429064">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429064); return false">スコア:4</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429064">on 2003年11月07日 13時35分
+			 (<a href="../../../../../comment/429064.html">#429064</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429064">akamaiがcrackされてwindowsupdateのミラーからトロイが流し込まれそうになった、としよう。<br/>・これだからWindowsUpdateなんて<br/>・WindowsUpdateすると止まるしね<br/>・前にもWindowsUpdateでトロイ配ったよね<br/>・そりゃmsnだタコ<br/>・Linuxもまともに使えないダサい会社ですね<br/>そしていつもの調子。<br/> <br/># 確認:crackされたのはakamaiである、というシミュレーション</div>
+</div>
+<div class="commentSub" id="comment_sub_429064">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429064'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429064'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429064'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_e38521ce.html" onclick="return D2.selectParent(429047)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429064"></div>
+<ul class="comment-group" id="group_429064">
+<li class="hide" id="hiddens_429064"></li>
+</ul></li><li class="comment full contain" id="tree_429079"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429079"></div>
+<div class="comment-item" id="comment_429079">
+<div class="commentTop comment-top newcomment" id="comment_top_429079">
+<div class="title">
+<h4><a href="../../../../../comments.pl_21bdb7c5.html" id="comment_link_429079" name="comment_link_429079" onclick="return D2.setFocusComment(429079)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429079">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429079); return false">スコア:2</a>, フレームのもと)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~voodoo/index.html">voodoo (16843)</a>
+<span class="otherdetails" id="comment_otherdetails_429079">on 2003年11月07日 13時47分
+			 (<a href="../../../../../comment/429079.html">#429079</a>)
+			<small>
+<a class="user_homepage_display" href="../../../../../~voodoo/index.html" title="http://srad.jp/~voodoo/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~voodoo/journal/index.html" title="2004年09月13日 16時46分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429079">MS の開発体制からして、トロイの木馬が仕掛けられ、発見されることはそうないと思うが??? もし、しかけられていた製品を販売したら、内部の犯行である可能性が高く、それをチェックできなかった体制は批判されてしかるべきだと思う。<br/> <br/>今回の記事は、バックドアが仕込まれたが発見しました、という主旨だが、どこをどう叩くのだろうか??? Linux そのものについては、批判する部分は無いと思うが。ぜひ、実践してみてもらいたい。</div>
+</div>
+<div class="commentSub" id="comment_sub_429079">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429079'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429079'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429079'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_e38521ce.html" onclick="return D2.selectParent(429047)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429079"></div>
+<ul class="comment-group" id="group_429079">
+<li class="hide" id="hiddens_429079"></li>
+</ul><ul id="commtree_429079"><li class="comment hidden" id="tree_429093"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429093"></div>
+<div class="comment-item" id="comment_429093">
+</div>
+<div id="replyto_429093"></div>
+<ul class="comment-group" id="group_429093">
+<li class="hide" id="hiddens_429093"></li>
+</ul><ul id="commtree_429093"><li class="comment full contain" id="tree_429115"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429115"></div>
+<div class="comment-item" id="comment_429115">
+<div class="commentTop comment-top newcomment" id="comment_top_429115">
+<div class="title">
+<h4><a href="../../../../../comments.pl_10608870.html" id="comment_link_429115" name="comment_link_429115" onclick="return D2.setFocusComment(429115)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429115">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429115); return false">スコア:1</a>, 余計なもの)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~vbsnbk/index.html">vbsnbk (13976)</a>
+<span class="otherdetails" id="comment_otherdetails_429115">on 2003年11月07日 14時29分
+			 (<a href="../../../../../comment/429115.html">#429115</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~vbsnbk/journal/index.html" title="2020年04月21日 22時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429115">開発体制が全然違うんだから、<br/>
+&gt;不正侵入され、改変されました。 <br/>
+こっちは厳然たる事実でも、<br/>
+&gt;事前に被害は食い止められましたが、<br/>
+&gt;多くのユーザが危険に陥れられる <br/>
+&gt;危険に少なからずあった可能性は否定できませんでした。<br/>
+となるとは限らないでしょ。<br/>
+このままリリースされたら確かに<br/>
+&gt;十分批判できる<br/>
+状況ですけど。<br/>
+何のためにLinusはBitKeeper使ってると思ってるわけ？</div>
+</div>
+<div class="commentSub" id="comment_sub_429115">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429115'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429115'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429115'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_4cba7667.html" onclick="return D2.selectParent(429093)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429115"></div>
+<ul class="comment-group" id="group_429115">
+<li class="hide" id="hiddens_429115"></li>
+</ul><ul id="commtree_429115"><li class="comment full contain" id="tree_429161"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429161"></div>
+<div class="comment-item" id="comment_429161">
+<div class="commentTop comment-top newcomment" id="comment_top_429161">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a2b38bfb.html" id="comment_link_429161" name="comment_link_429161" onclick="return D2.setFocusComment(429161)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429161">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429161); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429161">on 2003年11月07日 15時26分
+			 (<a href="../../../../../comment/429161.html">#429161</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429161">&gt; &gt;不正侵入され、改変されました。 <br/>&gt; こっちは厳然たる事実でも<br/> <br/>ええと、コレだけで充分批判されるに足る<strong>失態</strong>だと思いますが。<br/>何ヶ月か前にGNUがやられたっけかなあ....もうみんな忘れてるよなあ....<br/> <br/>例えばこの進入したCrackerが、CVSいじるだけじゃなくて侵入したマシンの方にも色々と仕込み、Bitkeeper側からの改変検知のリクエストに大嘘を答えるように上手い事細工した、としたら。<br/>ぞっとしねえか？<br/># 実効性の問題じゃねえぞ</div>
+</div>
+<div class="commentSub" id="comment_sub_429161">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429161'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429161'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429161'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a629d021.html" onclick="return D2.selectParent(429115)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429161"></div>
+<ul class="comment-group" id="group_429161">
+<li class="hide" id="hiddens_429161"></li>
+</ul></li><li class="comment full contain" id="tree_429240"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429240"></div>
+<div class="comment-item" id="comment_429240">
+<div class="commentTop comment-top newcomment" id="comment_top_429240">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d00a68d7.html" id="comment_link_429240" name="comment_link_429240" onclick="return D2.setFocusComment(429240)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429240">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429240); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429240">on 2003年11月07日 16時56分
+			 (<a href="../../../../../comment/429240.html">#429240</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429240">そのような事実は現在のところありません。<br/> <br/>予想は幾らでも言える。Linuxに対しても、MSに対しても。<br/> <br/>「実際何が起きて、どう対処したのか」で話してください。</div>
+</div>
+<div class="commentSub" id="comment_sub_429240">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429240'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429240'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429240'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_1ef80a3d.html" onclick="return D2.selectParent(429161)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429240"></div>
+<ul class="comment-group" id="group_429240">
+<li class="hide" id="hiddens_429240"></li>
+</ul></li><li class="comment full contain" id="tree_429354"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429354"></div>
+<div class="comment-item" id="comment_429354">
+<div class="commentTop comment-top newcomment" id="comment_top_429354">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ce289c00.html" id="comment_link_429354" name="comment_link_429354" onclick="return D2.setFocusComment(429354)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429354">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429354); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~vbsnbk/index.html">vbsnbk (13976)</a>
+<span class="otherdetails" id="comment_otherdetails_429354">on 2003年11月07日 18時55分
+			 (<a href="../../../../../comment/429354.html">#429354</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~vbsnbk/journal/index.html" title="2020年04月21日 22時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429354">&gt;ええと、コレだけで充分批判されるに足る失態だと思いますが。<br/>
+　ええとですね、あくまで今回バックドア仕掛けられたのは<br/>
+『開発用』のコードレビューシステムであって、正式にリリースとして配布<br/>
+されたカーネルじゃないでしょ？<br/>
+　だから、巷のプロプラエタリな開発システムで言えば<br/>
+開発中のコードにプロジェクト内部の不心得者がバックドア仕込んだ、というレベルな訳ですよ。<br/>
+　ただLinuxの開発スタイル的には複数の開発者に開発中の<br/>
+コードを見せて、オープンなスタイルで開発を行っている関係上、<br/>
+コードを晒すのはいわば全世界、開発者もpublicな人々であるので、プロプラエタリな<br/>
+開発と違って今回のようなことが起きる危険は常にあるわけです。<br/>
+だからこそ私は「何のためにBitKeeper…」と書いたわけで。<br/>
+ある意味、こういう開発スタイルを行っている場合には<br/>
+必ず存在するリスク・想定されているリスクであって、<br/>
+Linusを初めとするカーネル開発者達がそのリスクを負った上で<br/>
+開発を進めている以上、ヒステリックに騒ぎ立てる<br/>
+ようなことではないと思いますよ。<br/>
+#確かにこれがGNUの事件のように、公式配布サイトを乗っ取られた<br/>
+んだったら「リリースシステムの不備」なわけですから大問題ですけど。</div>
+</div>
+<div class="commentSub" id="comment_sub_429354">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429354'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429354'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429354'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_1ef80a3d.html" onclick="return D2.selectParent(429161)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429354"></div>
+<ul class="comment-group" id="group_429354">
+<li class="hide" id="hiddens_429354"></li>
+</ul></li><li class="comment full contain" id="tree_429443"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429443"></div>
+<div class="comment-item" id="comment_429443">
+<div class="commentTop comment-top newcomment" id="comment_top_429443">
+<div class="title">
+<h4><a href="../../../../../comments.pl_bb79dfa1.html" id="comment_link_429443" name="comment_link_429443" onclick="return D2.setFocusComment(429443)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429443">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429443); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429443">on 2003年11月07日 21時14分
+			 (<a href="../../../../../comment/429443.html">#429443</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429443"><blockquote>&gt; &gt;不正侵入され、改変されました。  <br/>&gt; こっちは厳然たる事実でも <br/>
+  <br/>ええと、コレだけで充分批判されるに足る失態だと思いますが。 <br/></blockquote> <br/>不正侵入され、改変されたことから、「失態」というには「やすやすと侵入されるだけのいい加減さがあったこと」が必要だと思います。今回は失態と言い切るほどだったのでしょうか。<br/> <br/>ある程度の手を尽くしていたならば、これを「失態」と言うのはさすがに酷ではないでしょうか？常にCrackerの上をいくことが可能とは思えません。<br/> <br/>また、このようなことを「失態」とみなすことは、外部への隠ぺい体質、過剰な完璧さを装う、批判を無視する（例：このシステムは完璧で、セキュリティホールなどありません）ような、旧世代のものじゃないでしょうか。<br/> <br/>マイクロソフトのような大企業でさえ、頻繁にセキュリティ情報を出している現在、失態と言い切るには、「ろくな努力をしてない」「事後の処理が激マズ」くらいはないと。</div>
+</div>
+<div class="commentSub" id="comment_sub_429443">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429443'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429443'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429443'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_1ef80a3d.html" onclick="return D2.selectParent(429161)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429443"></div>
+<ul class="comment-group" id="group_429443">
+<li class="hide" id="hiddens_429443"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_429152"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429152"></div>
+<div class="comment-item" id="comment_429152">
+<div class="commentTop comment-top newcomment" id="comment_top_429152">
+<div class="title">
+<h4><a href="../../../../../comments.pl_cfba3b58.html" id="comment_link_429152" name="comment_link_429152" onclick="return D2.setFocusComment(429152)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429152">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429152); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~kusigahama/index.html">kusigahama (7719)</a>
+<span class="otherdetails" id="comment_otherdetails_429152">on 2003年11月07日 15時10分
+			 (<a href="../../../../../comment/429152.html">#429152</a>)
+			<small>
+<a class="user_homepage_display" href="http://d.hatena.ne.jp/kusigahama/" title="http://d.hatena.ne.jp/kusigahama/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~kusigahama/journal/index.html" title="2012年03月09日  1時51分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429152">「発見する仕組みがあり、正しく動作した」ことは評価されるべきでしょう。</div>
+</div>
+<div class="commentSub" id="comment_sub_429152">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429152'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429152'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429152'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_e38521ce.html" onclick="return D2.selectParent(429047)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429152"></div>
+<ul class="comment-group" id="group_429152">
+<li class="hide" id="hiddens_429152"></li>
+</ul></li><li class="comment full contain" id="tree_429402"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429402"></div>
+<div class="comment-item" id="comment_429402">
+<div class="commentTop comment-top newcomment" id="comment_top_429402">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0098708e.html" id="comment_link_429402" name="comment_link_429402" onclick="return D2.setFocusComment(429402)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429402">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429402); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~shiraga/index.html">shiraga (14233)</a>
+<span class="otherdetails" id="comment_otherdetails_429402">on 2003年11月07日 20時01分
+			 (<a href="../../../../../comment/429402.html">#429402</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429402">LinuxもWindowsもMacOSも使っている人間（あくまでもユーザー）としての意見ですが…。<br/>客から金取ってる企業と、「みんなで作ってみんなで使おう」というコミュニティでは、何か問題が起きた時に問われる責任の質も重さも当然違うでしょう。</div>
+</div>
+<div class="commentSub" id="comment_sub_429402">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429402'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429402'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429402'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_e38521ce.html" onclick="return D2.selectParent(429047)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429402"></div>
+<ul class="comment-group" id="group_429402">
+<li class="hide" id="hiddens_429402"></li>
+</ul></li></ul></li></ul></li><li class="comment hidden" id="tree_429040"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429040"></div>
+<div class="comment-item" id="comment_429040">
+</div>
+<div id="replyto_429040"></div>
+<ul class="comment-group" id="group_429040">
+<li class="hide" id="hiddens_429040"></li>
+</ul><ul id="commtree_429040"><li class="comment full contain" id="tree_429087"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429087"></div>
+<div class="comment-item" id="comment_429087">
+<div class="commentTop comment-top newcomment" id="comment_top_429087">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b9c165eb.html" id="comment_link_429087" name="comment_link_429087" onclick="return D2.setFocusComment(429087)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429087">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429087); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~onoyan/index.html">onoyan (135)</a>
+<span class="otherdetails" id="comment_otherdetails_429087">on 2003年11月07日 13時59分
+			 (<a href="../../../../../comment/429087.html">#429087</a>)
+			<small>
+<a class="user_homepage_display" href="../../../../../index.html" title="http://srad.jp/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~onoyan/journal/index.html" title="2004年01月17日 17時41分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429087">すぐに修正できたのは良いですが、「侵入された」ことは問題では？<br/>そんな環境でソースを管理してるのか、と言われても仕方ないと思いますよ。</div>
+<div class="sig" id="comment_sig_429087">-- <br/><br/>
+--- （´-`）｡oO(平和な日常は私を鈍くする) ---</div>
+</div>
+<div class="commentSub" id="comment_sub_429087">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429087'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429087'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429087'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_545814b4.html" onclick="return D2.selectParent(429040)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429087"></div>
+<ul class="comment-group" id="group_429087">
+<li class="hide" id="hiddens_429087"></li>
+</ul></li></ul></li><li class="comment hidden" id="tree_429133"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429133"></div>
+<div class="comment-item" id="comment_429133">
+</div>
+<div id="replyto_429133"></div>
+<ul class="comment-group" id="group_429133">
+<li class="hide" id="hiddens_429133"></li>
+</ul><ul id="commtree_429133"><li class="comment hidden" id="tree_429147"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429147"></div>
+<div class="comment-item" id="comment_429147">
+</div>
+<div id="replyto_429147"></div>
+<ul class="comment-group" id="group_429147">
+<li class="hide" id="hiddens_429147"></li>
+</ul><ul id="commtree_429147"><li class="comment full contain" id="tree_429157"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429157"></div>
+<div class="comment-item" id="comment_429157">
+<div class="commentTop comment-top newcomment" id="comment_top_429157">
+<div class="title">
+<h4><a href="../../../../../comments.pl_48a2b3bf.html" id="comment_link_429157" name="comment_link_429157" onclick="return D2.setFocusComment(429157)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429157">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429157); return false">スコア:2</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~onoyan/index.html">onoyan (135)</a>
+<span class="otherdetails" id="comment_otherdetails_429157">on 2003年11月07日 15時20分
+			 (<a href="../../../../../comment/429157.html">#429157</a>)
+			<small>
+<a class="user_homepage_display" href="../../../../../index.html" title="http://srad.jp/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~onoyan/journal/index.html" title="2004年01月17日 17時41分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429157">おいおい、なんでこんなに揉めるかなぁ。<br/>まあ、Linuxを庇いたくなる気持ちは分かるけど、<br/>えこひいきは結果として悪い方向に進むと思うよ。<br/>ライバル（？）のWinの時だけ騒ぐのはやっぱりフェアじゃない。<br/>お決まりのMS陰謀論まで出てきちゃったりして<br/>ちょっとくらい、今までの経験から学ぼうよ。<br/>ついでに煽ってる奴等に一言。<br/>けんかしたけりゃ2chにでもいけ！</div>
+<div class="sig" id="comment_sig_429157">-- <br/><br/>
+--- （´-`）｡oO(平和な日常は私を鈍くする) ---</div>
+</div>
+<div class="commentSub" id="comment_sub_429157">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429157'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429157'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429157'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_d3e40a78.html" onclick="return D2.selectParent(429147)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429157"></div>
+<ul class="comment-group" id="group_429157">
+<li class="hide" id="hiddens_429157"></li>
+</ul><ul id="commtree_429157"><li class="comment full contain" id="tree_429191"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429191"></div>
+<div class="comment-item" id="comment_429191">
+<div class="commentTop comment-top newcomment" id="comment_top_429191">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a333babd.html" id="comment_link_429191" name="comment_link_429191" onclick="return D2.setFocusComment(429191)">Re:いつものことだが</a>
+<span class="score" id="comment_score_429191">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429191); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_429191">on 2003年11月07日 16時09分
+			 (<a href="../../../../../comment/429191.html">#429191</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429191">いわゆる派閥争いや宗教論争に限った話では、たしかにフェアじゃないと思うけども<br/>MSの場合はユーザに対して誠意見せてないからなぁ。<br/>#Win派にとってフェアじゃない = 一方的なWindows批判 ということはないと思う<br/>#お互いにとってフェアじゃない。デマ流してまでLinux批判してる連中も腐る程いるし、自分の勝手な思いこみで無闇やたらに叩く連中も多いよ<br/> <br/>不具合に対する考え方が違ったりするのが原因かもしれんが<br/>不具合なんて無い方がおかしいし、今回の件にしても<br/>進入経路を作る なんてのはいくら対策しても新しい手を考えて入ってくるので<br/>絶対に安全っていうことは無いと思う。<br/>それはどんなOSであっても一緒なはずだ。<br/> <br/>ようは、その不具合や穴に対して、開発者(及びメーカ)がどういった対応を取るかが<br/>重要なんだよね。<br/>Windowsユーザに多く見られる傾向としては、「不具合が存在する事自体が悪」と思ってる人が多いんじゃないかな。<br/>前述の通り、不具合なんて無い方が無理。いかに早く対応するか、また不具合をどういう風に扱うかが開発者(メーカ)とソフトの信頼性に繋がるものと思う。<br/> <br/>その点でMSは不具合を盛り沢山のまま製品売ってるくせに誠意ある対応をしない = 気にくわない というユーザが多いんじゃなかろうか。<br/>#以前にセキュリティホールを発見したユーザを法廷に引き摺り出した事もあったし<br/>#バグを「仕様です」と言い切ってしまう事なんかもMSの得意技として有名<br/>不具合を直したら、その修正でまた新しい不具合が…なんてことも多いし。<br/>そういった意味で 信頼性を欠いている = よく批判される ということだと思う。<br/> <br/>Linux派 Win派と分けて、Linux派はWinをこきおろす<br/>しかもフェアじゃない と思っているなら<br/>Win派 じゃなくて単なるWindowsユーザにWindowsについて聞いてみたほうがよい<br/>Linux派よりさらに批判的である。<br/>#Windowsに不具合があって一番困るのはLinuxユーザじゃなくてWindowsユーザ。<br/>#誰よりも不満を抱えていて当然である。<br/> <br/>それに今はLinuxユーザであっても、元々はWindowsユーザだった人は多いし<br/>WindowsとLinux併用してる人も多い<br/>彼等の批判は内なる声であるとも言える<br/> <br/>ちなみに<br/>Win派 = Windows至上主義者<br/>Linux派 = Linux至上主義者<br/>であるなら、どちらの意見もそれほど聞く価値はないと思われる。<br/>#どちらも盲目的かつ異常なまでに排他的<br/> <br/>ついでに、Windowsはライバルじゃないです。<br/>怖いのはMSであって、Windowsじゃないよ。</div>
+</div>
+<div class="commentSub" id="comment_sub_429191">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:いつものことだが')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429191'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429191'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429191'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_cf9676d2.html" onclick="return D2.selectParent(429157)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429191"></div>
+<ul class="comment-group" id="group_429191">
+<li class="hide" id="hiddens_429191"></li>
+</ul></li><li class="comment full contain" id="tree_429246"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429246"></div>
+<div class="comment-item" id="comment_429246">
+<div class="commentTop comment-top newcomment" id="comment_top_429246">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4e9dc23e.html" id="comment_link_429246" name="comment_link_429246" onclick="return D2.setFocusComment(429246)">すまん・・・</a>
+<span class="score" id="comment_score_429246">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429246); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~onoyan/index.html">onoyan (135)</a>
+<span class="otherdetails" id="comment_otherdetails_429246">on 2003年11月07日 17時00分
+			 (<a href="../../../../../comment/429246.html">#429246</a>)
+			<small>
+<a class="user_homepage_display" href="../../../../../index.html" title="http://srad.jp/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~onoyan/journal/index.html" title="2004年01月17日 17時41分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429246">やはり最後の行は「けんナオコ」のほうが良かったか・・・</div>
+<div class="sig" id="comment_sig_429246">-- <br/><br/>
+--- （´-`）｡oO(平和な日常は私を鈍くする) ---</div>
+</div>
+<div class="commentSub" id="comment_sub_429246">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('すまん・・・')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429246'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429246'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429246'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_cf9676d2.html" onclick="return D2.selectParent(429157)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429246"></div>
+<ul class="comment-group" id="group_429246">
+<li class="hide" id="hiddens_429246"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment hidden" id="tree_429274"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429274"></div>
+<div class="comment-item" id="comment_429274">
+</div>
+<div id="replyto_429274"></div>
+<ul class="comment-group" id="group_429274">
+<li class="hide" id="hiddens_429274"></li>
+</ul><ul id="commtree_429274"><li class="comment full contain" id="tree_429353"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_429353"></div>
+<div class="comment-item" id="comment_429353">
+<div class="commentTop comment-top newcomment" id="comment_top_429353">
+<div class="title">
+<h4><a href="../../../../../comments.pl_94274da8.html" id="comment_link_429353" name="comment_link_429353" onclick="return D2.setFocusComment(429353)">Re:SC○だったら</a>
+<span class="score" id="comment_score_429353">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 429353); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~sakamoto/index.html">sakamoto (8009)</a>
+<span class="otherdetails" id="comment_otherdetails_429353">on 2003年11月07日 18時55分
+			 (<a href="../../../../../comment/429353.html">#429353</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~sakamoto/journal/index.html" title="2003年08月06日 23時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_429353">行末にゴミがでるけどこんなんでいいのかな?<br/>#!/usr/bin/perl<br/>$flag=0;$\="\n";<br/>while(&lt;&gt;){<br/>
+    chomp;<br/>
+    if($flag){<br/>
+        s/.../SCO/g;<br/>
+    }elsif(/(.*Copyright \(C\))(.*)/){<br/>
+        $a=$1; $_=$2;    <br/>
+        s/.../SCO/g;<br/>
+        $_=$a.$_;<br/>
+        $flag=1;<br/>
+    }<br/>
+    print;<br/>}</div>
+<div class="sig" id="comment_sig_429353">-- <br/>-- 哀れな日本人専用(sorry Japanese only) --</div>
+</div>
+<div class="commentSub" id="comment_sub_429353">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:SC○だったら')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=132127&amp;cid=429353'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429353'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=132127&amp;cid=429353'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_644bae5a.html" onclick="return D2.selectParent(429274)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_429353"></div>
+<ul class="comment-group" id="group_429353">
+<li class="hide" id="hiddens_429353"></li>
+</ul></li></ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 0;
+		D2.currents()['full']     = 50;
+		D2.currents()['oneline']  = 0;
+		// D2.currents_total(50);
+
+		D2.abbrev_comments({});
+		D2.noshow_comments([429030,429026,429070,429170,429009,429090,429112,429167,429177,430053,429029,429154,429034,429093,429040,429133,429147,429274]);
+		D2.pieces_comments([]);
+		D2.init_hiddens([]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">50</span>/<span class="totalcommentcnt">149</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>アレゲはアレゲ以上のなにものでもなさげ  -- アレゲ研究家<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../about.html">About</a></li>
+<li><a href="../../../../../faq/index.html">FAQ</a></li>
+<li><a href="../../../../index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../hof.html">殿堂入り</a></li>
+<li><a href="../../../../../authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

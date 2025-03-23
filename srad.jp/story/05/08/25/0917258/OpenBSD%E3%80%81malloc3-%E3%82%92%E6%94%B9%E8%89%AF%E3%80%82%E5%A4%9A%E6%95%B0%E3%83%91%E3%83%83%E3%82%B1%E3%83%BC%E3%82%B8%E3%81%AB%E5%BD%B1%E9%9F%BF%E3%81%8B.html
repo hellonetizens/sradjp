@@ -1,0 +1,2403 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/05/08/25/0917258.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>OpenBSD、malloc(3) を改良。多数パッケージに影響か | スラド</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="OpenBSD、malloc(3) を改良。多数パッケージに影響か | スラド" property="og:title">
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '909922361280297386',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content='tamo 曰く、 "Undeadly.org の記事によると、3.8 リリースの近付く OpenBSD で malloc(3) に大きな変更が加えられたため、より多くのユーザによるテストが求められている。変更点は、まず malloc(3) が brk(2) ではなく mmap(2) を使うようにしたこと。そして mmap(2) がランダムな領域を取るようにし、かつ、割り当てら...' name="description"/>
+<meta content='tamo 曰く、 "Undeadly.org の記事によると、3.8 リリースの近付く OpenBSD で malloc(3) に大きな変更が加えられたため、より多くのユーザによるテストが求められている。変更点は、まず malloc(3) が brk(2) ではなく mmap(2) を使うようにしたこと。そして mmap(2) がランダムな領域を取るようにし、かつ、割り当てら...' property="og:description"/>
+<meta content="OpenBSD、malloc(3) を改良。多数パッケージに影響か | スラド" itemprop="name"/>
+<meta content='tamo 曰く、 "Undeadly.org の記事によると、3.8 リリースの近付く OpenBSD で malloc(3) に大きな変更が加えられたため、より多くのユーザによるテストが求められている。変更点は、まず malloc(3) が brk(2) ではなく mmap(2) を使うようにしたこと。そして mmap(2) がランダムな領域を取るようにし、かつ、割り当てら...' itemprop="description"/>
+<link href="../../../../../index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../sradjp.rss" rel="alternate" title="スラド RSS" type="application/rss+xml"/>
+<link href="../../../../../static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/05/08/25/0917258/OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'mainpage';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/05/08/25/0917258.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="10720" data-fhtype="story" id="firehose-10720">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">10720</span>
+<span class="type">story</span>
+</span>
+<header>
+<h2 class="story">
+<span id="title-10720"> <a href="index.html">OpenBSD、malloc(3) を改良。多数パッケージに影響か</a></span>
+<span class="comments commentcnt-10720">32</span>
+</h2>
+<div class="details" id="details-10720">ストーリー by <a href="../../../../../~Acanthopanax/index.html">Acanthopanax</a>
+<time datetime="2005-08-25T18:19+09:00" id="fhtime-10720">2005年08月25日 18時19分</time><br/>セキュア養成 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "OpenBSD、malloc(3) を改良。多数パッケージに影響か",
+  "datePublished": "2005-08-25T18:19+09:00",
+  "articleBody": "tamo 曰く、 \"Undeadly.org の記事によると、3.8 リリースの近付く OpenBSD で malloc(3) に大きな変更が加えられたため、より多くのユーザによるテストが求められている。変更点は、まず malloc(3) が brk(2) ではなく mmap(2) を使うようにしたこと。そして mmap(2) がランダムな領域を取るようにし、かつ、割り当てられた複数の領域が隣接することのないようにしたこと。これらにより、ソフトウェアにバグがあってオーバーフローしても、既存領域を上書きすることなく SIGSEGV で死ぬようになる。また、free(3) は領域を実際にカーネルへ返してしまうようになった。そのため、free(3) したあとに読み書きしようとすると SIGSEGV することになる。これらはどちらも legal ではあるが、プログラマに厳しい制約を課すことになる。言い換えれば、自然にセキュアなコードを書かせるものである。たとえば、この変更のおかげで X サーバのコードにバグを見付けることができた。free(3) 後のアクセスと、バッファを越えた読み出しである。自分の使っているパッケージにこうしたバグがないかどうか、OpenBSD 3.8-beta で調べてみるようお奨めする。\"",
+  "image": "https://srad.jp/static/topics/"
+}
+</script>
+<div class="body" id="fhbody-10720">
+<div class="contents_text p" id="text-10720">
+<p><a href="http://tamo.tdiary.net/">tamo</a> 曰く、 "<a href="http://undeadly.org/cgi?action=article&amp;sid=20050824190317&amp;mode=expanded">Undeadly.org の記事</a>によると、3.8 リリースの近付く OpenBSD で malloc(3) に大きな変更が加えられたため、より多くのユーザによるテストが求められている。
+<br/>
+変更点は、まず malloc(3) が brk(2) ではなく mmap(2) を使うようにしたこと。そして mmap(2) がランダムな領域を取るようにし、かつ、割り当てられた複数の領域が隣接することのないようにしたこと。これらにより、ソフトウェアにバグがあってオーバーフローしても、既存領域を上書きすることなく SIGSEGV で死ぬようになる。
+<br/>
+また、free(3) は領域を実際にカーネルへ返してしまうようになった。そのため、free(3) したあとに読み書きしようとすると SIGSEGV することになる。
+<br/>
+これらはどちらも legal ではあるが、プログラマに厳しい制約を課すことになる。言い換えれば、自然にセキュアなコードを書かせるものである。たとえば、この変更のおかげで X サーバのコードにバグを見付けることができた。free(3) 後のアクセスと、バッファを越えた読み出しである。
+<br/>
+自分の使っているパッケージにこうしたバグがないかどうか、OpenBSD 3.8-beta で調べてみるようお奨めする。"</p>
+</div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //srad.jp/story/05/08/25/0917258/ -->
+<!-- http://srad.jp/story/05/08/25/0917258/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://srad.jp/story/05/08/25/0917258/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://srad.jp/story/05/08/25/0917258/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/srad.jp/story/05/08/25/0917258/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html"><strong class="comments"><span class="totalcommentcnt">32</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-10720"><a class="popular topic tag" href="../../../../../tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../tag/bsd.html" rel="statictag" target="_blank">bsd</a>
+<a class="popular tag" href="../../../../../tag/os.html" rel="statictag" target="_blank">os</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../0232251/index.html" id="hrefns">松下とインテルがノートPC用電源技術を共同開発</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../../../../developers.srad.jp/story/19/06/25/1325243/index.html">Microsoft、高速なmallocを公開</a></h3><h3><a href="../../../../../../opensource.srad.jp/story/14/04/17/0541224/index.html">OpenBSDがOpenSSLの大掃除に着手、「OpenOpenSSL」サイトも立ち上がる</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="OpenBSD、malloc(3) を改良。多数パッケージに影響かのストーリーへ戻る">OpenBSD、malloc(3) を改良。多数パッケージに影響か</a></span>
+<span class="commentBoxLinks"><a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//srad.jp/story/05/08/25/0917258/';
+var parent_item_title = 'OpenBSD、malloc(3) を改良。多数パッケージに影響か';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「OpenBSD、malloc(3) を改良。多数パッケージに影響か」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//srad.jp/search.pl?op=comments&amp;sid=272845" class="btn"><span class="totalcommentcnt">32</span>コメントを検索</a>
+-->
+<a class="btn" href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//srad.jp/comments.pl?sid=272845"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_c321c25a.html"><span>検索</span><span class="totalcommentcnt">32</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 787679: { uid: 1, pid: 0, read: 0, points: -1, kids: [ 787687, 787706 ], opid: 0 }, 788069: { uid: 1, pid: 787601, read: 0, points: 2, kids: [ 788101, 788187, 788275, 788340 ], opid: 787601 }, 787687: { uid: 23432, pid: 787679, read: 0, points: 1, kids: [ 787690 ], opid: 787679 }, 788340: { uid: 17623, pid: 788069, read: 0, points: 2, kids: [ 788635 ], opid: 788069 }, 787722: { uid: 3793, pid: 787703, read: 0, points: 2, kids: [  ], opid: 787703 }, 788569: { uid: 1, pid: 787696, read: 0, points: 0, kids: [  ], opid: 787696 }, 787733: { uid: 13535, pid: 787702, read: 0, points: 1, kids: [ 787737 ], opid: 787702 }, 787703: { uid: 1, pid: 787693, read: 0, points: 1, kids: [ 787722 ], opid: 787693 }, 788635: { uid: 1, pid: 788340, read: 0, points: 0, kids: [ 788725, 789379, 789452 ], opid: 788340 }, 788101: { uid: 1, pid: 788069, read: 0, points: 1, kids: [  ], opid: 788069 }, 788350: { uid: 1, pid: 787770, read: 0, points: -1, kids: [  ], opid: 787770 }, 788921: { uid: 4131, pid: 788920, read: 0, points: 1, kids: [  ], opid: 788920 }, 789379: { uid: 17623, pid: 788635, read: 0, points: 1, kids: [  ], opid: 788635 }, 788725: { uid: 1, pid: 788635, read: 0, points: 1, kids: [ 788920 ], opid: 788635 }, 788187: { uid: 26447, pid: 788069, read: 0, points: 1, kids: [  ], opid: 788069 }, 787693: { uid: 3793, pid: 0, read: 0, points: 1, kids: [ 787703 ], opid: 0 }, 787770: { uid: 1, pid: 787696, read: 0, points: 0, kids: [ 788350 ], opid: 787696 }, 788920: { uid: 1, pid: 788725, read: 0, points: 0, kids: [ 788921 ], opid: 788725 }, 787696: { uid: 13560, pid: 0, read: 0, points: 3, kids: [ 787699, 787716, 787770, 788569 ], opid: 0 }, 787700: { uid: 1, pid: 787604, read: 0, points: 0, kids: [  ], opid: 787604 }, 787737: { uid: 19654, pid: 787733, read: 0, points: 2, kids: [  ], opid: 787733 }, 787604: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 787700, 787702 ], opid: 0 }, 787702: { uid: 2654, pid: 787604, read: 0, points: 3, kids: [ 787733 ], opid: 787604 }, 787762: { uid: 1, pid: 787601, read: 0, points: 1, kids: [  ], opid: 787601 }, 787601: { uid: 17664, pid: 0, read: 0, points: 1, kids: [ 787610, 787762, 788069 ], opid: 0 }, 788275: { uid: 1, pid: 788069, read: 0, points: 2, kids: [  ], opid: 788069 }, 787716: { uid: 1, pid: 787696, read: 0, points: 0, kids: [  ], opid: 787696 }, 787610: { uid: 1, pid: 787601, read: 0, points: 1, kids: [  ], opid: 787601 }, 787699: { uid: 1, pid: 787696, read: 0, points: 0, kids: [  ], opid: 787696 }, 789452: { uid: 20374, pid: 788635, read: 0, points: 2, kids: [  ], opid: 788635 }, 787690: { uid: 5019, pid: 787687, read: 0, points: 1, kids: [  ], opid: 787687 }, 787706: { uid: 1, pid: 787679, read: 0, points: 0, kids: [  ], opid: 787679 } });
+
+D2.thresh_totals({6:{6:{1:32,3:0,2:0}},4:{6:{1:32,3:0,2:0},4:{1:32,3:0,2:0},5:{1:32,3:0,2:0}},1:{6:{1:11,3:0,2:21},4:{1:11,3:1,2:20},1:{1:11,3:21,2:0},3:{1:11,3:2,2:19},2:{1:11,3:10,2:11},5:{1:11,3:0,2:21}},3:{6:{1:30,3:0,2:2},4:{1:30,3:1,2:1},3:{1:30,3:2,2:0},5:{1:30,3:0,2:2}},0:{6:{1:2,3:0,2:30},4:{1:2,3:1,2:29},1:{1:2,3:22,2:8},3:{1:2,3:2,2:28},0:{1:2,3:30,2:0},2:{1:2,3:10,2:20},5:{1:2,3:0,2:30}},2:{6:{1:24,3:0,2:8},4:{1:24,3:1,2:7},3:{1:24,3:2,2:6},2:{1:24,3:8,2:0},5:{1:24,3:0,2:8}},5:{6:{1:32,3:0,2:0},5:{1:32,3:0,2:0}},"-1":{6:{1:0,3:0,2:32},4:{1:0,3:1,2:31},1:{1:0,3:22,2:10},3:{1:0,3:2,2:30},0:{1:0,3:31,2:1},2:{1:0,3:10,2:22},5:{1:0,3:0,2:32},"-1":{1:0,3:32,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([787696,787601,787693,787604,787679]);
+D2.root_comments_hash({787679:1,787693:1,787696:1,787604:1,787601:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(272845);
+
+D2.d2_seen('787601,3,6,69,8,3,3,3,3,1,2,1,3,10,6,11,4,25,8,299,32,86,88,65,10,219,66,90,195,1,458,73');
+D2.more_comments_num(0);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_787696"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787696"></div>
+<div class="comment-item" id="comment_787696">
+<div class="commentTop comment-top newcomment" id="comment_top_787696">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3b6c2512.html" id="comment_link_787696" name="comment_link_787696" onclick="return D2.setFocusComment(787696)">brkを使わないデメリット</a>
+<span class="score" id="comment_score_787696">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787696); return false">スコア:3</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~mkosaki/index.html">mkosaki (13560)</a>
+<span class="otherdetails" id="comment_otherdetails_787696">on 2005年08月25日 21時35分
+			 (<a href="../../../../../comment/787696.html">#787696</a>)
+			<small>
+<a class="user_homepage_display" href="http://mkosaki.blog46.fc2.com/" title="http://mkosaki.blog46.fc2.com/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~mkosaki/journal/index.html" title="2006年05月11日 11時05分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787696">Linuxでもbrkを使わない（こともある）実装になっているんだけど、Linuxはそれによってsetrlimit(2)がうまく効かねーという業病をかかえてしまった。<br/>OpenBSDではどう回避するのかな？互換性問題でると思うんだけど。</div>
+</div>
+</div>
+<div id="replyto_787696"></div>
+<ul class="comment-group" id="group_787696">
+<li class="hide" id="hiddens_787696"></li>
+</ul><ul id="commtree_787696"><li class="comment oneline" id="tree_787699"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787699"></div>
+<div class="comment-item" id="comment_787699">
+<div class="commentTop comment-top newcomment" id="comment_top_787699">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e6125624.html" id="comment_link_787699" name="comment_link_787699" onclick="return D2.setFocusComment(787699)">Re:brkを使わないデメリット</a>
+<span class="score" id="comment_score_787699">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787699); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_787699"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787699">overcommitmentのお話？</div>
+</div>
+<div class="commentSub" id="comment_sub_787699"></div>
+</div>
+<div id="replyto_787699"></div>
+<ul class="comment-group" id="group_787699">
+<li class="hide" id="hiddens_787699"></li>
+</ul></li><li class="comment oneline" id="tree_787716"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787716"></div>
+<div class="comment-item" id="comment_787716">
+<div class="commentTop comment-top newcomment" id="comment_top_787716">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b4b609ba.html" id="comment_link_787716" name="comment_link_787716" onclick="return D2.setFocusComment(787716)">Re:brkを使わないデメリット</a>
+<span class="score" id="comment_score_787716">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787716); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_787716"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787716">連続しないmallocは、Mach OSとかで既に採用されていて、brk API自体も時代遅れになった。なので遅すぎという言い方もできるけどね。
+
+それでも、undumpするプログラムには必ず影響が出るだろうね。例えば、GNU Emacs は確実に影響がでると思う。</div>
+</div>
+<div class="commentSub" id="comment_sub_787716"></div>
+</div>
+<div id="replyto_787716"></div>
+<ul class="comment-group" id="group_787716">
+<li class="hide" id="hiddens_787716"></li>
+</ul></li><li class="comment oneline" id="tree_787770"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787770"></div>
+<div class="comment-item" id="comment_787770">
+<div class="commentTop comment-top newcomment" id="comment_top_787770">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1f3f33e2.html" id="comment_link_787770" name="comment_link_787770" onclick="return D2.setFocusComment(787770)">Re:brkを使わないデメリット</a>
+<span class="score" id="comment_score_787770">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787770); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_787770"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787770">&gt; setrlimit(2)がうまく効かねーという業病<br/> <br/>詳しく。</div>
+</div>
+<div class="commentSub" id="comment_sub_787770"></div>
+</div>
+<div id="replyto_787770"></div>
+<ul class="comment-group" id="group_787770">
+<li class="hide" id="hiddens_787770"></li>
+</ul><ul id="commtree_787770"><li class="comment hidden" id="tree_788350"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_788350"></div>
+<div class="comment-item" id="comment_788350">
+</div>
+<div id="replyto_788350"></div>
+<ul class="comment-group" id="group_788350">
+<li class="hide" id="hiddens_788350"></li>
+</ul></li><li id="hidestring_787770"><noscript><b class="more"><a href="../../../../../comments.pl_b97fc3b0.html">1個のコメント</a> が現在のしきい値以下です。</b></noscript></li></ul></li><li class="comment oneline" id="tree_788569"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_788569"></div>
+<div class="comment-item" id="comment_788569">
+<div class="commentTop comment-top newcomment" id="comment_top_788569">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ee45e3b3.html" id="comment_link_788569" name="comment_link_788569" onclick="return D2.setFocusComment(788569)">Re:brkを使わないデメリット</a>
+<span class="score" id="comment_score_788569">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 788569); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_788569"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_788569">http://www.openbsd.org/cgi-bin/cvsweb/src/sys/kern/kern_resource.c</div>
+</div>
+<div class="commentSub" id="comment_sub_788569"></div>
+</div>
+<div id="replyto_788569"></div>
+<ul class="comment-group" id="group_788569">
+<li class="hide" id="hiddens_788569"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_787601"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787601"></div>
+<div class="comment-item" id="comment_787601">
+<div class="commentTop comment-top newcomment" id="comment_top_787601">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e666fc8e.html" id="comment_link_787601" name="comment_link_787601" onclick="return D2.setFocusComment(787601)">これはつまり</a>
+<span class="score" id="comment_score_787601">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787601); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~seoth/index.html">seoth (17664)</a>
+<span class="otherdetails" id="comment_otherdetails_787601">on 2005年08月25日 18時55分
+			 (<a href="../../../../../comment/787601.html">#787601</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787601">Linux等でも同じようにmallocを修正すれば、バグの叩き出しができるんでしょうか？</div>
+</div>
+</div>
+<div id="replyto_787601"></div>
+<ul class="comment-group" id="group_787601">
+<li class="hide" id="hiddens_787601"></li>
+</ul><ul id="commtree_787601"><li class="comment full contain" id="tree_788069"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_788069"></div>
+<div class="comment-item" id="comment_788069">
+<div class="commentTop comment-top newcomment" id="comment_top_788069">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7bdc5e74.html" id="comment_link_788069" name="comment_link_788069" onclick="return D2.setFocusComment(788069)">Re:これはつまり</a>
+<span class="score" id="comment_score_788069">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 788069); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_788069">on 2005年08月26日 12時52分
+			 (<a href="../../../../../comment/788069.html">#788069</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_788069">Linuxではむかしからmallocはmmapを使っています。というかbrkはPOSIX.1ではないので意図的に使っていません。それからシステムコールになんかしたらパフォーマンスがあがらないので、そんな馬鹿なことを平気でする感覚がわからないです。mallocのバグ出しには<a href="http://www-6.ibm.com/jp/software/rational/products/design/purifyp/">Purify</a> [ibm.com]　のような
+タイプの方法論を使うべきで、それをシステムコール云々での解決は問題解決のアプローチを間違えています。</div>
+</div>
+<div class="commentSub" id="comment_sub_788069">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これはつまり')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=788069'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788069'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788069'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a78f7a43.html" onclick="return D2.selectParent(787601)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_788069"></div>
+<ul class="comment-group" id="group_788069">
+<li class="hide" id="hiddens_788069"></li>
+</ul><ul id="commtree_788069"><li class="comment full contain" id="tree_788275"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_788275"></div>
+<div class="comment-item" id="comment_788275">
+<div class="commentTop comment-top newcomment" id="comment_top_788275">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c97f0772.html" id="comment_link_788275" name="comment_link_788275" onclick="return D2.setFocusComment(788275)">Re:これはつまり</a>
+<span class="score" id="comment_score_788275">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 788275); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_788275">on 2005年08月26日 17時59分
+			 (<a href="../../../../../comment/788275.html">#788275</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_788275">&gt; mallocのバグ出しにはPurify [ibm.com]　のようなタイプの方法論を使うべき<br/> <br/>理屈は分かるが...<br/>これは、BSD Purify を作って OpenBSD と一緒に配布した方が、よりセキュアだと言ってるの？<br/>それとも Pufity みたいなメモリチェッカーを使わないフリーソフト作者はこの世から排除すべきだと言っている？<br/> <br/>なんというか、ぼくは OpenBSD らしい方法だと思う。とにかくセキュアにしたい、でも怪しいフリーソフトも使ってみたい、という場合もまああるにはあると思うので、こういうのがあってもいいと思う。このぐらいやらないと、OpenBSD の存在意義が無いというかなんというか。</div>
+</div>
+<div class="commentSub" id="comment_sub_788275">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これはつまり')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=788275'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788275'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788275'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_ff5be622.html" onclick="return D2.selectParent(788069)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_788275"></div>
+<ul class="comment-group" id="group_788275">
+<li class="hide" id="hiddens_788275"></li>
+</ul></li><li class="comment full contain" id="tree_788340"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_788340"></div>
+<div class="comment-item" id="comment_788340">
+<div class="commentTop comment-top newcomment" id="comment_top_788340">
+<div class="title">
+<h4><a href="../../../../../comments.pl_62b021e8.html" id="comment_link_788340" name="comment_link_788340" onclick="return D2.setFocusComment(788340)">Re:これはつまり</a>
+<span class="score" id="comment_score_788340">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 788340); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~tt_net/index.html">tt_net (17623)</a>
+<span class="otherdetails" id="comment_otherdetails_788340">on 2005年08月26日 19時53分
+			 (<a href="../../../../../comment/788340.html">#788340</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_788340">&gt; それからシステムコールになんかしたらパフォーマンスがあがらないので、<br/> <br/>ええと、malloc(3)はシステム「ライブラリ」のtypoですよね？<br/> <br/>たしか、OpenBSDは安全性をウリにしているOSだと思うので、パフォーマンスを犠牲にして安全性を保障するというのは一つの戦略として僕はわからんでもないです。システムライブラリのmallocを置き換えてしまえば、mallocを使用している多くのプログラムの安全性を一挙に高めることが出来ますからね。<br/> <br/>Purifyなどのツールはあくまで個々のプログラムを検査・分析する為のツールのように思います。一方で今回のOpenBSDの方法はOS上で走っているプログラムを含めたシステムトータルの安全性を高める戦略で、目的が異なります。<br/> <br/>そして、そのOpenBSDが検査にも使えるってのはあくまで2次的な用途です。こういうのをアレゲっていうんでしょ？(笑)　ちがうかな。</div>
+</div>
+<div class="commentSub" id="comment_sub_788340">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これはつまり')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=788340'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788340'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788340'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_ff5be622.html" onclick="return D2.selectParent(788069)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_788340"></div>
+<ul class="comment-group" id="group_788340">
+<li class="hide" id="hiddens_788340"></li>
+</ul><ul id="commtree_788340"><li class="comment oneline" id="tree_788635"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_788635"></div>
+<div class="comment-item" id="comment_788635">
+<div class="commentTop comment-top newcomment" id="comment_top_788635">
+<div class="title">
+<h4><a href="../../../../../comments.pl_5dda33cc.html" id="comment_link_788635" name="comment_link_788635" onclick="return D2.setFocusComment(788635)">Re:これはつまり</a>
+<span class="score" id="comment_score_788635">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 788635); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_788635"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_788635">たぶんあなたはmallocの中身が理解できていないので、まず、そこから始めます。mallocはまずシステムコールmmapあるいはbrkを呼びある程度のメモリ空間をプールしておきます。次に、mallocが呼ばれたときに、その中を必要に応じて刻んで渡します。freeをされると、リサイクル用リストに入ります。次にmallocが呼ばれたらfreeされているリサイクル用リストに適切なものがあれば、そちらから引渡し、なければプールされている領域から取ります。これがユーザ空間で行われるため、単純なポインタの付け替えだけで処理できます。ですから非常に高速です。</div>
+</div>
+<div class="commentSub" id="comment_sub_788635"></div>
+</div>
+<div id="replyto_788635"></div>
+<ul class="comment-group" id="group_788635">
+<li class="hide" id="hiddens_788635"></li>
+</ul><ul id="commtree_788635"><li class="comment full contain" id="tree_789452"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_789452"></div>
+<div class="comment-item" id="comment_789452">
+<div class="commentTop comment-top newcomment" id="comment_top_789452">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d1674020.html" id="comment_link_789452" name="comment_link_789452" onclick="return D2.setFocusComment(789452)">Re:これはつまり</a>
+<span class="score" id="comment_score_789452">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 789452); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~zenkakueisuuji/index.html">zenkakueisuuji (20374)</a>
+<span class="otherdetails" id="comment_otherdetails_789452">on 2005年08月29日 10時29分
+			 (<a href="../../../../../comment/789452.html">#789452</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~zenkakueisuuji/journal/index.html" title="2009年04月07日 22時09分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_789452"><blockquote>
+OpenBSDは、この「システムコールで一度にある程度のサイズを取る」ということをせずに、mallocが呼ばれれば内部でシステムコールであるmmapを毎回呼びます。
+</blockquote>
+<p>
+はずれ。
+<br/>
+元記事のリンク先に
+</p>
+<blockquote>
+- As before, objects smaller than a page are allocated within shared pages that malloc(3) maintains. But their allocation is now somewhat randomized as well.
+</blockquote>
+と書いてある。malloc(3) が毎回 mmap(2) を呼ぶのではなく、今まで brk(2) を読んでいた箇所で mmap(2) を使うようにしただけ。free(3) がカーネルにメモリを返すのも当然毎回ではなくそのページ中に割り当てられたチャンクがすべて free(3) された時。
+<br/>
+毎回 mmap(3) を呼んで新たにページを割り当ててたら、システムコールのオーバーヘッド云々以前に、数バイト、数十バイト単位のチャンクを大量に malloc(3) するプログラムがメモリを食い尽くしてしまう。テストどころの騒ぎではない。火を見るより明らか。そんなことはしないでしょ。
+<br/>
+となると、この変更の効果は実用環境でのオーバーラン等の被害を減らし、またバグを検出しやすくすることではあるけど、徹底的にバグをたたき出すものではない。Purify のようなものとは用途がずれている。
+</div>
+</div>
+<div class="commentSub" id="comment_sub_789452">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これはつまり')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=789452'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=789452'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=789452'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_942383bf.html" onclick="return D2.selectParent(788635)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_789452"></div>
+<ul class="comment-group" id="group_789452">
+<li class="hide" id="hiddens_789452"></li>
+</ul></li><li class="comment full contain" id="tree_788725"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_788725"></div>
+<div class="comment-item" id="comment_788725">
+<div class="commentTop comment-top newcomment" id="comment_top_788725">
+<div class="title">
+<h4><a href="../../../../../comments.pl_eae1b3ef.html" id="comment_link_788725" name="comment_link_788725" onclick="return D2.setFocusComment(788725)">Re:これはつまり</a>
+<span class="score" id="comment_score_788725">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 788725); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_788725">on 2005年08月27日 16時36分
+			 (<a href="../../../../../comment/788725.html">#788725</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_788725"><p>
+  mmap や brk で大きめの領域を確保しおいて malloc がその領域から割り当てを行うことも、free した領域に関する扱いも処理系依存で実装により違うのでは？
+</p>
+<br/>
+<p>
+ というのは置いておいて、<a href="http://www.openbsd.org/ja/34.html">OpenBSD 3.4 Release</a> [openbsd.org] で、
+</p>
+<blockquote>
+ カーネルおよびユーザランドのユーティリティから、多数の安全ではない文字列関数が除去されました。 これは、OpenBSD でほとんど総合的に実施されてきた監査の一環であり、何千個もの strcpy(3)、 strcat(3)、 sprintf(3) や vsprintf(3) が、より安全で制限のある strlcpy(3)、 strlcat(3)、 snprintf(3)、 vsnprintf(3)、 や asprintf(3) で代替されました。
+</blockquote>
+<p>
+ と明らかに高速性よりも積極的なセキュリティを重視する戦略を取っているので、パフォーマンスは無視してでも潜在的に問題がありそうなところは徹底して潰すほうが OpenBSD らしいよ。
+</p></div>
+</div>
+<div class="commentSub" id="comment_sub_788725">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これはつまり')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=788725'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788725'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788725'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_942383bf.html" onclick="return D2.selectParent(788635)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_788725"></div>
+<ul class="comment-group" id="group_788725">
+<li class="hide" id="hiddens_788725"></li>
+</ul><ul id="commtree_788725"><li class="comment oneline" id="tree_788920"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_788920"></div>
+<div class="comment-item" id="comment_788920">
+<div class="commentTop comment-top newcomment" id="comment_top_788920">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9c3e5968.html" id="comment_link_788920" name="comment_link_788920" onclick="return D2.setFocusComment(788920)">Re:これはつまり</a>
+<span class="score" id="comment_score_788920">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 788920); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_788920"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_788920">&gt;明らかに高速性よりも積極的なセキュリティを重視する
+<p>
+高速でかつセキュリティなものも出来るのですが。
+あなたの文章を読んで無知が一番強いという言葉を思い出しました。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_788920"></div>
+</div>
+<div id="replyto_788920"></div>
+<ul class="comment-group" id="group_788920">
+<li class="hide" id="hiddens_788920"></li>
+</ul><ul id="commtree_788920"><li class="comment full contain" id="tree_788921"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_788921"></div>
+<div class="comment-item" id="comment_788921">
+<div class="commentTop comment-top newcomment" id="comment_top_788921">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8434f901.html" id="comment_link_788921" name="comment_link_788921" onclick="return D2.setFocusComment(788921)">Re:これはつまり</a>
+<span class="score" id="comment_score_788921">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 788921); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~fukapon/index.html">fukapon (4131)</a>
+<span class="otherdetails" id="comment_otherdetails_788921">on 2005年08月27日 23時00分
+			 (<a href="../../../../../comment/788921.html">#788921</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_788921"><p>
+　「セキュアなもの」ね。
+無知が一番強いというのは、確かなようだ。
+（フレームのもと）
+</p></div>
+</div>
+<div class="commentSub" id="comment_sub_788921">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これはつまり')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=788921'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788921'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788921'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_f39e88a0.html" onclick="return D2.selectParent(788920)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_788921"></div>
+<ul class="comment-group" id="group_788921">
+<li class="hide" id="hiddens_788921"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_789379"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_789379"></div>
+<div class="comment-item" id="comment_789379">
+<div class="commentTop comment-top newcomment" id="comment_top_789379">
+<div class="title">
+<h4><a href="../../../../../comments.pl_df4f2969.html" id="comment_link_789379" name="comment_link_789379" onclick="return D2.setFocusComment(789379)">Re:これはつまり</a>
+<span class="score" id="comment_score_789379">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 789379); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~tt_net/index.html">tt_net (17623)</a>
+<span class="otherdetails" id="comment_otherdetails_789379">on 2005年08月29日  4時31分
+			 (<a href="../../../../../comment/789379.html">#789379</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_789379">大変有用な解説をありがとうございます。でも、ごめんなさい、それは踏まえてこの話はしているつもりでした(ところで、#788069のACさんですよね？) 。そもそも、それが分かってないと、このトピックの面白みがわかりませんし;)。<br/> <br/>つまり、#788069では、<i>ユーザランドのライブラリ</i> じゃなくて<i>システムコール</i>で解決しようとしているのが<i>馬鹿なこと</i>とおっしゃってたのですね。システムライブラリに組み込むのが<i>馬鹿なこと</i>なのではなく、そのアルゴリズムに関する異議なのですよね？それなら合点です。すいません。<br/> <br/>ところで、ユーザランドでのmalloc置き換えの実装と言うと、例えば以下のものもそうなのではないかと想像しますが、これらと比べても今回のOpenBSDのアプローチはhigh costですかね？ 昔、これらに類するツールをいくつかちょこっと試してみた感想なのですが、それらも通常のmallocを使った場合と比べて大分パフォーマンスが悪かった記憶がありますので、それ以上遅いと実用には向かない気がいたします。その時、私の使ったツールのアルゴリズムがたまたま悪かったのでしょうか？ この種のツールのみなさんの比較経験を教えて頂けるとありがたいです。<br/><ul> <br/><li> ccmalloc http://www.inf.ethz.ch/personal/biere/projects/ccmalloc/<br/><li> Electric Fence http://perens.com/FreeSoftware/<br/></li></li></ul> <br/> <br/># って、もうこの記事にはコメントつかなそうですが...</div>
+</div>
+<div class="commentSub" id="comment_sub_789379">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これはつまり')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=789379'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=789379'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=789379'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_942383bf.html" onclick="return D2.selectParent(788635)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_789379"></div>
+<ul class="comment-group" id="group_789379">
+<li class="hide" id="hiddens_789379"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_788101"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_788101"></div>
+<div class="comment-item" id="comment_788101">
+<div class="commentTop comment-top newcomment" id="comment_top_788101">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2b157712.html" id="comment_link_788101" name="comment_link_788101" onclick="return D2.setFocusComment(788101)">Re:これはつまり</a>
+<span class="score" id="comment_score_788101">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 788101); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_788101">on 2005年08月26日 13時17分
+			 (<a href="../../../../../comment/788101.html">#788101</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_788101">わかってないなぁ。<br/>これはOpenBSD だぜ。<br/>いいじゃねぇか、実用OS を使った壮大な実験なんだよ、これは。</div>
+</div>
+<div class="commentSub" id="comment_sub_788101">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これはつまり')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=788101'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788101'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788101'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_ff5be622.html" onclick="return D2.selectParent(788069)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_788101"></div>
+<ul class="comment-group" id="group_788101">
+<li class="hide" id="hiddens_788101"></li>
+</ul></li><li class="comment full contain" id="tree_788187"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_788187"></div>
+<div class="comment-item" id="comment_788187">
+<div class="commentTop comment-top newcomment" id="comment_top_788187">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f2e6cba3.html" id="comment_link_788187" name="comment_link_788187" onclick="return D2.setFocusComment(788187)">Re: これはつまり</a>
+<span class="score" id="comment_score_788187">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 788187); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~urandom/index.html">urandom (26447)</a>
+<span class="otherdetails" id="comment_otherdetails_788187">on 2005年08月26日 15時26分
+			 (<a href="../../../../../comment/788187.html">#788187</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_788187">&gt; Linuxではむかしからmallocはmmapを使っています。<br/>ふむ。<br/> <br/>&gt; というかbrkはPOSIX.1ではないので意図的に使っていません。<br/>standard至上主義はよしとして、<br/> <br/>&gt; それからシステムコールになんかしたらパフォーマンスがあがらないので、<br/>何をシステムコールにしたら性能が上がらないのでしょうか?<br/>malloc(3)をmmap(2)だろうがsbrk(2)だろうが、どっちにしろシステムコールを呼ぶ場合がある<br/>という状況に変わりはないと思うのですが。</div>
+</div>
+<div class="commentSub" id="comment_sub_788187">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re: これはつまり')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=788187'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788187'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=788187'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_ff5be622.html" onclick="return D2.selectParent(788069)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_788187"></div>
+<ul class="comment-group" id="group_788187">
+<li class="hide" id="hiddens_788187"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_787610"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787610"></div>
+<div class="comment-item" id="comment_787610">
+<div class="commentTop comment-top newcomment" id="comment_top_787610">
+<div class="title">
+<h4><a href="../../../../../comments.pl_48259b05.html" id="comment_link_787610" name="comment_link_787610" onclick="return D2.setFocusComment(787610)">Re:これはつまり</a>
+<span class="score" id="comment_score_787610">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787610); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_787610">on 2005年08月25日 19時04分
+			 (<a href="../../../../../comment/787610.html">#787610</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787610"><a href="http://valgrind.org/">valgrind</a> [valgrind.org]とかで良くね？</div>
+</div>
+<div class="commentSub" id="comment_sub_787610">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これはつまり')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=787610'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787610'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787610'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a78f7a43.html" onclick="return D2.selectParent(787601)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_787610"></div>
+<ul class="comment-group" id="group_787610">
+<li class="hide" id="hiddens_787610"></li>
+</ul></li><li class="comment full contain" id="tree_787762"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787762"></div>
+<div class="comment-item" id="comment_787762">
+<div class="commentTop comment-top newcomment" id="comment_top_787762">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7675844a.html" id="comment_link_787762" name="comment_link_787762" onclick="return D2.setFocusComment(787762)">Re:これはつまり</a>
+<span class="score" id="comment_score_787762">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787762); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_787762">on 2005年08月26日  0時17分
+			 (<a href="../../../../../comment/787762.html">#787762</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787762">バグの叩き出しができるかどうかは運次第かもしれませんが、<br/>fj.comp.lang.cの定番だったmalloc/free論争には決着が<br/>付けられるかもしれません :-)</div>
+</div>
+<div class="commentSub" id="comment_sub_787762">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これはつまり')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=787762'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787762'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787762'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a78f7a43.html" onclick="return D2.selectParent(787601)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_787762"></div>
+<ul class="comment-group" id="group_787762">
+<li class="hide" id="hiddens_787762"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_787693"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787693"></div>
+<div class="comment-item" id="comment_787693">
+<div class="commentTop comment-top newcomment" id="comment_top_787693">
+<div class="title">
+<h4><a href="../../../../../comments.pl_756a9776.html" id="comment_link_787693" name="comment_link_787693" onclick="return D2.setFocusComment(787693)">32bit アドレス 4k ページのシステムだと</a>
+<span class="score" id="comment_score_787693">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787693); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Ab./index.html">Ab. (3793)</a>
+<span class="otherdetails" id="comment_otherdetails_787693">on 2005年08月25日 21時30分
+			 (<a href="../../../../../comment/787693.html">#787693</a>)
+			<small>
+<a class="user_homepage_display" href="http://hp.vector.co.jp/authors/VA028199/" title="http://hp.vector.co.jp/authors/VA028199/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~Ab./journal/index.html" title="2015年01月28日 17時00分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787693">2^(32-12-1) 回、つまり malloc(1) を51万回位呼び出すとアドレス使い果たして malloc() に失敗しちゃうのかな?<br/>
+（-1 は隣接ページを空けておく分）</div>
+</div>
+</div>
+<div id="replyto_787693"></div>
+<ul class="comment-group" id="group_787693">
+<li class="hide" id="hiddens_787693"></li>
+</ul><ul id="commtree_787693"><li class="comment full contain" id="tree_787703"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787703"></div>
+<div class="comment-item" id="comment_787703">
+<div class="commentTop comment-top newcomment" id="comment_top_787703">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2316baf6.html" id="comment_link_787703" name="comment_link_787703" onclick="return D2.setFocusComment(787703)">Re:32bit アドレス 4k ページのシステムだと</a>
+<span class="score" id="comment_score_787703">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787703); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_787703">on 2005年08月25日 21時49分
+			 (<a href="../../../../../comment/787703.html">#787703</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787703"><blockquote>- As before, objects smaller than a page are allocated within shared pages that malloc(3) maintains. But their allocation is now somewhat randomized as well.</blockquote>
+
+ページ以下のサイズだとほぼ従来通りの挙動になるってことでは。</div>
+</div>
+<div class="commentSub" id="comment_sub_787703">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:32bit アドレス 4k ページのシステムだと')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=787703'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787703'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787703'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_25383f89.html" onclick="return D2.selectParent(787693)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_787703"></div>
+<ul class="comment-group" id="group_787703">
+<li class="hide" id="hiddens_787703"></li>
+</ul><ul id="commtree_787703"><li class="comment full contain" id="tree_787722"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787722"></div>
+<div class="comment-item" id="comment_787722">
+<div class="commentTop comment-top newcomment" id="comment_top_787722">
+<div class="title">
+<h4><a href="../../../../../comments.pl_500fd668.html" id="comment_link_787722" name="comment_link_787722" onclick="return D2.setFocusComment(787722)">Re:32bit アドレス 4k ページのシステムだと</a>
+<span class="score" id="comment_score_787722">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787722); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Ab./index.html">Ab. (3793)</a>
+<span class="otherdetails" id="comment_otherdetails_787722">on 2005年08月25日 22時15分
+			 (<a href="../../../../../comment/787722.html">#787722</a>)
+			<small>
+<a class="user_homepage_display" href="http://hp.vector.co.jp/authors/VA028199/" title="http://hp.vector.co.jp/authors/VA028199/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~Ab./journal/index.html" title="2015年01月28日 17時00分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787722"><blockquote>
+ページ以下のサイズだとほぼ従来通りの挙動になるってことでは。
+</blockquote>
+お、ホントだ。リンク先は読んでませんでした。<br/>
+そうすると、malloc(4097) を34万回か…</div>
+</div>
+<div class="commentSub" id="comment_sub_787722">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:32bit アドレス 4k ページのシステムだと')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=787722'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787722'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787722'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_f745b9b5.html" onclick="return D2.selectParent(787703)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_787722"></div>
+<ul class="comment-group" id="group_787722">
+<li class="hide" id="hiddens_787722"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_787604"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787604"></div>
+<div class="comment-item" id="comment_787604">
+<div class="commentTop comment-top newcomment" id="comment_top_787604">
+<div class="title">
+<h4><a href="../../../../../comments.pl_15c05b8d.html" id="comment_link_787604" name="comment_link_787604" onclick="return D2.setFocusComment(787604)">性能は?</a>
+<span class="score" id="comment_score_787604">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787604); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_787604">on 2005年08月25日 18時59分
+			 (<a href="../../../../../comment/787604.html">#787604</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787604">これ、実行性能は悪くなる変更ですけど、実際のパフォーマンスへの悪影響はどんなものでしょう。初期のバージョンだと 50% も遅くなったそうですが、現在のバージョンだと、どれくらい?</div>
+</div>
+</div>
+<div id="replyto_787604"></div>
+<ul class="comment-group" id="group_787604">
+<li class="hide" id="hiddens_787604"></li>
+</ul><ul id="commtree_787604"><li class="comment full contain" id="tree_787702"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787702"></div>
+<div class="comment-item" id="comment_787702">
+<div class="commentTop comment-top newcomment" id="comment_top_787702">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b9746d05.html" id="comment_link_787702" name="comment_link_787702" onclick="return D2.setFocusComment(787702)">Re:性能は?</a>
+<span class="score" id="comment_score_787702">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787702); return false">スコア:3</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~SteppingWind/index.html">SteppingWind (2654)</a>
+<span class="otherdetails" id="comment_otherdetails_787702">on 2005年08月25日 21時48分
+			 (<a href="../../../../../comment/787702.html">#787702</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787702"><p>やっぱり問題になりそうなのは愚直にmalloc-freeを繰り返すタイプのプログラムでしょうね. 今まではfreeした領域をプロセス内で保持して次のmallocで再利用していたので, うまくいくと(しかもうまくいく確率が高い)システムコールを呼び出す必要が無いので大幅に性能に効いてきますね.</p>
+<p>典型的にはリスト処理とかオブジェクトのインスタンス生成なんですけど, やっぱり自前でガーベージコレクションなどの処理を行う必要を覚悟しておけってこてなんでしょうかね.</p></div>
+</div>
+<div class="commentSub" id="comment_sub_787702">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:性能は?')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=787702'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787702'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787702'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_9289c3df.html" onclick="return D2.selectParent(787604)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_787702"></div>
+<ul class="comment-group" id="group_787702">
+<li class="hide" id="hiddens_787702"></li>
+</ul><ul id="commtree_787702"><li class="comment full contain" id="tree_787733"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787733"></div>
+<div class="comment-item" id="comment_787733">
+<div class="commentTop comment-top newcomment" id="comment_top_787733">
+<div class="title">
+<h4><a href="../../../../../comments.pl_846283c3.html" id="comment_link_787733" name="comment_link_787733" onclick="return D2.setFocusComment(787733)">Re:性能は?</a>
+<span class="score" id="comment_score_787733">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787733); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~IKeJI/index.html">IKeJI (13535)</a>
+<span class="otherdetails" id="comment_otherdetails_787733">on 2005年08月25日 22時47分
+			 (<a href="../../../../../comment/787733.html">#787733</a>)
+			<small>
+<a class="user_homepage_display" href="http://ikeji.ma/" title="http://ikeji.ma/">ホームページ</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787733">性能を気にして、自前で、malloc &amp; freeを実装しているため、<br/>バッファオーバーフローしてもエラーにならないという訳ですね。<br/> <br/>やっぱりオン、オフできるといいのだけど。<br/>#OpenBSDを使う事がオンにするという事なのか。</div>
+</div>
+<div class="commentSub" id="comment_sub_787733">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:性能は?')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=787733'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787733'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787733'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_c936b17c.html" onclick="return D2.selectParent(787702)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_787733"></div>
+<ul class="comment-group" id="group_787733">
+<li class="hide" id="hiddens_787733"></li>
+</ul><ul id="commtree_787733"><li class="comment full contain" id="tree_787737"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787737"></div>
+<div class="comment-item" id="comment_787737">
+<div class="commentTop comment-top newcomment" id="comment_top_787737">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b7908e00.html" id="comment_link_787737" name="comment_link_787737" onclick="return D2.setFocusComment(787737)">Re:性能は?</a>
+<span class="score" id="comment_score_787737">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787737); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~deleted%20user/index.html">deleted user (19654)</a>
+<span class="otherdetails" id="comment_otherdetails_787737">on 2005年08月25日 22時55分
+			 (<a href="../../../../../comment/787737.html">#787737</a>)
+			<small>
+<a class="user_homepage_display" href="http://tamo.tdiary.net/" title="http://tamo.tdiary.net/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~deleted%20user/journal/index.html" title="2013年07月30日  8時18分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787737">未確認ですが、ln -s fg <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=malloc.conf&amp;apropos=0&amp;sektion=5&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">/etc/malloc.conf</a> [openbsd.org] とすればオフにできるかもしれません。</div>
+</div>
+<div class="commentSub" id="comment_sub_787737">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:性能は?')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=787737'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787737'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787737'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_0027008f.html" onclick="return D2.selectParent(787733)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_787737"></div>
+<ul class="comment-group" id="group_787737">
+<li class="hide" id="hiddens_787737"></li>
+</ul></li></ul></li></ul></li><li class="comment oneline" id="tree_787700"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787700"></div>
+<div class="comment-item" id="comment_787700">
+<div class="commentTop comment-top newcomment" id="comment_top_787700">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e421eed8.html" id="comment_link_787700" name="comment_link_787700" onclick="return D2.setFocusComment(787700)">Re:性能は?</a>
+<span class="score" id="comment_score_787700">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787700); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_787700"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787700">malloc/freeの使用頻度に依存するので、一概にどれくらいとは言えないでしょう。<br/>普通に使っていれば気になるほど遅くならないと思いますが。<br/> <br/>あまりに遅くなるようなら、自前のサブアロケータ用意するという逃げ道もありますが、<br/>それはそれで本末転倒ですな。</div>
+</div>
+<div class="commentSub" id="comment_sub_787700"></div>
+</div>
+<div id="replyto_787700"></div>
+<ul class="comment-group" id="group_787700">
+<li class="hide" id="hiddens_787700"></li>
+</ul></li></ul></li><li class="comment hidden" id="tree_787679"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787679"></div>
+<div class="comment-item" id="comment_787679">
+</div>
+<div id="replyto_787679"></div>
+<ul class="comment-group" id="group_787679">
+<li class="hide" id="hiddens_787679"></li>
+</ul><ul id="commtree_787679"><li class="comment full contain" id="tree_787687"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787687"></div>
+<div class="comment-item" id="comment_787687">
+<div class="commentTop comment-top newcomment" id="comment_top_787687">
+<div class="title">
+<h4><a href="../../../../../comments.pl_58f26f1b.html" id="comment_link_787687" name="comment_link_787687" onclick="return D2.setFocusComment(787687)">Re:テスト環境省</a>
+<span class="score" id="comment_score_787687">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787687); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Higuchi_Misya/index.html">Higuchi_Misya (23432)</a>
+<span class="otherdetails" id="comment_otherdetails_787687">on 2005年08月25日 21時15分
+			 (<a href="../../../../../comment/787687.html">#787687</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787687">多分BSDセクションローカルで、トップページに現れないからじゃないかなと思う。<br/>デペロッパー辺りに投げれば食いつきいいんじゃないかな。<br/><br/>#脳内オーバーフロー :)</div>
+</div>
+<div class="commentSub" id="comment_sub_787687">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:テスト環境省')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=787687'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787687'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787687'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_065beebb.html" onclick="return D2.selectParent(787679)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_787687"></div>
+<ul class="comment-group" id="group_787687">
+<li class="hide" id="hiddens_787687"></li>
+</ul><ul id="commtree_787687"><li class="comment full contain" id="tree_787690"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787690"></div>
+<div class="comment-item" id="comment_787690">
+<div class="commentTop comment-top newcomment" id="comment_top_787690">
+<div class="title">
+<h4><a href="../../../../../comments.pl_eaaebe1b.html" id="comment_link_787690" name="comment_link_787690" onclick="return D2.setFocusComment(787690)">Re:テスト環境省</a>
+<span class="score" id="comment_score_787690">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787690); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Acanthopanax/index.html">Acanthopanax (5019)</a>
+<span class="otherdetails" id="comment_otherdetails_787690">&lt;<a href="mailto:reversethis-%7Bmoc.cam%7D%20%7Bta%7D%20%7Bxanapordned%7D">reversethis-{moc.cam} {ta} {xanapordned}</a>&gt;
+			on 2005年08月25日 21時23分
+			 (<a href="../../../../../comment/787690.html">#787690</a>)
+			<small>
+<a class="user_homepage_display" href="../../../../../~Acanthopanax/index.html" title="http://srad.jp/~Acanthopanax/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~Acanthopanax/journal/index.html" title="2011年01月20日 22時18分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787690"><blockquote>
+多分BSDセクションローカルで、トップページに現れないからじゃないかなと思う。
+</blockquote>
+<p>
+ということで、トップページに出してみました。
+</p></div>
+</div>
+<div class="commentSub" id="comment_sub_787690">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:テスト環境省')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=272845&amp;cid=787690'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787690'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=272845&amp;cid=787690'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_526df48f.html" onclick="return D2.selectParent(787687)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_787690"></div>
+<ul class="comment-group" id="group_787690">
+<li class="hide" id="hiddens_787690"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_787706"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_787706"></div>
+<div class="comment-item" id="comment_787706">
+<div class="commentTop comment-top newcomment" id="comment_top_787706">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e2e54817.html" id="comment_link_787706" name="comment_link_787706" onclick="return D2.setFocusComment(787706)">Re:テスト環境省</a>
+<span class="score" id="comment_score_787706">(<a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 787706); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_787706"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_787706">#787679 のせいで（空行がいっぱい）<br/>３つしかコメントが付いてないように見えたぞ。</div>
+</div>
+<div class="commentSub" id="comment_sub_787706"></div>
+</div>
+<div id="replyto_787706"></div>
+<ul class="comment-group" id="group_787706">
+<li class="hide" id="hiddens_787706"></li>
+</ul></li></ul></li><li id="hidestring_0"><noscript><b class="more"><a href="../../../../../comments.pl_2435c26c.html">1個のコメント</a> が現在のしきい値以下です。</b></noscript></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 2;
+		D2.currents()['full']     = 22;
+		D2.currents()['oneline']  = 8;
+		// D2.currents_total(32);
+
+		D2.abbrev_comments({788635:275});
+		D2.noshow_comments([788350,787679]);
+		D2.pieces_comments([787699,787716,787770,788569,788635,788920,787700,787706]);
+		D2.init_hiddens([787770,0]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">32</span>/<span class="totalcommentcnt">32</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>長期的な見通しやビジョンはあえて持たないようにしてる -- Linus Torvalds<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../about.html">About</a></li>
+<li><a href="../../../../../faq/index.html">FAQ</a></li>
+<li><a href="../../../../index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../hof.html">殿堂入り</a></li>
+<li><a href="../../../../../authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="OpenBSD%E3%80%81malloc3-%E3%82%92%E6%94%B9%E8%89%AF%E3%80%82%E5%A4%9A%E6%95%B0%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%BD%B1%E9%9F%BF%E3%81%8B.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

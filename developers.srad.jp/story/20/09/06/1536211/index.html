@@ -1,0 +1,2771 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/20/09/06/1536211.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>広島大学、ハフマン符号の処理を高速化するデータ構造「ギャップ配列」を考案 | スラド デベロッパー</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="広島大学、ハフマン符号の処理を高速化するデータ構造「ギャップ配列」を考案 | スラド デベロッパー" property="og:title">
+<meta content="https://srad.jp/static/topics/technology_64.png" property="og:image"/>
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '190554539225166370',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content="広島大学の中野浩嗣教授らの研究チームは8月31日、GPUによる「ハフマン符号」の並列展開処理を高速化する新しいデータ構造「ギャップ配列」を考案したそうだ（広島大学リリース[PDF]、マイナビ）。 ハフマン符号はJPEGやZIPなど多くのデータ圧縮で使われている符号化方式。NVIDAのGPU「Tesla V100」を用いた実験では、10..." name="description"/>
+<meta content="広島大学の中野浩嗣教授らの研究チームは8月31日、GPUによる「ハフマン符号」の並列展開処理を高速化する新しいデータ構造「ギャップ配列」を考案したそうだ（広島大学リリース[PDF]、マイナビ）。 ハフマン符号はJPEGやZIPなど多くのデータ圧縮で使われている符号化方式。NVIDAのGPU「Tesla V100」を用いた実験では、10..." property="og:description"/>
+<meta content="広島大学、ハフマン符号の処理を高速化するデータ構造「ギャップ配列」を考案 | スラド デベロッパー" itemprop="name"/>
+<meta content="広島大学の中野浩嗣教授らの研究チームは8月31日、GPUによる「ハフマン符号」の並列展開処理を高速化する新しいデータ構造「ギャップ配列」を考案したそうだ（広島大学リリース[PDF]、マイナビ）。 ハフマン符号はJPEGやZIPなど多くのデータ圧縮で使われている符号化方式。NVIDAのGPU「Tesla V100」を用いた実験では、10..." itemprop="description"/>
+<link href="../../../../../../srad.jp/index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../../srad.jp/search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../../srad.jp/developers.rss" rel="alternate" title="スラド developers RSS" type="application/rss+xml"/>
+<link href="../../../../../../srad.jp/static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../../srad.jp/static/topics/technology_64.png" rel="image_src"/>
+<link href="../../../../../../srad.jp/static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../../srad.jp/static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../../srad.jp/static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/20/09/06/1536211/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'developers';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//developers.srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/20/09/06/1536211.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../../srad.jp/recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../../srad.jp/popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../../srad.jp/comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../../srad.jp/journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../../srad.jp/polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：デベロッパー</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+<li class="active" id="fhsection-developers">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-5">デベロッパー</a><span></span>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+<li class="active" id="fhsection-developers">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-5">デベロッパー</a><span></span>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="14292351" data-fhtype="story" id="firehose-14292351">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">14292351</span>
+<span class="type">story</span>
+</span>
+<header>
+<span class="topic" id="topic-14292351">
+<a href="../../../../../../srad.jp/stories/tech.html" onclick="return addfhfilter('tech');">
+<img alt="テクノロジー" height="64" src="../../../../../../srad.jp/static/topics/technology_64.png" title="テクノロジー" width="64"/>
+</a>
+</span>
+<h2 class="story">
+<span id="title-14292351"> <a href="index.html">広島大学、ハフマン符号の処理を高速化するデータ構造「ギャップ配列」を考案</a></span>
+<span class="comments commentcnt-14292351">66</span>
+</h2>
+<div class="details" id="details-14292351">ストーリー by nagazou
+	<time datetime="2020-09-07T12:00+09:00" id="fhtime-14292351">2020年09月07日 12時00分</time><br/>デジカメ写真とかによさげ 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "広島大学、ハフマン符号の処理を高速化するデータ構造「ギャップ配列」を考案",
+  "datePublished": "2020-09-07T12:00+09:00",
+  "articleBody": "広島大学の中野浩嗣教授らの研究チームは8月31日、GPUによる「ハフマン符号」の並列展開処理を高速化する新しいデータ構造「ギャップ配列」を考案したそうだ（広島大学リリース[PDF]、マイナビ）。 ハフマン符号はJPEGやZIPなど多くのデータ圧縮で使われている符号化方式。NVIDAのGPU「Tesla V100」を用いた実験では、10種類の様々な種類のファイルを用意し、既知の最速プログラムとギャップ配列用に構築したプログラムを用いて比較したという。その結果、従来の展開プログラムと比較した場合、圧縮処理で2.5～7.4倍、また展開処理については、2.5倍から最大1万1000倍もの高速化が達成できたとしている。 ちなみにこの論文は、8月に開催された第49回並列処理に関する国際会議（ICPP）で最優秀論文賞に選ばれたとのこと。",
+  "image": "https://srad.jp/static/topics/technology_64.png"
+}
+</script>
+<div class="body" id="fhbody-14292351">
+<div class="contents_text p" id="text-14292351">
+        広島大学の中野浩嗣教授らの研究チームは8月31日、GPUによる「<a href="https://ja.wikipedia.org/wiki/%E3%83%8F%E3%83%95%E3%83%9E%E3%83%B3%E7%AC%A6%E5%8F%B7#:~:text=%E3%83%8F%E3%83%95%E3%83%9E%E3%83%B3%E7%AC%A6%E5%8F%B7%EF%BC%88%E3%83%8F%E3%83%95%E3%83%9E%E3%83%B3%E3%81%B5%E3%81%94%E3%81%86,%E3%81%AA%E3%81%A9%E3%81%AB%E4%BD%BF%E7%94%A8%E3%81%95%E3%82%8C%E3%82%8B%E3%80%82">ハフマン符号</a>」の並列展開処理を高速化する新しいデータ構造「ギャップ配列」を考案したそうだ（<a href="https://www.hiroshima-u.ac.jp/system/files/148917/20200831_pr01.pdf">広島大学リリース[PDF]</a>、<a href="https://news.mynavi.jp/article/20200902-1264896/">マイナビ</a>）。<br/> <br/>
+
+ハフマン符号はJPEGやZIPなど多くのデータ圧縮で使われている符号化方式。NVIDAのGPU「Tesla V100」を用いた実験では、10種類の様々な種類のファイルを用意し、既知の最速プログラムとギャップ配列用に構築したプログラムを用いて比較したという。その結果、従来の展開プログラムと比較した場合、圧縮処理で2.5～7.4倍、また展開処理については、2.5倍から最大1万1000倍もの高速化が達成できたとしている。<br/> <br/>
+
+ちなみにこの論文は、8月に開催された第49回並列処理に関する国際会議（ICPP）で最優秀論文賞に選ばれたとのこと。
+        </div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //developers.srad.jp/story/20/09/06/1536211/ -->
+<!-- http://developers.srad.jp/story/20/09/06/1536211/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://developers.srad.jp/story/20/09/06/1536211/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://developers.srad.jp/story/20/09/06/1536211/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/developers.srad.jp/story/20/09/06/1536211/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../../srad.jp/about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">66</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-14292351"><a class="topic tag" href="../../../../../../srad.jp/tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/tech.html" rel="statictag" target="_blank">tech</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%83%86%E3%82%AF%E3%83%8E%E3%83%AD%E3%82%B8%E3%83%BC.html" rel="statictag" target="_blank">テクノロジー</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0.html" rel="statictag" target="_blank">プログラミング</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../../../../../../it.srad.jp/story/20/09/06/0523243/index.html" id="hrefns">1週間でいくらもらえたらFacebook/Instagramアカウントを一時停止する？</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../../15/12/06/1822243/index.html">PHP 7リリース、言語仕様の大幅拡張と当社比2倍の性能アップを実現</a></h3><h3><a href="../../../../../../it.srad.jp/story/15/02/05/0521215/index.html">MIT、大規模マルチコアCPUの効率を向上させるデータ構造を開発</a></h3><h3><a href="../../../../04/02/02/0424257/index.html">次世代の電子メールのあるべき姿とは</a></h3><h3><a href="../../../../23/07/20/1259218/index.html">並列処理をGo/Rust/Kotlin/Python/JSで解説するイベント</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="広島大学、ハフマン符号の処理を高速化するデータ構造「ギャップ配列」を考案のストーリーへ戻る">広島大学、ハフマン符号の処理を高速化するデータ構造「ギャップ配列」を考案</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//developers.srad.jp/story/20/09/06/1536211/';
+var parent_item_title = '広島大学、ハフマン符号の処理を高速化するデータ構造「ギャップ配列」を考案';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「広島大学、ハフマン符号の処理を高速化するデータ構造「ギャップ配列」を考案」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//developers.srad.jp/search.pl?op=comments&amp;sid=795897" class="btn"><span class="totalcommentcnt">66</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//developers.srad.jp/comments.pl?sid=795897"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_679ad129.html"><span>検索</span><span class="totalcommentcnt">66</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../../srad.jp/static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 3883966: { uid: 1, pid: 3883952, subject: "Re:ふつーに", read: 0, points: 4, kids: [  ], opid: 3883952 }, 3884306: { uid: 1, pid: 3883952, subject: "Re:ふつーに", read: 0, points: 0, kids: [  ], opid: 3883952 }, 3884197: { uid: 1, pid: 3884097, subject: "Re:ふつーに", read: 0, points: 0, kids: [ 3884296 ], opid: 3884097 }, 3886696: { uid: undefined, pid: 3886664, read: 0, points: -2, kids: [ 3886759 ], opid: undefined }, 3884524: { uid: 33181, pid: 3884448, subject: "Re:なにかがおかしい", read: 0, points: 2, kids: [ 3884542 ], opid: 3884448 }, 3884260: { uid: 1, pid: 3884231, subject: "Re:なにかがおかしい", read: 0, points: 0, kids: [  ], opid: 3884231 }, 3884310: { uid: 1, pid: 3884053, subject: "Re:アルゴリズム単体で見ればちょっと遅くなるけど", read: 0, points: 0, kids: [  ], opid: 3884053 }, 3884231: { uid: 33181, pid: 0, read: 0, points: 2, kids: [ 3884233, 3884244, 3884260, 3884448, 3884521 ], opid: 0 }, 3884241: { uid: 1, pid: 3883983, subject: "Re:ワーストケース", read: 0, points: 0, kids: [ 3884463 ], opid: 3883983 }, 3886788: { uid: undefined, pid: 3886759, read: 0, points: -2, kids: [ 3887154 ], opid: undefined }, 3883995: { uid: 14791, pid: 3883961, subject: "Re:アルゴリズム単体で見ればちょっと遅くなるけど", read: 0, points: 1, kids: [ 3884029 ], opid: 3883961 }, 3884305: { uid: 1, pid: 3883959, subject: "Re:アルゴリズム単体で見ればちょっと遅くなるけど", read: 0, points: 0, kids: [  ], opid: 3883959 }, 3883943: { uid: 1, pid: 3883937, subject: "Re:10種類の様々な種類のファイル", read: 0, points: 0, kids: [  ], opid: 3883937 }, 3883968: { uid: 1, pid: 3883952, subject: "Re:ふつーに", read: 0, points: 0, kids: [ 3884097 ], opid: 3883952 }, 3883961: { uid: 1, pid: 3883959, subject: "Re:アルゴリズム単体で見ればちょっと遅くなるけど", read: 0, points: 0, kids: [ 3883995 ], opid: 3883959 }, 3884397: { uid: 1, pid: 3884286, subject: "Re:結構いまさら感", read: 0, points: 0, kids: [  ], opid: 3884286 }, 3884233: { uid: 33181, pid: 3884231, subject: "Re:なにかがおかしい", read: 0, points: 2, kids: [  ], opid: 3884231 }, 3884542: { uid: 33181, pid: 3884524, subject: "Re:なにかがおかしい", read: 0, points: 2, kids: [  ], opid: 3884524 }, 3884097: { uid: 1, pid: 3883968, subject: "Re:ふつーに", read: 0, points: 0, kids: [ 3884197 ], opid: 3883968 }, 3884030: { uid: 1, pid: 3883959, subject: "Re:アルゴリズム単体で見ればちょっと遅くなるけど", read: 0, points: 0, kids: [  ], opid: 3883959 }, 3883962: { uid: 1, pid: 3883952, subject: "Re:ふつーに", read: 0, points: 0, kids: [  ], opid: 3883952 }, 3883952: { uid: 33181, pid: 0, read: 0, points: 2, kids: [ 3883962, 3883966, 3883968, 3884306 ], opid: 0 }, 3884296: { uid: 1, pid: 3884197, subject: "Re:ふつーに", read: 0, points: 0, kids: [ 3884304 ], opid: 3884197 }, 3884428: { uid: 1, pid: 3884304, subject: "Re:ふつーに", read: 0, points: 0, kids: [  ], opid: 3884384 }, 3884007: { uid: 1, pid: 3883946, subject: "Re:アルゴリズム単体で見ればちょっと遅くなるけど", read: 0, points: 0, kids: [  ], opid: 3883946 }, 3886759: { uid: undefined, pid: 3886696, read: 0, points: -2, kids: [ 3886788 ], opid: undefined }, 3886664: { uid: 5376, pid: 0, read: 0, points: 2, kids: [ 3886696 ], opid: 0 }, 3883951: { uid: 1, pid: 3883938, subject: "Re:結構いまさら感", read: 0, points: 0, kids: [ 3884286 ], opid: 3883938 }, 3883939: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 3883953, 3884480 ], opid: 0 }, 3884384: { uid: 1, pid: 3884304, subject: "Re:ふつーに", read: 0, points: 0, kids: [  ], opid: 3884304 }, 3884100: { uid: 1, pid: 3884053, subject: "Re:アルゴリズム単体で見ればちょっと遅くなるけど", read: 0, points: 0, kids: [  ], opid: 3884053 }, 3884053: { uid: 14791, pid: 3884029, subject: "Re:アルゴリズム単体で見ればちょっと遅くなるけど", read: 0, points: 2, kids: [ 3884100, 3884310 ], opid: 3884029 }, 3884029: { uid: 1, pid: 3883995, subject: "Re:アルゴリズム単体で見ればちょっと遅くなるけど", read: 0, points: 0, kids: [ 3884053 ], opid: 3883995 }, 3884286: { uid: 1, pid: 3883951, subject: "Re:結構いまさら感", read: 0, points: 0, kids: [ 3884397 ], opid: 3883951 }, 3883956: { uid: 1, pid: 3883938, subject: "Re:結構いまさら感", read: 0, points: 0, kids: [  ], opid: 3883938 }, 3883937: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 3883943, 3884065 ], opid: 0 }, 3883955: { uid: 1, pid: 3883946, subject: "Re:アルゴリズム単体で見ればちょっと遅くなるけど", read: 0, points: 0, kids: [  ], opid: 3883946 }, 3884304: { uid: 1, pid: 3884296, subject: "Re:ふつーに", read: 0, points: 0, kids: [ 3884384, 3884419, 3884428 ], opid: 3884296 }, 3884244: { uid: 33181, pid: 3884231, subject: "Re:なにかがおかしい", read: 0, points: 2, kids: [ 3884253 ], opid: 3884231 }, 3884120: { uid: 1, pid: 3883938, subject: "Re:結構いまさら感", read: 0, points: 0, kids: [  ], opid: 3883938 }, 3887154: { uid: 5376, pid: 3886788, subject: "Re:コンセプトの段階？", read: 0, points: 2, kids: [  ], opid: 3886788 }, 3883959: { uid: 14791, pid: 3883946, subject: "Re:アルゴリズム単体で見ればちょっと遅くなるけど", read: 0, points: 1, kids: [ 3883961, 3884030, 3884305 ], opid: 3883946 }, 3884448: { uid: 1, pid: 3884231, subject: "Re:なにかがおかしい", read: 0, points: 1, kids: [ 3884524 ], opid: 3884231 }, 3884253: { uid: 1, pid: 3884244, subject: "Re:なにかがおかしい", read: 0, points: 0, kids: [  ], opid: 3884244 }, 3883953: { uid: 1, pid: 3883939, subject: "Re:動的ハフマンコード", read: 0, points: 0, kids: [  ], opid: 3883939 }, 3884419: { uid: 1, pid: 3884304, subject: "Re:ふつーに", read: 0, points: 0, kids: [  ], opid: 3884384 }, 3884463: { uid: 1, pid: 3884241, subject: "Re:ワーストケース", read: 0, points: 0, kids: [  ], opid: 3884241 }, 3883983: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 3884241 ], opid: 0 }, 3884480: { uid: 1, pid: 3883939, subject: "Re:動的ハフマンコード", read: 0, points: 0, kids: [  ], opid: 3883939 }, 3884521: { uid: 33181, pid: 3884231, subject: "Re:なにかがおかしい", read: 0, points: 2, kids: [  ], opid: 3884231 }, 3883946: { uid: 32469, pid: 0, read: 0, points: 2, kids: [ 3883955, 3883959, 3884007 ], opid: 0 }, 3884065: { uid: 1, pid: 3883937, subject: "Re:10種類の様々な種類のファイル", read: 0, points: 3, kids: [  ], opid: 3883937 }, 3883938: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 3883951, 3883956, 3884120 ], opid: 0 } });
+
+D2.thresh_totals({6:{6:{1:50,3:0,2:0}},4:{6:{1:49,3:0,2:1},4:{1:49,3:1,2:0},5:{1:49,3:0,2:1}},1:{6:{1:34,3:0,2:16},4:{1:34,3:1,2:15},1:{1:34,3:16,2:0},3:{1:34,3:6,2:10},2:{1:34,3:13,2:3},5:{1:34,3:0,2:16}},3:{6:{1:48,3:0,2:2},4:{1:48,3:1,2:1},3:{1:48,3:2,2:0},5:{1:48,3:0,2:2}},0:{6:{1:0,3:0,2:50},4:{1:0,3:1,2:49},1:{1:0,3:20,2:30},3:{1:0,3:6,2:44},0:{1:0,3:50,2:0},2:{1:0,3:13,2:37},5:{1:0,3:0,2:50}},2:{6:{1:37,3:0,2:13},4:{1:37,3:1,2:12},3:{1:37,3:6,2:7},2:{1:37,3:13,2:0},5:{1:37,3:0,2:13}},5:{6:{1:50,3:0,2:0},5:{1:50,3:0,2:0}},"-1":{6:{1:0,3:0,2:50},4:{1:0,3:1,2:49},1:{1:0,3:20,2:30},3:{1:0,3:6,2:44},0:{1:0,3:50,2:0},2:{1:0,3:13,2:37},5:{1:0,3:0,2:50},"-1":{1:0,3:50,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([3883946,3883952,3884231,3886664,3883937,3883938,3883939,3883983]);
+D2.root_comments_hash({3883983:1,3883937:1,3883952:1,3886664:1,3883939:1,3884231:1,3883946:1,3883938:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(795897);
+
+D2.d2_seen('3883937,1,1,4,3,5,1,1,2,1,3,2,1,4,2,15,12,12,22,1,23,12,32,3,20,77,34,2,8,3,9,7,26,10,8,1,1,4,74,13,22,9,20,15,17,41,3,18,2122,490');
+D2.more_comments_num(16);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_3883946"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883946"></div>
+<div class="comment-item" id="comment_3883946">
+<div class="commentTop comment-top newcomment" id="comment_top_3883946">
+<div class="title">
+<h4><a href="../../../../../comments.pl_fc94c325.html" id="comment_link_3883946" name="comment_link_3883946" onclick="return D2.setFocusComment(3883946)">アルゴリズム単体で見ればちょっと遅くなるけど</a>
+<span class="score" id="comment_score_3883946">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883946); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Y.Tae/index.html">Y.Tae (32469)</a>
+<span class="otherdetails" id="comment_otherdetails_3883946">on 2020年09月07日 12時27分
+			 (<a href="../../../../../../srad.jp/comment/3883946.html">#3883946</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883946"><p>ついでに圧縮率もちょっと悪くなるけど、<br/>並列処理できる分、GPUで高速化できますよって話ですよね。</p><p>大量の画像を同時並列的に処理する場合でも高速化できるのでしょうか</p></div>
+</div>
+</div>
+<div id="replyto_3883946"></div>
+<ul class="comment-group" id="group_3883946">
+<li class="hide" id="hiddens_3883946"></li>
+</ul><ul id="commtree_3883946"><li class="comment full contain" id="tree_3883959"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883959"></div>
+<div class="comment-item" id="comment_3883959">
+<div class="commentTop comment-top newcomment" id="comment_top_3883959">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b68a888a.html" id="comment_link_3883959" name="comment_link_3883959" onclick="return D2.setFocusComment(3883959)">Re:アルゴリズム単体で見ればちょっと遅くなるけど</a>
+<span class="score" id="comment_score_3883959">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883959); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~taka2/index.html">taka2 (14791)</a>
+<span class="otherdetails" id="comment_otherdetails_3883959">on 2020年09月07日 13時06分
+			 (<a href="../../../../../../srad.jp/comment/3883959.html">#3883959</a>)
+			<small>
+<a class="user_homepage_display" href="http://taka2.info/" title="http://taka2.info/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~taka2/journal/index.html" title="2023年11月11日  7時50分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883959"><p><a href="https://twitter.com/umezawa_takeshi/status/1301396814990462979" rel="nofollow" title="twitter.com">可逆圧縮動画コーデック UtVideo の作者の人</a> [twitter.com]が、</p><blockquote><div><p>別にそんなことしなくても全体をコア数で分割して並列処理したらコア数倍速くなるという自明な高速化を昔から適用できている</p></div></blockquote><blockquote><div><p>GPUに投げるには処理が軽すぎるので、CPUメモリとGPUメモリの間で転送してGPUで処理するよりCPUで全部処理したほうが速い</p></div></blockquote><p>と、GPUでハフマン展開を並列処理することそのものに否定的で一蹴してますね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3883959">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:アルゴリズム単体で見ればちょっと遅くなるけど')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3883959'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3883959'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3883959'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_5d4c004a.html" onclick="return D2.selectParent(3883946)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3883959"></div>
+<ul class="comment-group" id="group_3883959">
+<li class="hide" id="hiddens_3883959"></li>
+</ul><ul id="commtree_3883959"><li class="comment oneline" id="tree_3883961"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883961"></div>
+<div class="comment-item" id="comment_3883961">
+<div class="commentTop comment-top newcomment" id="comment_top_3883961">
+<div class="title">
+<h4><a href="../../../../../comments.pl_504ba497.html" id="comment_link_3883961" name="comment_link_3883961" onclick="return D2.setFocusComment(3883961)">Re:</a>
+<span class="score" id="comment_score_3883961">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883961); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883961"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883961"><p>その人が否定しているのは「UtVideoで使うには」という部分だけでは</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3883961"></div>
+</div>
+<div id="replyto_3883961"></div>
+<ul class="comment-group" id="group_3883961">
+<li class="hide" id="hiddens_3883961"></li>
+</ul><ul id="commtree_3883961"><li class="comment full contain" id="tree_3883995"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883995"></div>
+<div class="comment-item" id="comment_3883995">
+<div class="commentTop comment-top newcomment" id="comment_top_3883995">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2c4058bc.html" id="comment_link_3883995" name="comment_link_3883995" onclick="return D2.setFocusComment(3883995)">Re:アルゴリズム単体で見ればちょっと遅くなるけど</a>
+<span class="score" id="comment_score_3883995">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883995); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~taka2/index.html">taka2 (14791)</a>
+<span class="otherdetails" id="comment_otherdetails_3883995">on 2020年09月07日 14時02分
+			 (<a href="../../../../../../srad.jp/comment/3883995.html">#3883995</a>)
+			<small>
+<a class="user_homepage_display" href="http://taka2.info/" title="http://taka2.info/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~taka2/journal/index.html" title="2023年11月11日  7時50分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883995"><blockquote><div><p>別にそんなことしなくても全体をコア数で分割して並列処理したらコア数倍速くなるという自明な高速化を昔から適用できている</p></div></blockquote><p>こっちはたしかにUtVideo限定のものですが、元コメの質問「大量の画像を同時並列的に処理する場合」にも該当。</p><blockquote><div><p>GPUに投げるには処理が軽すぎるので、CPUメモリとGPUメモリの間で転送してGPUで処理するよりCPUで全部処理したほうが速い</p></div></blockquote><p>こっちは一般論としてハフマン復号をGPU処理することを否定しているかと。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3883995">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:アルゴリズム単体で見ればちょっと遅くなるけど')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3883995'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3883995'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3883995'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_6e01fbf2.html" onclick="return D2.selectParent(3883961)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3883995"></div>
+<ul class="comment-group" id="group_3883995">
+<li class="hide" id="hiddens_3883995"></li>
+</ul><ul id="commtree_3883995"><li class="comment oneline" id="tree_3884029"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884029"></div>
+<div class="comment-item" id="comment_3884029">
+<div class="commentTop comment-top newcomment" id="comment_top_3884029">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ae4408ea.html" id="comment_link_3884029" name="comment_link_3884029" onclick="return D2.setFocusComment(3884029)">Re:</a>
+<span class="score" id="comment_score_3884029">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884029); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884029"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884029"><p>&gt; 別にそんなことしなくても全体をコア数で分割して並列処理したらコア数倍速くなるという自明な高速化を昔から適用できている<br/>展開時(ハフマン符号のデコード)にコア数分割するのがそもそも普通のデータ構造だと厳しいって論文だけど、昔から適用出来てるってほんと？</p><p># 圧縮時(ハフマン符号のエンコード)ならそら昔からやってるよね</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884029"></div>
+</div>
+<div id="replyto_3884029"></div>
+<ul class="comment-group" id="group_3884029">
+<li class="hide" id="hiddens_3884029"></li>
+</ul><ul id="commtree_3884029"><li class="comment full contain" id="tree_3884053"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884053"></div>
+<div class="comment-item" id="comment_3884053">
+<div class="commentTop comment-top newcomment" id="comment_top_3884053">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f9f34600.html" id="comment_link_3884053" name="comment_link_3884053" onclick="return D2.setFocusComment(3884053)">Re:アルゴリズム単体で見ればちょっと遅くなるけど</a>
+<span class="score" id="comment_score_3884053">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884053); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~taka2/index.html">taka2 (14791)</a>
+<span class="otherdetails" id="comment_otherdetails_3884053">on 2020年09月07日 15時17分
+			 (<a href="../../../../../../srad.jp/comment/3884053.html">#3884053</a>)
+			<small>
+<a class="user_homepage_display" href="http://taka2.info/" title="http://taka2.info/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~taka2/journal/index.html" title="2023年11月11日  7時50分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884053"><p>元コメは、動画コーデックつまり独立した複数のハフマン符号列をデコードする場合の話で、<br/>その場合は符号列ごとにコアを割り当てればいい、という話でしょ。</p><p>一つの長大なハフマン符号列をデコードする場合、つまり「すごくばかでかいgzipファイルを展開する」とかいった場合には<br/>今まで並列化できなかったのが本手法で並列化できるようになるわけですし、<br/>今後の展開としてgzipへの組み込みを挙げられてますね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884053">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:アルゴリズム単体で見ればちょっと遅くなるけど')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884053'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884053'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884053'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_c7f5d014.html" onclick="return D2.selectParent(3884029)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3884053"></div>
+<ul class="comment-group" id="group_3884053">
+<li class="hide" id="hiddens_3884053"></li>
+</ul><ul id="commtree_3884053"><li class="comment oneline" id="tree_3884100"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884100"></div>
+<div class="comment-item" id="comment_3884100">
+<div class="commentTop comment-top newcomment" id="comment_top_3884100">
+<div class="title">
+<h4><a href="../../../../../comments.pl_75780af1.html" id="comment_link_3884100" name="comment_link_3884100" onclick="return D2.setFocusComment(3884100)">Re:</a>
+<span class="score" id="comment_score_3884100">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884100); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884100"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884100"><p>そのツイートは「元コメ」(大量云々)とは無関係にコア数分割と言ってる様に見えます。<br/>レポートの内容を見れば主題は単一ソースのデコード時なのは明確です。<br/>これで、エンコード時の話や、複数ソースの同時デコードの話してるならかなり残念ですね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884100"></div>
+</div>
+<div id="replyto_3884100"></div>
+<ul class="comment-group" id="group_3884100">
+<li class="hide" id="hiddens_3884100"></li>
+</ul></li><li class="comment oneline" id="tree_3884310"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884310"></div>
+<div class="comment-item" id="comment_3884310">
+<div class="commentTop comment-top newcomment" id="comment_top_3884310">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a6ef6826.html" id="comment_link_3884310" name="comment_link_3884310" onclick="return D2.setFocusComment(3884310)">Re:</a>
+<span class="score" id="comment_score_3884310">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884310); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884310"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884310"><p>これ語弊があると思うんだけど、gzipがストリームで頭から展開して中味が読めるってことは、ファイルがでかくても符号列がでかいわけじゃないんじゃないかな。実用上はどっかに仕切りを置いて切ってるんでしょ。</p><p>もちろん、大きく見た方が圧縮には有利なんだろうけど、巨大なメモリ展開まで含めて考えると実用的じゃないんでは。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884310"></div>
+</div>
+<div id="replyto_3884310"></div>
+<ul class="comment-group" id="group_3884310">
+<li class="hide" id="hiddens_3884310"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3884030"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884030"></div>
+<div class="comment-item" id="comment_3884030">
+<div class="commentTop comment-top newcomment" id="comment_top_3884030">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3e5c3ba2.html" id="comment_link_3884030" name="comment_link_3884030" onclick="return D2.setFocusComment(3884030)">Re:</a>
+<span class="score" id="comment_score_3884030">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884030); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884030"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884030"><p>並列処理したらコア数倍速くなるというのなら並列度が桁違いのGPUで処理したほうが圧倒的に速くなるのでは。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884030"></div>
+</div>
+<div id="replyto_3884030"></div>
+<ul class="comment-group" id="group_3884030">
+<li class="hide" id="hiddens_3884030"></li>
+</ul></li><li class="comment oneline" id="tree_3884305"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884305"></div>
+<div class="comment-item" id="comment_3884305">
+<div class="commentTop comment-top newcomment" id="comment_top_3884305">
+<div class="title">
+<h4><a href="../../../../../comments.pl_5142790d.html" id="comment_link_3884305" name="comment_link_3884305" onclick="return D2.setFocusComment(3884305)">Re:</a>
+<span class="score" id="comment_score_3884305">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884305); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884305"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884305"><p>UtVideoで使うのは向かないでしょうが、これは肥大化するGPUのテクスチャ圧縮の分野では使えそうですね。<br/>最近のゲームは平気で数GB超えるテクスチャバッファ使いますし、GPU内で処理完結するならCPUとの転送も関係ないし。<br/>今でも圧縮は普通に使われてますが、圧縮展開の速度が上がれば使える範囲が増えて嬉しそう。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884305"></div>
+</div>
+<div id="replyto_3884305"></div>
+<ul class="comment-group" id="group_3884305">
+<li class="hide" id="hiddens_3884305"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_3883955"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883955"></div>
+<div class="comment-item" id="comment_3883955">
+<div class="commentTop comment-top newcomment" id="comment_top_3883955">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c85a902f.html" id="comment_link_3883955" name="comment_link_3883955" onclick="return D2.setFocusComment(3883955)">Re:</a>
+<span class="score" id="comment_score_3883955">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883955); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883955"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883955"><p>性能を追求したファイル圧縮方式は複数のファイルを一個にまとめたうえで圧縮するからファイルの数は問題にならないと思う。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3883955"></div>
+</div>
+<div id="replyto_3883955"></div>
+<ul class="comment-group" id="group_3883955">
+<li class="hide" id="hiddens_3883955"></li>
+</ul></li><li class="comment oneline" id="tree_3884007"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884007"></div>
+<div class="comment-item" id="comment_3884007">
+<div class="commentTop comment-top newcomment" id="comment_top_3884007">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b7011656.html" id="comment_link_3884007" name="comment_link_3884007" onclick="return D2.setFocusComment(3884007)">Re:</a>
+<span class="score" id="comment_score_3884007">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884007); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884007"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884007"><p>「アルゴリズム単体で見ればちょっと遅くなるけど」というものではないでしょう。<br/>ギャップ配列という、本来デコードに必要ない（なくてもデコード可能な）ヒント情報を付け加えることによってデコードを高速化する、というものではないかと。</p><p>ただ、「圧縮も高速化される」という点が分からないですね。<br/>（提示されているリリース文からは読み取れない）</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884007"></div>
+</div>
+<div id="replyto_3884007"></div>
+<ul class="comment-group" id="group_3884007">
+<li class="hide" id="hiddens_3884007"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_3883952"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883952"></div>
+<div class="comment-item" id="comment_3883952">
+<div class="commentTop comment-top newcomment" id="comment_top_3883952">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a50f2987.html" id="comment_link_3883952" name="comment_link_3883952" onclick="return D2.setFocusComment(3883952)">ふつーに</a>
+<span class="score" id="comment_score_3883952">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883952); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~miyuri/index.html">miyuri (33181)</a>
+<span class="otherdetails" id="comment_otherdetails_3883952">on 2020年09月07日 12時47分
+			 (<a href="../../../../../../srad.jp/comment/3883952.html">#3883952</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~miyuri/journal/index.html" title="2023年11月18日 22時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883952"><p>GPGPUでJPEGなエンコーダを作る時等で、誰でも行っていた手なので、何を今更感。</p></div>
+</div>
+</div>
+<div id="replyto_3883952"></div>
+<ul class="comment-group" id="group_3883952">
+<li class="hide" id="hiddens_3883952"></li>
+</ul><ul id="commtree_3883952"><li class="comment full contain" id="tree_3883966"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883966"></div>
+<div class="comment-item" id="comment_3883966">
+<div class="commentTop comment-top newcomment" id="comment_top_3883966">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c9e252ba.html" id="comment_link_3883966" name="comment_link_3883966" onclick="return D2.setFocusComment(3883966)">Re:ふつーに</a>
+<span class="score" id="comment_score_3883966">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883966); return false">スコア:4</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883966">on 2020年09月07日 13時32分
+			 (<a href="../../../../../../srad.jp/comment/3883966.html">#3883966</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883966"><p>エンコーダではなくデコーダを高速化できるという技術ですね</p><p>圧縮はそもそも今までも並列処理できる<br/>展開は符号長が可変なので頭から順に展開していかないとどこからどこまで符号かわからない＝並列処理に向かない<br/>それなら事前にそれぞれの符号の目印を埋め込めば良いのでは？</p><p>という理屈自体は割と単純なように思います<br/>動画圧縮でいえばずっとBフレームしか存在しなかったものにGOPという概念を追加するような</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3883966">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ふつーに')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3883966'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3883966'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3883966'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_df369812.html" onclick="return D2.selectParent(3883952)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3883966"></div>
+<ul class="comment-group" id="group_3883966">
+<li class="hide" id="hiddens_3883966"></li>
+</ul></li><li class="comment oneline" id="tree_3883962"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883962"></div>
+<div class="comment-item" id="comment_3883962">
+<div class="commentTop comment-top newcomment" id="comment_top_3883962">
+<div class="title">
+<h4><a href="../../../../../comments.pl_69c19dba.html" id="comment_link_3883962" name="comment_link_3883962" onclick="return D2.setFocusComment(3883962)">Re:</a>
+<span class="score" id="comment_score_3883962">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883962); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883962"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883962"><p>圧縮の方はおまけみたいなもので、展開を高速化できたというのが核心じゃないの<br/>しかもGPUを使用する既知の最速デコーダと比較して</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3883962"></div>
+</div>
+<div id="replyto_3883962"></div>
+<ul class="comment-group" id="group_3883962">
+<li class="hide" id="hiddens_3883962"></li>
+</ul></li><li class="comment oneline" id="tree_3883968"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883968"></div>
+<div class="comment-item" id="comment_3883968">
+<div class="commentTop comment-top newcomment" id="comment_top_3883968">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a2be5d07.html" id="comment_link_3883968" name="comment_link_3883968" onclick="return D2.setFocusComment(3883968)">Re:</a>
+<span class="score" id="comment_score_3883968">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883968); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883968"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883968"><p>誰でもやってるなら、おれおれライブラリなりRedditなりで公開してる人もいるよね？<br/>例えばどれ？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3883968"></div>
+</div>
+<div id="replyto_3883968"></div>
+<ul class="comment-group" id="group_3883968">
+<li class="hide" id="hiddens_3883968"></li>
+</ul><ul id="commtree_3883968"><li class="comment oneline" id="tree_3884097"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884097"></div>
+<div class="comment-item" id="comment_3884097">
+<div class="commentTop comment-top newcomment" id="comment_top_3884097">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7bb46d2f.html" id="comment_link_3884097" name="comment_link_3884097" onclick="return D2.setFocusComment(3884097)">Re:</a>
+<span class="score" id="comment_score_3884097">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884097); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884097"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884097"><p>おまえは本当に「Hello, world!」がほしいのか？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884097"></div>
+</div>
+<div id="replyto_3884097"></div>
+<ul class="comment-group" id="group_3884097">
+<li class="hide" id="hiddens_3884097"></li>
+</ul><ul id="commtree_3884097"><li class="comment oneline" id="tree_3884197"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884197"></div>
+<div class="comment-item" id="comment_3884197">
+<div class="commentTop comment-top newcomment" id="comment_top_3884197">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0d031c57.html" id="comment_link_3884197" name="comment_link_3884197" onclick="return D2.setFocusComment(3884197)">Re:</a>
+<span class="score" id="comment_score_3884197">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884197); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884197"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884197"><p>うん欲しい。<br/>誰でもやってるハロワレベルの話なら腐るほど記事もあるよね、きっと。<br/>それならちょっと検索すりゃ一瞬で出せるっしょ？<br/>何で勿体ぶってるの？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884197"></div>
+</div>
+<div id="replyto_3884197"></div>
+<ul class="comment-group" id="group_3884197">
+<li class="hide" id="hiddens_3884197"></li>
+</ul><ul id="commtree_3884197"><li class="comment oneline" id="tree_3884296"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884296"></div>
+<div class="comment-item" id="comment_3884296">
+<div class="commentTop comment-top newcomment" id="comment_top_3884296">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b109cc48.html" id="comment_link_3884296" name="comment_link_3884296" onclick="return D2.setFocusComment(3884296)">Re:</a>
+<span class="score" id="comment_score_3884296">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884296); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884296"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884296"><p>動画エンコーダの老舗、FFmpegのソースをgitから持ってくればよかろ？<br/>っ <a href="https://github.com/FFmpeg/FFmpeg" rel="nofollow" title="github.com">https://github.com/FFmpeg/FFmpeg</a> [github.com]</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884296"></div>
+</div>
+<div id="replyto_3884296"></div>
+<ul class="comment-group" id="group_3884296">
+<li class="hide" id="hiddens_3884296"></li>
+</ul><ul id="commtree_3884296"><li class="comment oneline" id="tree_3884304"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884304"></div>
+<div class="comment-item" id="comment_3884304">
+<div class="commentTop comment-top newcomment" id="comment_top_3884304">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9580cf04.html" id="comment_link_3884304" name="comment_link_3884304" onclick="return D2.setFocusComment(3884304)">Re:</a>
+<span class="score" id="comment_score_3884304">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884304); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884304"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884304"><p>これデコーダの話なんですけど？(爆笑)</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884304"></div>
+</div>
+<div id="replyto_3884304"></div>
+<ul class="comment-group" id="group_3884304">
+<li class="hide" id="hiddens_3884304"></li>
+</ul><ul id="commtree_3884304"><li class="comment oneline" id="tree_3884384"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884384"></div>
+<div class="comment-item" id="comment_3884384">
+<div class="commentTop comment-top newcomment" id="comment_top_3884384">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d5dee617.html" id="comment_link_3884384" name="comment_link_3884384" onclick="return D2.setFocusComment(3884384)">Re:</a>
+<span class="score" id="comment_score_3884384">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884384); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884384"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884384"><p>「誰でも行っていた手」なのはエンコーダの話ですよ。<br/>文字は読めても意味は読めないんですね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884384"></div>
+</div>
+<div id="replyto_3884384"></div>
+<ul class="comment-group" id="group_3884384">
+<li class="hide" id="hiddens_3884384"></li>
+</ul></li><li class="comment oneline" id="tree_3884419"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884419"></div>
+<div class="comment-item" id="comment_3884419">
+<div class="commentTop comment-top newcomment" id="comment_top_3884419">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ab8b002b.html" id="comment_link_3884419" name="comment_link_3884419" onclick="return D2.setFocusComment(3884419)">Re:</a>
+<span class="score" id="comment_score_3884419">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884419); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884419"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884419"><p>&gt; 「誰でも行っていた手」なのはエンコーダの話ですよ。<br/>はい、その通りだと思います。<br/>つまり、この論文はデコーダの話だと理解できずエンコーダの話ししちゃうくらい理解が及んでないと言うことです。(爆笑)<br/>一行コメントくらいはなんとか読めても前後を含めるとなると読めないんですね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884419"></div>
+</div>
+<div id="replyto_3884419"></div>
+<ul class="comment-group" id="group_3884419">
+<li class="hide" id="hiddens_3884419"></li>
+</ul></li><li class="comment oneline" id="tree_3884428"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884428"></div>
+<div class="comment-item" id="comment_3884428">
+<div class="commentTop comment-top newcomment" id="comment_top_3884428">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6abf234f.html" id="comment_link_3884428" name="comment_link_3884428" onclick="return D2.setFocusComment(3884428)">Re:</a>
+<span class="score" id="comment_score_3884428">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884428); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884428"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884428"><p>&gt; 「誰でも行っていた手」なのはエンコーダの話ですよ。<br/>それなら、エンコードする時にエンコードにはクソの役にも立たないギャップ配列みたいなのを一緒に作るのを、誰でも行っていた手だと思うくらい君は技術音痴と言うことになりますね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884428"></div>
+</div>
+<div id="replyto_3884428"></div>
+<ul class="comment-group" id="group_3884428">
+<li class="hide" id="hiddens_3884428"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3884306"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884306"></div>
+<div class="comment-item" id="comment_3884306">
+<div class="commentTop comment-top newcomment" id="comment_top_3884306">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e043ebc5.html" id="comment_link_3884306" name="comment_link_3884306" onclick="return D2.setFocusComment(3884306)">Re:</a>
+<span class="score" id="comment_score_3884306">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884306); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884306"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884306"><p>新規なのはデータ構造なわけだけど、このデータ構造を採用したものが既にあると言う話？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884306"></div>
+</div>
+<div id="replyto_3884306"></div>
+<ul class="comment-group" id="group_3884306">
+<li class="hide" id="hiddens_3884306"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_3884231"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884231"></div>
+<div class="comment-item" id="comment_3884231">
+<div class="commentTop comment-top newcomment" id="comment_top_3884231">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3c837349.html" id="comment_link_3884231" name="comment_link_3884231" onclick="return D2.setFocusComment(3884231)">なにかがおかしい</a>
+<span class="score" id="comment_score_3884231">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884231); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~miyuri/index.html">miyuri (33181)</a>
+<span class="otherdetails" id="comment_otherdetails_3884231">on 2020年09月07日 18時22分
+			 (<a href="../../../../../../srad.jp/comment/3884231.html">#3884231</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~miyuri/journal/index.html" title="2023年11月18日 22時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884231"><blockquote><div><p>ハフマン符号の圧縮処理では各バイト記号を可変長符号に変換し、連結すればよいだけなので並列化は容易です。</p></div></blockquote><p>符号の連結は、圧縮・伸長の双方で最も高速化が難しい処理なのに。</p></div>
+</div>
+</div>
+<div id="replyto_3884231"></div>
+<ul class="comment-group" id="group_3884231">
+<li class="hide" id="hiddens_3884231"></li>
+</ul><ul id="commtree_3884231"><li class="comment full contain" id="tree_3884233"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884233"></div>
+<div class="comment-item" id="comment_3884233">
+<div class="commentTop comment-top newcomment" id="comment_top_3884233">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a0935742.html" id="comment_link_3884233" name="comment_link_3884233" onclick="return D2.setFocusComment(3884233)">Re:なにかがおかしい</a>
+<span class="score" id="comment_score_3884233">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884233); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~miyuri/index.html">miyuri (33181)</a>
+<span class="otherdetails" id="comment_otherdetails_3884233">on 2020年09月07日 18時23分
+			 (<a href="../../../../../../srad.jp/comment/3884233.html">#3884233</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~miyuri/journal/index.html" title="2023年11月18日 22時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884233"><p>x 符号の連結<br/>o ビット列の連結</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884233">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:なにかがおかしい')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884233'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884233'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884233'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_eae0e2ef.html" onclick="return D2.selectParent(3884231)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3884233"></div>
+<ul class="comment-group" id="group_3884233">
+<li class="hide" id="hiddens_3884233"></li>
+</ul></li><li class="comment full contain" id="tree_3884244"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884244"></div>
+<div class="comment-item" id="comment_3884244">
+<div class="commentTop comment-top newcomment" id="comment_top_3884244">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9982c532.html" id="comment_link_3884244" name="comment_link_3884244" onclick="return D2.setFocusComment(3884244)">Re:なにかがおかしい</a>
+<span class="score" id="comment_score_3884244">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884244); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~miyuri/index.html">miyuri (33181)</a>
+<span class="otherdetails" id="comment_otherdetails_3884244">on 2020年09月07日 18時36分
+			 (<a href="../../../../../../srad.jp/comment/3884244.html">#3884244</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~miyuri/journal/index.html" title="2023年11月18日 22時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884244"><p>あと、処理時間の記述は有るけど、圧縮率について書いてないのはなぜなのかなあにやにや。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884244">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:なにかがおかしい')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884244'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884244'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884244'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_eae0e2ef.html" onclick="return D2.selectParent(3884231)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3884244"></div>
+<ul class="comment-group" id="group_3884244">
+<li class="hide" id="hiddens_3884244"></li>
+</ul><ul id="commtree_3884244"><li class="comment oneline" id="tree_3884253"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884253"></div>
+<div class="comment-item" id="comment_3884253">
+<div class="commentTop comment-top newcomment" id="comment_top_3884253">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ab46db66.html" id="comment_link_3884253" name="comment_link_3884253" onclick="return D2.setFocusComment(3884253)">Re:</a>
+<span class="score" id="comment_score_3884253">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884253); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884253"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884253"><p>&gt; 同様に、ギャップ配列の分だけ圧縮データのサイズも増加してしまうが、増加量は0.4～1.5%。デメリットと呼ぶほどでもない増加である。<br/>&gt;にやにや。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884253"></div>
+</div>
+<div id="replyto_3884253"></div>
+<ul class="comment-group" id="group_3884253">
+<li class="hide" id="hiddens_3884253"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_3884521"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884521"></div>
+<div class="comment-item" id="comment_3884521">
+<div class="commentTop comment-top newcomment" id="comment_top_3884521">
+<div class="title">
+<h4><a href="../../../../../comments.pl_03a1359b.html" id="comment_link_3884521" name="comment_link_3884521" onclick="return D2.setFocusComment(3884521)">Re:なにかがおかしい</a>
+<span class="score" id="comment_score_3884521">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884521); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~miyuri/index.html">miyuri (33181)</a>
+<span class="otherdetails" id="comment_otherdetails_3884521">on 2020年09月08日  7時35分
+			 (<a href="../../../../../../srad.jp/comment/3884521.html">#3884521</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~miyuri/journal/index.html" title="2023年11月18日 22時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884521"><p><a href="https://jnamaral.github.io/icpp20/slides/Yamamoto_Huffman.pdf" title="github.io">https://jnamaral.github.io/icpp20/slides/Yamamoto_Huffman.pdf</a> [github.io]</p><p>普通のハフマン符号のデータ量に、開始位置のズレを示すデータ(ギャップ配列)を加えただけに見える。<br/>各スレッド毎に伸長して、SM単位で合わせてデータ長を計算して、後のアドレスに書込むSMにデータ長を伝播する事になるけど、それでも良さげな性能が出るのか。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884521">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:なにかがおかしい')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884521'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884521'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884521'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_eae0e2ef.html" onclick="return D2.selectParent(3884231)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3884521"></div>
+<ul class="comment-group" id="group_3884521">
+<li class="hide" id="hiddens_3884521"></li>
+</ul></li><li class="comment full contain" id="tree_3884448"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884448"></div>
+<div class="comment-item" id="comment_3884448">
+<div class="commentTop comment-top newcomment" id="comment_top_3884448">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7c546eac.html" id="comment_link_3884448" name="comment_link_3884448" onclick="return D2.setFocusComment(3884448)">Re:なにかがおかしい</a>
+<span class="score" id="comment_score_3884448">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884448); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884448">on 2020年09月08日  0時04分
+			 (<a href="../../../../../../srad.jp/comment/3884448.html">#3884448</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884448"><p>高速化ではなくて並列化ね。データを分割して並列化する場合、圧縮時は元データが固定bit長なのでデータをぶった切る位置が簡単。それに対して展開時の可変bit長のハフマン符号は先頭から順に追っていかないと、どのbit位置で区切られているのか分からない。そもそも先頭から追っていくのなら、並列化せずについでにデコードしてしまった方が速い可能性もある。</p><p>だから圧縮時にキリトリ線を予め入れておけば、展開時にほとんど計算せずにデータをキリトリ線の位置でぶった切って並列処理に放り込むことができる。キリトリ線の位置の集合をギャップ配列というデータ構造に入れるということでしょう。</p><p>適応型には向かない（キリトリ線だけでなくその位置での辞書がないといけない）ので圧縮率より展開速度の方を優先したい場合に有用なんでしょうね。</p><p>ちょっとしたヒントを与えて並列化をし易くするという点がミソで、ギャップ配列を無視した場合は今まで通りの処理ができそう。だから既存データフォーマットをバージョンアップしてオプション仕様を拡張すればいいので採用し易いと思う。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884448">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:なにかがおかしい')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884448'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884448'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884448'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_eae0e2ef.html" onclick="return D2.selectParent(3884231)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3884448"></div>
+<ul class="comment-group" id="group_3884448">
+<li class="hide" id="hiddens_3884448"></li>
+</ul><ul id="commtree_3884448"><li class="comment full contain" id="tree_3884524"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884524"></div>
+<div class="comment-item" id="comment_3884524">
+<div class="commentTop comment-top newcomment" id="comment_top_3884524">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a658cc95.html" id="comment_link_3884524" name="comment_link_3884524" onclick="return D2.setFocusComment(3884524)">Re:なにかがおかしい</a>
+<span class="score" id="comment_score_3884524">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884524); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~miyuri/index.html">miyuri (33181)</a>
+<span class="otherdetails" id="comment_otherdetails_3884524">on 2020年09月08日  7時44分
+			 (<a href="../../../../../../srad.jp/comment/3884524.html">#3884524</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~miyuri/journal/index.html" title="2023年11月18日 22時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884524"><p>メモリには32bit単位で書き込みたいのに、伸長後の断片は8bit単位なので、連結する必要が有るが、その処理が重そう。<br/>そこを圧縮率を犠牲にして伸長後の断片を32bit単位にしていると思ったけど、そうでもなかったという。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884524">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:なにかがおかしい')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884524'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884524'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884524'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_14273026.html" onclick="return D2.selectParent(3884448)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3884524"></div>
+<ul class="comment-group" id="group_3884524">
+<li class="hide" id="hiddens_3884524"></li>
+</ul><ul id="commtree_3884524"><li class="comment full contain" id="tree_3884542"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884542"></div>
+<div class="comment-item" id="comment_3884542">
+<div class="commentTop comment-top newcomment" id="comment_top_3884542">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1e407f21.html" id="comment_link_3884542" name="comment_link_3884542" onclick="return D2.setFocusComment(3884542)">Re:なにかがおかしい</a>
+<span class="score" id="comment_score_3884542">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884542); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~miyuri/index.html">miyuri (33181)</a>
+<span class="otherdetails" id="comment_otherdetails_3884542">on 2020年09月08日  8時19分
+			 (<a href="../../../../../../srad.jp/comment/3884542.html">#3884542</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~miyuri/journal/index.html" title="2023年11月18日 22時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884542"><p>伝播とは言うものの、個別に足し込むだけだから問題無いのか。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884542">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:なにかがおかしい')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884542'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884542'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884542'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_0fbd22a1.html" onclick="return D2.selectParent(3884524)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3884542"></div>
+<ul class="comment-group" id="group_3884542">
+<li class="hide" id="hiddens_3884542"></li>
+</ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3884260"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884260"></div>
+<div class="comment-item" id="comment_3884260">
+<div class="commentTop comment-top newcomment" id="comment_top_3884260">
+<div class="title">
+<h4><a href="../../../../../comments.pl_65fb00e0.html" id="comment_link_3884260" name="comment_link_3884260" onclick="return D2.setFocusComment(3884260)">Re:</a>
+<span class="score" id="comment_score_3884260">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884260); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884260"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884260"><p>「圧縮処理では」、つまり限定することで何かと比較してる<br/>極普通のSEの常識で読めば展開と比べるだろうと容易に分かる<br/>で、まさに続く文章にそう書いてあるね</p><p>&gt; これが、ハフマン符号の展開処理が並列処理に向かない理由だ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884260"></div>
+</div>
+<div id="replyto_3884260"></div>
+<ul class="comment-group" id="group_3884260">
+<li class="hide" id="hiddens_3884260"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_3886664"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3886664"></div>
+<div class="comment-item" id="comment_3886664">
+<div class="commentTop comment-top newcomment" id="comment_top_3886664">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a7378c41.html" id="comment_link_3886664" name="comment_link_3886664" onclick="return D2.setFocusComment(3886664)">コンセプトの段階？</a>
+<span class="score" id="comment_score_3886664">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3886664); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~uxi/index.html">uxi (5376)</a>
+<span class="otherdetails" id="comment_otherdetails_3886664">on 2020年09月10日 20時32分
+			 (<a href="../../../../../../srad.jp/comment/3886664.html">#3886664</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3886664"><p>新しいデータ構造「ギャップ配列」と言ってるんだけど、</p><blockquote><div><p>【今後の展開】処理の一部にハフマン符号を含んでいる圧縮方式（gzipなど）に今回開発したギャップ配列を組み込んで、<br/><a href="https://www.hiroshima-u.ac.jp/system/files/148917/20200831_pr01.pdf" title="hiroshima-u.ac.jp">https://www.hiroshima-u.ac.jp/system/files/148917/20200831_pr01.pdf</a> [hiroshima-u.ac.jp]</p></div></blockquote><p>と書いてあるし、実際にどのようにして利用するつもりなのかがよく分からなかった。</p><p>互換性と言う意味では gzip のデータ構造自体をいじるわけにも行かないだろうし、別ファイルとして添付するのだろうか？<br/>各ハフマン符号の先頭位置が分かればいいと言う話なので、圧縮済みのデータについても適当に同期位置を別ファイルで後付けすれば良いはずなんだけど、そういう意味では並列化を効率的に行うための一種のキャッシュかなという気もする。</p><p>発表スライド<br/><a href="https://jnamaral.github.io/icpp20/slides/Yamamoto_Huffman.pdf" title="github.io">https://jnamaral.github.io/icpp20/slides/Yamamoto_Huffman.pdf</a> [github.io]</p></div>
+<div class="sig" id="comment_sig_3886664">-- <br/>uxi</div>
+</div>
+</div>
+<div id="replyto_3886664"></div>
+<ul class="comment-group" id="group_3886664">
+<li class="hide" id="hiddens_3886664"></li>
+</ul><ul id="commtree_3886664"><li class="comment hidden" id="tree_3886696"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3886696"></div>
+<div class="comment-item" id="comment_3886696">
+</div>
+<div id="replyto_3886696"></div>
+<ul class="comment-group" id="group_3886696">
+<li class="hide" id="hiddens_3886696"></li>
+</ul><ul id="commtree_3886696"><li class="comment hidden" id="tree_3886759"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3886759"></div>
+<div class="comment-item" id="comment_3886759">
+</div>
+<div id="replyto_3886759"></div>
+<ul class="comment-group" id="group_3886759">
+<li class="hide" id="hiddens_3886759"></li>
+</ul><ul id="commtree_3886759"><li class="comment hidden" id="tree_3886788"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3886788"></div>
+<div class="comment-item" id="comment_3886788">
+</div>
+<div id="replyto_3886788"></div>
+<ul class="comment-group" id="group_3886788">
+<li class="hide" id="hiddens_3886788"></li>
+</ul><ul id="commtree_3886788"><li class="comment full contain" id="tree_3887154"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3887154"></div>
+<div class="comment-item" id="comment_3887154">
+<div class="commentTop comment-top newcomment" id="comment_top_3887154">
+<div class="title">
+<h4><a href="../../../../../comments.pl_592ddcad.html" id="comment_link_3887154" name="comment_link_3887154" onclick="return D2.setFocusComment(3887154)">Re:コンセプトの段階？</a>
+<span class="score" id="comment_score_3887154">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3887154); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~uxi/index.html">uxi (5376)</a>
+<span class="otherdetails" id="comment_otherdetails_3887154">on 2020年09月11日 14時34分
+			 (<a href="../../../../../../srad.jp/comment/3887154.html">#3887154</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3887154"><p>その意味で<br/>・別ファイルで後付け<br/>・一種のキャッシュ<br/>って書いてるんだけど伝わらなかったんですね。</p></div>
+<div class="sig" id="comment_sig_3887154">-- <br/>uxi</div>
+</div>
+<div class="commentSub" id="comment_sub_3887154">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:コンセプトの段階？')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3887154'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3887154'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3887154'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_88b88d56.html" onclick="return D2.selectParent(3886788)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3887154"></div>
+<ul class="comment-group" id="group_3887154">
+<li class="hide" id="hiddens_3887154"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_3883937"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883937"></div>
+<div class="comment-item" id="comment_3883937">
+<div class="commentTop comment-top newcomment" id="comment_top_3883937">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e6753364.html" id="comment_link_3883937" name="comment_link_3883937" onclick="return D2.setFocusComment(3883937)">10種類の様々な種類のファイル</a>
+<span class="score" id="comment_score_3883937">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883937); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883937">on 2020年09月07日 12時03分
+			 (<a href="../../../../../../srad.jp/comment/3883937.html">#3883937</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883937"><p>10==様々　ってことですかね？？</p></div>
+</div>
+</div>
+<div id="replyto_3883937"></div>
+<ul class="comment-group" id="group_3883937">
+<li class="hide" id="hiddens_3883937"></li>
+</ul><ul id="commtree_3883937"><li class="comment full contain" id="tree_3884065"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884065"></div>
+<div class="comment-item" id="comment_3884065">
+<div class="commentTop comment-top newcomment" id="comment_top_3884065">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0065c637.html" id="comment_link_3884065" name="comment_link_3884065" onclick="return D2.setFocusComment(3884065)">Re:10種類の様々な種類のファイル</a>
+<span class="score" id="comment_score_3884065">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884065); return false">スコア:3</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884065">on 2020年09月07日 15時27分
+			 (<a href="../../../../../../srad.jp/comment/3884065.html">#3884065</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884065"><p>論文は普通に <a href="https://dl.acm.org/doi/abs/10.1145/3404397.3404429" rel="nofollow" title="acm.org">Web で公開</a> [acm.org]されており、そこに細かい記載がありますよ<br/>・text（Collection of sacred text）<br/>・xml（Wikipedia dump file）<br/>・exe（Tarred executables of Mozilla）<br/>・image（Medical magnetic resonance image）<br/>・database（Chemical database of structures）<br/>・text（50th Mersenne number）<br/>・bin（ The SAO star catalog）<br/>・html（The 1913 Webster Dictionary）<br/>・src（Linux kernel 5.2.4）<br/>・text（Never self-synchronizes）</p><p>聖書のように容量の軽いものから、Linux ソースのような重い物まで効果が出ていて凄いですね<br/>軽い場合なんかは、GPU へのデータ転送や初期化のコストが結構重くて、CPU が勝つんじゃないかと思っていました</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884065">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:10種類の様々な種類のファイル')+'&amp;url='+encodeURIComponent('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884065'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884065'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://developers.srad.jp/comments.pl?sid=795897&amp;cid=3884065'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_8649b8b3.html" onclick="return D2.selectParent(3883937)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3884065"></div>
+<ul class="comment-group" id="group_3884065">
+<li class="hide" id="hiddens_3884065"></li>
+</ul></li><li class="comment oneline" id="tree_3883943"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883943"></div>
+<div class="comment-item" id="comment_3883943">
+<div class="commentTop comment-top newcomment" id="comment_top_3883943">
+<div class="title">
+<h4><a href="../../../../../comments.pl_682fd26c.html" id="comment_link_3883943" name="comment_link_3883943" onclick="return D2.setFocusComment(3883943)">Re:</a>
+<span class="score" id="comment_score_3883943">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883943); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883943"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883943"><p>広島大のPDFによると10個の様々なタイプのファイルとあるので、様々なフォーマットのファイル10個をまとめて圧縮したり解凍する性能比較を行ったように読めます。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3883943"></div>
+</div>
+<div id="replyto_3883943"></div>
+<ul class="comment-group" id="group_3883943">
+<li class="hide" id="hiddens_3883943"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_3883938"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883938"></div>
+<div class="comment-item" id="comment_3883938">
+<div class="commentTop comment-top newcomment" id="comment_top_3883938">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a0e388c3.html" id="comment_link_3883938" name="comment_link_3883938" onclick="return D2.setFocusComment(3883938)">結構いまさら感</a>
+<span class="score" id="comment_score_3883938">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883938); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883938">on 2020年09月07日 12時13分
+			 (<a href="../../../../../../srad.jp/comment/3883938.html">#3883938</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883938"><p>1952年に開発されて半世紀以上使われている符号化に、今でもまだアルゴリズムの革新とかありえるんだ。<br/>超高速ソーティングとか研究している人もいるのかな。</p></div>
+</div>
+</div>
+<div id="replyto_3883938"></div>
+<ul class="comment-group" id="group_3883938">
+<li class="hide" id="hiddens_3883938"></li>
+</ul><ul id="commtree_3883938"><li class="comment oneline" id="tree_3883951"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883951"></div>
+<div class="comment-item" id="comment_3883951">
+<div class="commentTop comment-top newcomment" id="comment_top_3883951">
+<div class="title">
+<h4><a href="../../../../../comments.pl_fe5380b4.html" id="comment_link_3883951" name="comment_link_3883951" onclick="return D2.setFocusComment(3883951)">Re:</a>
+<span class="score" id="comment_score_3883951">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883951); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883951"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883951"><p>ソートは下界があって、タイトバウンドかそれに近いアルゴリズムもあるから。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3883951"></div>
+</div>
+<div id="replyto_3883951"></div>
+<ul class="comment-group" id="group_3883951">
+<li class="hide" id="hiddens_3883951"></li>
+</ul><ul id="commtree_3883951"><li class="comment oneline" id="tree_3884286"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884286"></div>
+<div class="comment-item" id="comment_3884286">
+<div class="commentTop comment-top newcomment" id="comment_top_3884286">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a5c2307d.html" id="comment_link_3884286" name="comment_link_3884286" onclick="return D2.setFocusComment(3884286)">Re:</a>
+<span class="score" id="comment_score_3884286">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884286); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884286"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884286"><p>ソートアルゴリズムも数学的なオーダーは変わらなくても並列化が可能かどうかで現実的な速度がまったく異なるものを開発する余地は十分にありそう</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884286"></div>
+</div>
+<div id="replyto_3884286"></div>
+<ul class="comment-group" id="group_3884286">
+<li class="hide" id="hiddens_3884286"></li>
+</ul><ul id="commtree_3884286"><li class="comment oneline" id="tree_3884397"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884397"></div>
+<div class="comment-item" id="comment_3884397">
+<div class="commentTop comment-top newcomment" id="comment_top_3884397">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c11d6bbf.html" id="comment_link_3884397" name="comment_link_3884397" onclick="return D2.setFocusComment(3884397)">Re:</a>
+<span class="score" id="comment_score_3884397">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884397); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884397"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884397"><p>そーとー余地があるのは素晴らしい</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884397"></div>
+</div>
+<div id="replyto_3884397"></div>
+<ul class="comment-group" id="group_3884397">
+<li class="hide" id="hiddens_3884397"></li>
+</ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3883956"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883956"></div>
+<div class="comment-item" id="comment_3883956">
+<div class="commentTop comment-top newcomment" id="comment_top_3883956">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6ddc3480.html" id="comment_link_3883956" name="comment_link_3883956" onclick="return D2.setFocusComment(3883956)">Re:</a>
+<span class="score" id="comment_score_3883956">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883956); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883956"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883956"><p>並列化に向いてない処理というのは並列度が高くなればなるほど足を引っ張って全体を台無しにしてしまうのでチューニングが重要になります。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3883956"></div>
+</div>
+<div id="replyto_3883956"></div>
+<ul class="comment-group" id="group_3883956">
+<li class="hide" id="hiddens_3883956"></li>
+</ul></li><li class="comment oneline" id="tree_3884120"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884120"></div>
+<div class="comment-item" id="comment_3884120">
+<div class="commentTop comment-top newcomment" id="comment_top_3884120">
+<div class="title">
+<h4><a href="../../../../../comments.pl_84a3627a.html" id="comment_link_3884120" name="comment_link_3884120" onclick="return D2.setFocusComment(3884120)">Re:</a>
+<span class="score" id="comment_score_3884120">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884120); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884120"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884120"><p>アルゴリズムや基礎理論が面白いのは、文字通り世紀を越えたこういう発展があること<br/>機械学習なんかもライブラリをいじっているだけじゃ5年持たないけど<br/>学習アルゴリズムの理論である「計算論的学習」なんてのは数十年単位<br/>もちろん年単位でも発展しているから面白い</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884120"></div>
+</div>
+<div id="replyto_3884120"></div>
+<ul class="comment-group" id="group_3884120">
+<li class="hide" id="hiddens_3884120"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_3883939"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883939"></div>
+<div class="comment-item" id="comment_3883939">
+<div class="commentTop comment-top newcomment" id="comment_top_3883939">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6c28977d.html" id="comment_link_3883939" name="comment_link_3883939" onclick="return D2.setFocusComment(3883939)">動的ハフマンコード</a>
+<span class="score" id="comment_score_3883939">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883939); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883939">on 2020年09月07日 12時17分
+			 (<a href="../../../../../../srad.jp/comment/3883939.html">#3883939</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883939"><p>入力列に応じて辞書を更新するタイプの動的ハフマン符号でもうまく動くのかな？<br/>そもそもこの場合並列処理が無理な気がするけど、今の圧縮処理のトレンドでは使われてないのかな？</p></div>
+</div>
+</div>
+<div id="replyto_3883939"></div>
+<ul class="comment-group" id="group_3883939">
+<li class="hide" id="hiddens_3883939"></li>
+</ul><ul id="commtree_3883939"><li class="comment oneline" id="tree_3883953"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883953"></div>
+<div class="comment-item" id="comment_3883953">
+<div class="commentTop comment-top newcomment" id="comment_top_3883953">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1aa2f507.html" id="comment_link_3883953" name="comment_link_3883953" onclick="return D2.setFocusComment(3883953)">Re:</a>
+<span class="score" id="comment_score_3883953">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883953); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883953"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883953"><p><div class="quote"><p>入力列に応じて辞書を更新するタイプの動的ハフマン符号でもうまく動くのかな？</p></div><p>仕分けが必要な処理が入ると<br/>CPUの処理待ちでGPUが暇しちゃうかもね</p></p></div>
+</div>
+<div class="commentSub" id="comment_sub_3883953"></div>
+</div>
+<div id="replyto_3883953"></div>
+<ul class="comment-group" id="group_3883953">
+<li class="hide" id="hiddens_3883953"></li>
+</ul></li><li class="comment oneline" id="tree_3884480"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884480"></div>
+<div class="comment-item" id="comment_3884480">
+<div class="commentTop comment-top newcomment" id="comment_top_3884480">
+<div class="title">
+<h4><a href="../../../../../comments.pl_96917993.html" id="comment_link_3884480" name="comment_link_3884480" onclick="return D2.setFocusComment(3884480)">Re:</a>
+<span class="score" id="comment_score_3884480">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884480); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884480"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884480"><p>先行するデコード結果を参照することになるのでむりぽ。<br/>この発表、将来の展望でzipとかも入れてんだけど、そいつらのスライド辞書とかも同じく無理。<br/>並列化の分割点での辞書内容を独立に復元するないしはリセットする事ができればいいけど、<br/>数百バイト程度毎にそんなのやったら圧縮率が壊滅するので多分意味はない。</p><p>これが成立するのは、<br/>入力の符号境界と出力のオフセットくらいしかシークで欠落する情報がないハフマン符号化で、<br/>出力のオフセットを後で適当にマージすることで省略し符号境界のビット表現を短縮できたから。<br/>より大量のデータを抱えた辞書が相手ではシークに必要なヒントが大きくなりすぎる。</p><p>素直にGPGPUで扱うデータをハフマンのみで圧縮してオンメモリないしオンノードで扱うって方向のほうが使い勝手良いと思う。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884480"></div>
+</div>
+<div id="replyto_3884480"></div>
+<ul class="comment-group" id="group_3884480">
+<li class="hide" id="hiddens_3884480"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_3883983"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3883983"></div>
+<div class="comment-item" id="comment_3883983">
+<div class="commentTop comment-top newcomment" id="comment_top_3883983">
+<div class="title">
+<h4><a href="../../../../../comments.pl_da479271.html" id="comment_link_3883983" name="comment_link_3883983" onclick="return D2.setFocusComment(3883983)">ワーストケース</a>
+<span class="score" id="comment_score_3883983">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3883983); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3883983">on 2020年09月07日 13時53分
+			 (<a href="../../../../../../srad.jp/comment/3883983.html">#3883983</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3883983"><p>リリースを読んだ感じでは、最大符号長によってギャップ配列のビット数が変わるよね。<br/>ハフマン木のバランスが悪い場合、ギャップ配列が相当おデブになるんじゃ……。<br/>まあ、「バランスが悪い＝データが偏っている」ということなので、圧縮前のサイズを基準にすれば比較的軽微、ということかもしれないけど。<br/>ワーストケースを示してほしいところ。</p></div>
+</div>
+</div>
+<div id="replyto_3883983"></div>
+<ul class="comment-group" id="group_3883983">
+<li class="hide" id="hiddens_3883983"></li>
+</ul><ul id="commtree_3883983"><li class="comment oneline" id="tree_3884241"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884241"></div>
+<div class="comment-item" id="comment_3884241">
+<div class="commentTop comment-top newcomment" id="comment_top_3884241">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d1a71a30.html" id="comment_link_3884241" name="comment_link_3884241" onclick="return D2.setFocusComment(3884241)">Re:</a>
+<span class="score" id="comment_score_3884241">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884241); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884241"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884241"><p>ハフマン辞書のサイズなんてたかが知れているので、ワーストケースでもGPUの手に余るようなものになるとは思えないなぁ</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884241"></div>
+</div>
+<div id="replyto_3884241"></div>
+<ul class="comment-group" id="group_3884241">
+<li class="hide" id="hiddens_3884241"></li>
+</ul><ul id="commtree_3884241"><li class="comment oneline" id="tree_3884463"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3884463"></div>
+<div class="comment-item" id="comment_3884463">
+<div class="commentTop comment-top newcomment" id="comment_top_3884463">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c4a6f9f5.html" id="comment_link_3884463" name="comment_link_3884463" onclick="return D2.setFocusComment(3884463)">Re:</a>
+<span class="score" id="comment_score_3884463">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3884463); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3884463"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3884463"><p>いや、処理速度とかではなく、圧縮率の方です。</p><p>例えば、8ビットのデータをハフマン符号化したとき、ワーストケースでの最大符号長って256ビットになるんじゃなかったっけ。<br/>だとすると、1セグメントにつき8ビットのギャップ値が必要になるはずなので、そこそこ容量を取りそう。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3884463"></div>
+</div>
+<div id="replyto_3884463"></div>
+<ul class="comment-group" id="group_3884463">
+<li class="hide" id="hiddens_3884463"></li>
+</ul></li></ul></li></ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 0;
+		D2.currents()['full']     = 20;
+		D2.currents()['oneline']  = 30;
+		// D2.currents_total(50);
+
+		D2.abbrev_comments({});
+		D2.noshow_comments([3886696,3886759,3886788]);
+		D2.pieces_comments([3883961,3884029,3884100,3884310,3884030,3884305,3883955,3884007,3883962,3883968,3884097,3884197,3884296,3884304,3884384,3884419,3884428,3884306,3884253,3884260,3883943,3883951,3884286,3884397,3883956,3884120,3883953,3884480,3884241,3884463]);
+		D2.init_hiddens([]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">50</span>/<span class="totalcommentcnt">66</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>開いた括弧は必ず閉じる -- あるプログラマー<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../../srad.jp/about.html">About</a></li>
+<li><a href="../../../../../../srad.jp/faq/index.html">FAQ</a></li>
+<li><a href="../../../../../../srad.jp/story/index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../../srad.jp/hof.html">殿堂入り</a></li>
+<li><a href="../../../../../../srad.jp/authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../../srad.jp/topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../../srad.jp/index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

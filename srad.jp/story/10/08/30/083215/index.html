@@ -1,0 +1,3157 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/10/08/30/083215.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>Linuxにおける10億ファイル問題 | スラド</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="Linuxにおける10億ファイル問題 | スラド" property="og:title">
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '543749403238569210',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content="あるAnonymous Coward 曰く、ファイルシステムが大容量に対応し、ハードディスクの容量あたりの価格が安くなるにともない、1つのパーティションに入るファイル数も増えている。しかし、Red HatのRic Wheeler氏によると、100万ファイルではしっかりと動くファイルシステムも、10億ファイルともなるとスケーラビリティの問題..." name="description"/>
+<meta content="あるAnonymous Coward 曰く、ファイルシステムが大容量に対応し、ハードディスクの容量あたりの価格が安くなるにともない、1つのパーティションに入るファイル数も増えている。しかし、Red HatのRic Wheeler氏によると、100万ファイルではしっかりと動くファイルシステムも、10億ファイルともなるとスケーラビリティの問題..." property="og:description"/>
+<meta content="Linuxにおける10億ファイル問題 | スラド" itemprop="name"/>
+<meta content="あるAnonymous Coward 曰く、ファイルシステムが大容量に対応し、ハードディスクの容量あたりの価格が安くなるにともない、1つのパーティションに入るファイル数も増えている。しかし、Red HatのRic Wheeler氏によると、100万ファイルではしっかりと動くファイルシステムも、10億ファイルともなるとスケーラビリティの問題..." itemprop="description"/>
+<link href="../../../../../index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../sradjp.rss" rel="alternate" title="スラド RSS" type="application/rss+xml"/>
+<link href="../../../../../static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/10/08/30/083215/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'mainpage';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/10/08/30/083215.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="250742" data-fhtype="story" id="firehose-250742">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">250742</span>
+<span class="type">story</span>
+</span>
+<header>
+<h2 class="story">
+<span id="title-250742"> <a href="index.html">Linuxにおける10億ファイル問題</a></span>
+<span class="comments commentcnt-250742">97</span>
+</h2>
+<div class="details" id="details-250742">ストーリー by <a href="http://hylom.net/">hylom</a>
+<time datetime="2010-08-30T17:50+09:00" id="fhtime-250742">2010年08月30日 17時50分</time><br/>量は暴力 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "Linuxにおける10億ファイル問題",
+  "datePublished": "2010-08-30T17:50+09:00",
+  "articleBody": "あるAnonymous Coward 曰く、ファイルシステムが大容量に対応し、ハードディスクの容量あたりの価格が安くなるにともない、1つのパーティションに入るファイル数も増えている。しかし、Red HatのRic Wheeler氏によると、100万ファイルではしっかりと動くファイルシステムも、10億ファイルともなるとスケーラビリティの問題が発生してくるとのこと。詳細はLinuxcon 2010での発表スライド（PDF）及びLWNの記事を参照。大量のデータを扱いたければデータベースを使うか、複数のパーティションに分割して使え、という話があると思われるが、発表スライドでは「ファイルシステムは無料で多くの人々にとって親しみやすく分かりやすい、また複数のパーティションに分割するとユーザーによるデータの管理が面倒になり、またディスクシークの最適化が難しくなる」とし、大容量のファイルシステムの必要性が説かれている。現在でもRAIDやJBODを使って複数台のHDDを束ねれば「単一ファイルシステム内で10億ファイルを格納できるストレージ」は構築可能だが、その場合ファイルシステムの作成や大量のファイルの作成、ファイルシステムの修復などに時間がかかるという問題があるとのこと。Linux向けの最新ファイルシステムの1つであるext4では多量のファイルを格納できるように設計・開発が進められているが、とある大容量システムでテストした結果、それでもファイルシステムの作成に4時間、10億のファイルを書き込むのに4日、ファイルシステムのチェック（fsck）に2.5時間かかったそうだ。さらにfsckで大量のメモリを要するのも問題とのことだ。ちなみに、このような大量のファイルを含むディレクトリに対して「ls」を実行すると最悪な結果になるそうで、lsはreaddir()とstat()でディレクトリ内のファイルを取得するために毎秒数千ファイル程度の処理しかできないそうだ。そのため、10億のファイルに対してlsを実行すると実行完了まで数日かかるという。",
+  "image": "https://srad.jp/static/topics/"
+}
+</script>
+<div class="body" id="fhbody-250742">
+<div class="contents_text p" id="text-250742">
+<p>あるAnonymous Coward 曰く、</p><blockquote><div><p>
+ファイルシステムが大容量に対応し、ハードディスクの容量あたりの価格が安くなるにともない、1つのパーティションに入るファイル数も増えている。しかし、Red HatのRic Wheeler氏によると、100万ファイルではしっかりと動くファイルシステムも、10億ファイルともなるとスケーラビリティの問題が発生してくるとのこと。
+</p><p>
+詳細は<a href="http://events.linuxfoundation.org/slides/2010/linuxcon2010_wheeler.pdf">Linuxcon 2010での発表スライド（PDF）</a>及び<a href="http://lwn.net/Articles/400629/">LWNの記事</a>を参照。
+</p></div></blockquote><p>
+大量のデータを扱いたければデータベースを使うか、複数のパーティションに分割して使え、という話があると思われるが、発表スライドでは「ファイルシステムは無料で多くの人々にとって親しみやすく分かりやすい、また複数のパーティションに分割するとユーザーによるデータの管理が面倒になり、またディスクシークの最適化が難しくなる」とし、大容量のファイルシステムの必要性が説かれている。
+</p><p>
+現在でもRAIDやJBODを使って複数台のHDDを束ねれば「単一ファイルシステム内で10億ファイルを格納できるストレージ」は構築可能だが、その場合ファイルシステムの作成や大量のファイルの作成、ファイルシステムの修復などに時間がかかるという問題があるとのこと。Linux向けの最新ファイルシステムの1つであるext4では多量のファイルを格納できるように設計・開発が進められているが、とある大容量システムでテストした結果、それでもファイルシステムの作成に4時間、10億のファイルを書き込むのに4日、ファイルシステムのチェック（fsck）に2.5時間かかったそうだ。さらにfsckで大量のメモリを要するのも問題とのことだ。
+</p><p>
+ちなみに、このような大量のファイルを含むディレクトリに対して「ls」を実行すると最悪な結果になるそうで、lsはreaddir()とstat()でディレクトリ内のファイルを取得するために毎秒数千ファイル程度の処理しかできないそうだ。そのため、10億のファイルに対してlsを実行すると実行完了まで数日かかるという。</p>
+</div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //srad.jp/story/10/08/30/083215/ -->
+<!-- http://srad.jp/story/10/08/30/083215/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://srad.jp/story/10/08/30/083215/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://srad.jp/story/10/08/30/083215/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/srad.jp/story/10/08/30/083215/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">97</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-250742"><a class="popular topic tag" href="../../../../../tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../tag/linux.html" rel="statictag" target="_blank">linux</a>
+<a class="popular tag" href="../../../../../tag/os.html" rel="statictag" target="_blank">os</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../0738235/index.html" id="hrefns">日本の偵察衛星「レーダー2号」、故障していた</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../05/18/1325257/index.html">Linux カーネル 2.6.34 リリース</a></h3><h3><a href="../../../02/26/0646214/index.html">Linux カーネル 2.6.33 リリース</a></h3><h3><a href="../../../../../../linux.srad.jp/story/09/12/26/0230213/index.html">バックアップ用HDDに最適なファイルシステムは？ </a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="Linuxにおける10億ファイル問題のストーリーへ戻る">Linuxにおける10億ファイル問題</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//srad.jp/story/10/08/30/083215/';
+var parent_item_title = 'Linuxにおける10億ファイル問題';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「Linuxにおける10億ファイル問題」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//srad.jp/search.pl?op=comments&amp;sid=506159" class="btn"><span class="totalcommentcnt">97</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//srad.jp/comments.pl?sid=506159"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_8af3ec36.html"><span>検索</span><span class="totalcommentcnt">97</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 1817360: { uid: undefined, pid: 1817334, read: 0, points: -2, kids: [ 1817497 ], opid: undefined }, 1817615: { uid: 32616, pid: 0, read: 0, points: 2, kids: [ 1817674 ], opid: 0 }, 1817453: { uid: 365, pid: 1817357, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 1, kids: [ 1817490 ], opid: 1817357 }, 1817594: { uid: 34900, pid: 1817378, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 2, kids: [  ], opid: 1817378 }, 1817385: { uid: 1, pid: 1817308, subject: "Re:マルチスレッド化するとか", read: 0, points: 3, kids: [  ], opid: 1817308 }, 1817490: { uid: undefined, pid: 1817453, read: 0, points: -2, kids: [ 1817537 ], opid: undefined }, 1817315: { uid: 1, pid: 1817301, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 0, kids: [ 1817332 ], opid: 1817301 }, 1817501: { uid: undefined, pid: 1817364, read: 0, points: -2, kids: [ 1817574 ], opid: undefined }, 1817493: { uid: 1, pid: 1817328, subject: "Re:Linuxの問題なの？", read: 0, points: 4, kids: [ 1817904 ], opid: 1817328 }, 1817378: { uid: 37563, pid: 1817332, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 2, kids: [ 1817381, 1817387, 1817418, 1817446, 1817508, 1817594, 1818018 ], opid: 1817332 }, 1817624: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 1817676 ], opid: undefined }, 1817389: { uid: 2654, pid: 1817369, subject: "Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない", read: 0, points: 1, kids: [  ], opid: 1817369 }, 1817532: { uid: 37563, pid: 1817387, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 1, kids: [  ], opid: 1817387 }, 1817950: { uid: undefined, pid: 1817904, read: 0, points: -2, kids: [ 1818052 ], opid: undefined }, 1817676: { uid: 10803, pid: 1817624, subject: "Re:何を今更………", read: 0, points: 2, kids: [ 1817788, 1818132 ], opid: 1817624 }, 1817489: { uid: 25633, pid: 1817393, subject: "Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない", read: 0, points: 3, kids: [  ], opid: 1817393 }, 1817446: { uid: 11614, pid: 1817378, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 1, kids: [  ], opid: 1817378 }, 1817305: { uid: 4374, pid: 0, read: 0, points: 2, kids: [ 1817308, 1817319, 1817331 ], opid: 0 }, 1818018: { uid: 1, pid: 1817378, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 1, kids: [  ], opid: 1817378 }, 1817334: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 1817360, 1817553 ], opid: 0 }, 1817537: { uid: 365, pid: 1817490, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 1, kids: [  ], opid: 1817490 }, 1817418: { uid: 31126, pid: 1817378, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 1, kids: [  ], opid: 1817378 }, 1817332: { uid: 33993, pid: 1817315, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 5, kids: [ 1817378 ], opid: 1817315 }, 1817348: { uid: 365, pid: 1817335, subject: "Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない", read: 0, points: 1, kids: [  ], opid: 1817335 }, 1817381: { uid: undefined, pid: 1817378, read: 0, points: -2, kids: [ 1817523 ], opid: undefined }, 1817318: { uid: 32138, pid: 0, read: 0, points: 3, kids: [ 1817328 ], opid: 0 }, 1817393: { uid: undefined, pid: 1817335, read: 0, points: -2, kids: [ 1817489 ], opid: undefined }, 1817503: { uid: 11642, pid: 1817357, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 2, kids: [  ], opid: 1817357 }, 1817419: { uid: 1, pid: 1817357, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 1, kids: [  ], opid: 1817357 }, 1817379: { uid: 25633, pid: 1817369, subject: "Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない", read: 0, points: 3, kids: [  ], opid: 1817369 }, 1818052: { uid: undefined, pid: 1817950, read: 0, points: -2, kids: [ 1818532 ], opid: undefined }, 1817335: { uid: 25633, pid: 0, read: 0, points: 5, kids: [ 1817348, 1817369, 1817393, 1817529 ], opid: 0 }, 1817308: { uid: 1, pid: 1817305, subject: "Re:マルチスレッド化するとか", read: 0, points: 0, kids: [ 1817333, 1817385 ], opid: 1817305 }, 1817301: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 1817315, 1817357 ], opid: 0 }, 1817365: { uid: 1, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 1817553: { uid: undefined, pid: 1817334, read: 0, points: -2, kids: [ 1817663 ], opid: undefined }, 1817328: { uid: 1, pid: 1817318, subject: "Re:Linuxの問題なの？", read: 0, points: 0, kids: [ 1817493 ], opid: 1817318 }, 1817906: { uid: 37765, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 1817904: { uid: undefined, pid: 1817493, read: 0, points: -2, kids: [ 1817950 ], opid: undefined }, 1817331: { uid: 1, pid: 1817305, subject: "Re:マルチスレッド化するとか", read: 0, points: 0, kids: [ 1817368 ], opid: 1817305 }, 1817523: { uid: 37563, pid: 1817381, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 1, kids: [  ], opid: 1817381 }, 1817319: { uid: 1, pid: 1817305, subject: "Re:マルチスレッド化するとか", read: 0, points: 0, kids: [ 1817364 ], opid: 1817305 }, 1817788: { uid: 25633, pid: 1817676, subject: "Re:何を今更………", read: 0, points: 3, kids: [  ], opid: 1817676 }, 1817364: { uid: 3896, pid: 1817319, subject: "Re:マルチスレッド化するとか", read: 0, points: 1, kids: [ 1817501 ], opid: 1817319 }, 1817674: { uid: 10803, pid: 1817615, subject: "Re:Linuxが問題なんじゃない、人間が問題なんだ！", read: 0, points: 2, kids: [  ], opid: 1817615 }, 1817529: { uid: 1, pid: 1817335, subject: "Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない", read: 0, points: 1, kids: [  ], opid: 1817335 }, 1817497: { uid: 10803, pid: 1817360, subject: "Re:SONY NEWSでls /dev", read: 0, points: 2, kids: [  ], opid: 1817360 }, 1817387: { uid: 25633, pid: 1817378, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 2, kids: [ 1817532 ], opid: 1817378 }, 1817450: { uid: 11614, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 1817546: { uid: 10969, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 1817357: { uid: 9154, pid: 1817301, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 1, kids: [ 1817419, 1817453, 1817478, 1817503 ], opid: 1817301 }, 1817333: { uid: 4374, pid: 1817308, subject: "Re:マルチスレッド化するとか", read: 0, points: 2, kids: [  ], opid: 1817308 }, 1817574: { uid: 3896, pid: 1817501, subject: "Re:マルチスレッド化するとか", read: 0, points: 1, kids: [  ], opid: 1817501 }, 1818132: { uid: 14791, pid: 1817676, subject: "Re:何を今更………", read: 0, points: 2, kids: [  ], opid: 1817676 }, 1817508: { uid: undefined, pid: 1817378, read: 0, points: -2, kids: [ 1817528 ], opid: undefined }, 1817369: { uid: 9154, pid: 1817335, subject: "Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない", read: 0, points: 2, kids: [ 1817379, 1817389 ], opid: 1817335 }, 1817368: { uid: 3896, pid: 1817331, subject: "Re:マルチスレッド化するとか", read: 0, points: 1, kids: [  ], opid: 1817331 }, 1817478: { uid: 1, pid: 1817357, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 1, kids: [  ], opid: 1817357 }, 1817663: { uid: 10803, pid: 1817553, subject: "Re:SONY NEWSでls /dev", read: 0, points: 2, kids: [  ], opid: 1817553 }, 1817528: { uid: 37563, pid: 1817508, subject: "Re:ここで*BSDの優位性をアピールっ！", read: 0, points: 1, kids: [  ], opid: 1817508 }, 1818532: { uid: 1, pid: 1818052, subject: "Re:Linuxの問題なの？", read: 0, points: 1, kids: [  ], opid: 1818052 } });
+
+D2.thresh_totals({6:{6:{1:50,3:0,2:0}},4:{6:{1:47,3:1,2:2},4:{1:47,3:3,2:0},5:{1:47,3:2,2:1}},1:{6:{1:7,3:1,2:42},4:{1:7,3:4,2:39},1:{1:7,3:43,2:0},3:{1:7,3:12,2:31},2:{1:7,3:25,2:18},5:{1:7,3:2,2:41}},3:{6:{1:42,3:1,2:7},4:{1:42,3:4,2:4},3:{1:42,3:8,2:0},5:{1:42,3:2,2:6}},0:{6:{1:0,3:1,2:49},4:{1:0,3:4,2:46},1:{1:0,3:45,2:5},3:{1:0,3:12,2:38},0:{1:0,3:50,2:0},2:{1:0,3:25,2:25},5:{1:0,3:2,2:48}},2:{6:{1:27,3:1,2:22},4:{1:27,3:4,2:19},3:{1:27,3:12,2:11},2:{1:27,3:23,2:0},5:{1:27,3:2,2:21}},5:{6:{1:48,3:1,2:1},5:{1:48,3:2,2:0}},"-1":{6:{1:0,3:1,2:49},4:{1:0,3:4,2:46},1:{1:0,3:45,2:5},3:{1:0,3:12,2:38},0:{1:0,3:50,2:0},2:{1:0,3:25,2:25},5:{1:0,3:2,2:48},"-1":{1:0,3:50,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([1817335,1817318,1817305,1817365,1817546,1817615,1817450,1817906,1817301,1817334,1817624]);
+D2.root_comments_hash({1817615:1,1817365:1,1817450:1,1817906:1,1817546:1,1817318:1,1817624:1,1817335:1,1817305:1,1817334:1,1817301:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(506159);
+
+D2.d2_seen('1817301,4,3,7,3,1,9,3,1,1,1,1,13,9,7,1,3,1,9,1,6,2,2,29,1,27,4,3,25,11,4,4,6,20,5,1,3,5,9,28,20,21,48,11,2,112,118,112,114,400');
+D2.more_comments_num(47);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_1817335"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817335"></div>
+<div class="comment-item" id="comment_1817335">
+<div class="commentTop comment-top newcomment" id="comment_top_1817335">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e06645e2.html" id="comment_link_1817335" name="comment_link_1817335" onclick="return D2.setFocusComment(1817335)">データをファイルとしてたくさん格納するようなシステムは作ってはいけない</a>
+<span class="score" id="comment_score_1817335">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817335); return false">スコア:5</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~jsi/index.html">jsi (25633)</a>
+<span class="otherdetails" id="comment_otherdetails_1817335">on 2010年08月30日 19時26分
+			 (<a href="../../../../../comment/1817335.html">#1817335</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817335"><p>データをファイルとしてたくさん格納するようなシステムはそもそも作ってはなりません。<br/>そのような場合にはDBMSを用いてblob形式でデータベースに格納すべきです。</p><ol><li>DBMSはロールバック・コミット等、ジャーナリングの情報を基に迅速に<br/>障害から復旧できます。最近のファイルシステムにはジャーナリング<br/>なども行われつつありますが、fsckなどのジャーナリングに頼らない<br/>古いチェック方法が残っているので、ディレクトリの循環などを<br/>チェックする必要がありチェックを終えるまでに時間がかかります。</li><li>fsckのツリーの循環チェックのため、ディレクトリとビットマップの<br/>情報をメモリ内に格納しなくてはなりませんが、この際大量のメモリが必要です。<br/>32bitシステムでは、運用当初問題ない場合でも、使い込んでいく<br/>うちにファイル数が増加し、ある日、メモリが足りずfsckを終えられず<br/>マウントできない現象が発生する場合があります。</li><li>ファイルシステムのデータ構造が破壊されたことを知ることが困難です。<br/>ファイルシステムのバックアップを取っていても、バックアップ<br/>が壊れていないことを知ることはできません。DBMSなら運用中チェックを<br/>行うことができますし、なにより、ファイルシステムでなんらかの<br/>異常が検出される確率はDBMSで障害が検出される確率よりもはるかに<br/>高いものです。</li></ol><p>FreeBSDならbackground fsckが使えますので、時間の問題はないかも?<br/>でも、おそらくDBMSを使ったほうがよいでしょうね。今ならHadoop<br/>なんかも面白いかもしれないけどOracleなんかと比較するとまだまだ<br/>信頼性に欠ける部分もあるような気はします。</p></div>
+</div>
+</div>
+<div id="replyto_1817335"></div>
+<ul class="comment-group" id="group_1817335">
+<li class="hide" id="hiddens_1817335"></li>
+</ul><ul id="commtree_1817335"><li class="comment full contain" id="tree_1817369"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817369"></div>
+<div class="comment-item" id="comment_1817369">
+<div class="commentTop comment-top newcomment" id="comment_top_1817369">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2c1bb804.html" id="comment_link_1817369" name="comment_link_1817369" onclick="return D2.setFocusComment(1817369)">Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない</a>
+<span class="score" id="comment_score_1817369">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817369); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~tyuu/index.html">tyuu (9154)</a>
+<span class="otherdetails" id="comment_otherdetails_1817369">on 2010年08月30日 20時25分
+			 (<a href="../../../../../comment/1817369.html">#1817369</a>)
+			<small>
+<a class="user_homepage_display" href="http://tyuu.com/" title="http://tyuu.com/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~tyuu/journal/index.html" title="2004年02月11日 12時15分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817369"><p>DBMS にしてもファイルシステム上のファイルとして存在しているのですが、<br/><a href="https://wiki.ubuntu.com/KarmicKoala/ReleaseNotes/ja#ext4%20%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E3%81%A7%E3%81%AF%E5%B7%A8%E5%A4%A7%E3%81%AA%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%8C%E7%A0%B4%E6%90%8D%E3%81%99%E3%82%8B%E6%81%90%E3%82%8C%E3%81%8C%E3%81%82%E3%82%8A%E3%81%BE%E3%81%99" rel="nofollow" title="ubuntu.com">ext4 ファイルシステムでは巨大なファイルが破損する恐れがあります</a> [ubuntu.com] </p><blockquote><div><p>Ubuntu 9.10カーネルを使用していて (512MB以上の)巨大なファイルを書き込む際に、(アップグレードではなく)新規インストールした ext4 ファイルシステムでデータが破損したという報告をいくつか受けています。問題は現在調査中ですが、現象が確認されて解決されれば、次のリリースアップデート（訳注：インストール後に行われる、通常のアップデートのことです）で解消されます。日々の操作で巨大なファイルを使用しているユーザは、この問題が解決するまで ext3 ファイルシステムを使用するよう考慮してください。<a href="https://bugs.launchpad.net/ubuntu/+source/linux/+bug/453579" rel="nofollow" title="launchpad.net">(453579)</a> [launchpad.net]</p></div></blockquote><p>なんて場合はどうなるんでしょうね。<br/># <a href="https://bugs.launchpad.net/ubuntu/+source/linux/+bug/453579/comments/206" rel="nofollow" title="launchpad.net">#206</a> [launchpad.net] で解決？</p><p>そもそも ext4 や ext3 って信頼に値するファイルシステムなんでしょうか。<br/>ファイルシステムのうそ臭さを検証している <a href="http://devresources.linuxfoundation.org/dev/doubt/" rel="nofollow" title="linuxfoundation.org">DOUBT</a> [linuxfoundation.org]とか、<br/>情報が更新されていると嬉しいのですが、、、。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817369">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817369'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817369'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817369'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_807b62f1.html" onclick="return D2.selectParent(1817335)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817369"></div>
+<ul class="comment-group" id="group_1817369">
+<li class="hide" id="hiddens_1817369"></li>
+</ul><ul id="commtree_1817369"><li class="comment full contain" id="tree_1817379"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817379"></div>
+<div class="comment-item" id="comment_1817379">
+<div class="commentTop comment-top newcomment" id="comment_top_1817379">
+<div class="title">
+<h4><a href="../../../../../comments.pl_dec6e3a5.html" id="comment_link_1817379" name="comment_link_1817379" onclick="return D2.setFocusComment(1817379)">Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない</a>
+<span class="score" id="comment_score_1817379">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817379); return false">スコア:3</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~jsi/index.html">jsi (25633)</a>
+<span class="otherdetails" id="comment_otherdetails_1817379">on 2010年08月30日 20時38分
+			 (<a href="../../../../../comment/1817379.html">#1817379</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817379"><p>ファイルシステムはかなり複雑なコンポーネントですから、予期せぬ障害の原因になることがあります。<br/>DBMSの開発者もそれはよく把握していて、ディスクをファイルとして使うのだけでなく、raw deviceとして使って信頼性を高めることができるようになっているのが普通です。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817379">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817379'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817379'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817379'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_d55897c1.html" onclick="return D2.selectParent(1817369)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817379"></div>
+<ul class="comment-group" id="group_1817379">
+<li class="hide" id="hiddens_1817379"></li>
+</ul></li><li class="comment full contain" id="tree_1817389"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817389"></div>
+<div class="comment-item" id="comment_1817389">
+<div class="commentTop comment-top newcomment" id="comment_top_1817389">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1501fdbb.html" id="comment_link_1817389" name="comment_link_1817389" onclick="return D2.setFocusComment(1817389)">Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない</a>
+<span class="score" id="comment_score_1817389">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817389); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~SteppingWind/index.html">SteppingWind (2654)</a>
+<span class="otherdetails" id="comment_otherdetails_1817389">on 2010年08月30日 20時51分
+			 (<a href="../../../../../comment/1817389.html">#1817389</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817389"><blockquote><div><p>DBMS にしてもファイルシステム上のファイルとして存在しているのですが、</p></div></blockquote><p>大抵の場合はファイルシステムを経由せずに直接デバイスを操作するような設計にすると思います.</p><p>そういう実装ができないDBMSはエンタープライズ向けではないでしょう.</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817389">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817389'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817389'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817389'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_d55897c1.html" onclick="return D2.selectParent(1817369)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817389"></div>
+<ul class="comment-group" id="group_1817389">
+<li class="hide" id="hiddens_1817389"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1817348"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817348"></div>
+<div class="comment-item" id="comment_1817348">
+<div class="commentTop comment-top newcomment" id="comment_top_1817348">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6746a955.html" id="comment_link_1817348" name="comment_link_1817348" onclick="return D2.setFocusComment(1817348)">Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない</a>
+<span class="score" id="comment_score_1817348">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817348); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~haratake/index.html">haratake (365)</a>
+<span class="otherdetails" id="comment_otherdetails_1817348">on 2010年08月30日 19時48分
+			 (<a href="../../../../../comment/1817348.html">#1817348</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817348"><p>ああ、Microsoftが<a href="http://ja.wikipedia.org/wiki/WinFS" rel="nofollow" title="wikipedia.org">Vistaに搭載しようとして挫折した</a> [wikipedia.org]やつですね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817348">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817348'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817348'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817348'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_807b62f1.html" onclick="return D2.selectParent(1817335)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817348"></div>
+<ul class="comment-group" id="group_1817348">
+<li class="hide" id="hiddens_1817348"></li>
+</ul></li><li class="comment full contain" id="tree_1817529"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817529"></div>
+<div class="comment-item" id="comment_1817529">
+<div class="commentTop comment-top newcomment" id="comment_top_1817529">
+<div class="title">
+<h4><a href="../../../../../comments.pl_aa8383d2.html" id="comment_link_1817529" name="comment_link_1817529" onclick="return D2.setFocusComment(1817529)">Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない</a>
+<span class="score" id="comment_score_1817529">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817529); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817529">on 2010年08月31日  0時11分
+			 (<a href="../../../../../comment/1817529.html">#1817529</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817529"><p>今まではHDDが前提だったから、ヘッドがカリカリやる速度のことを考えると<br/>ちっこいファイルが無数に出来るようなやり方は「ダメなんだろうな」ということが簡単に理解できましたけど<br/>SSDがこれだけ普及すると「SSDなら制約ぜんぜんないんじゃね？」と変に勘違いされそう。<br/>iPadの某電子書籍のアプリなんかは、キャッシュをちっこいファイルに無数に分割させてて<br/>「これがSSDの使い方なのか～」と思いましたが。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817529">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817529'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817529'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817529'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_807b62f1.html" onclick="return D2.selectParent(1817335)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817529"></div>
+<ul class="comment-group" id="group_1817529">
+<li class="hide" id="hiddens_1817529"></li>
+</ul></li><li class="comment hidden" id="tree_1817393"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817393"></div>
+<div class="comment-item" id="comment_1817393">
+</div>
+<div id="replyto_1817393"></div>
+<ul class="comment-group" id="group_1817393">
+<li class="hide" id="hiddens_1817393"></li>
+</ul><ul id="commtree_1817393"><li class="comment full contain" id="tree_1817489"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817489"></div>
+<div class="comment-item" id="comment_1817489">
+<div class="commentTop comment-top newcomment" id="comment_top_1817489">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ff953eec.html" id="comment_link_1817489" name="comment_link_1817489" onclick="return D2.setFocusComment(1817489)">Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない</a>
+<span class="score" id="comment_score_1817489">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817489); return false">スコア:3</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~jsi/index.html">jsi (25633)</a>
+<span class="otherdetails" id="comment_otherdetails_1817489">on 2010年08月30日 23時05分
+			 (<a href="../../../../../comment/1817489.html">#1817489</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817489"><p>FUSEのエンタープライズシステムでの実績ってあるんですか?</p><p>個人的には「データが流れてこない」「openが成功しない」という状況になって、<br/>rebootして再度処理を実行すれば済む(うまく動かない理由を追求しなくてもよい)<br/>システムなら良いと思う。</p><p>でも、世の中には、一度うまく動かなくなったときにきっちり報告書を書かないと<br/>いけないようなシステムや、10分程度の障害が莫大な経済損失につながるシステム<br/>もあるわけで、そのようなシステムでは利用は避けるべきでしょうね。</p><p>FUSEは、ユーザプロセスがカーネルを通してファイルシステムを提供するシステムです。<br/>ファイルシステムを提供するFUSEプロセスは任意のシステムコールを呼び出すことが<br/>できるわけですが、FUSEプロセスからのあらゆるシステムコール呼び出しについて、<br/>動作上問題が起こらないことが十分にテストされているとはいえません。<br/>ですので、FUSEのカーネル部分とFUSEプロセスが呼び出したシステムコールとの間で<br/>デッドロックが起こるような、そんなバグが残存しているような気がしてなりません。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817489">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:データをファイルとしてたくさん格納するようなシステムは作ってはいけない')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817489'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817489'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817489'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_f44703d1.html" onclick="return D2.selectParent(1817393)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817489"></div>
+<ul class="comment-group" id="group_1817489">
+<li class="hide" id="hiddens_1817489"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1817318"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817318"></div>
+<div class="comment-item" id="comment_1817318">
+<div class="commentTop comment-top newcomment" id="comment_top_1817318">
+<div class="title">
+<h4><a href="../../../../../comments.pl_882b3224.html" id="comment_link_1817318" name="comment_link_1817318" onclick="return D2.setFocusComment(1817318)">Linuxの問題なの？</a>
+<span class="score" id="comment_score_1817318">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817318); return false">スコア:3</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Driver/index.html">Driver (32138)</a>
+<span class="otherdetails" id="comment_otherdetails_1817318">on 2010年08月30日 19時05分
+			 (<a href="../../../../../comment/1817318.html">#1817318</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~Driver/journal/index.html" title="2018年03月02日 12時45分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817318"><p>殆どのOSで問題になりそうな気がするんですけど。（FileSystemの種類毎に程度は違うだろうけど）<br/>10億ファイルをディスク内に記録しておいても大きな問題にならないOSを知っている人がいたら教えてください。</p></div>
+</div>
+</div>
+<div id="replyto_1817318"></div>
+<ul class="comment-group" id="group_1817318">
+<li class="hide" id="hiddens_1817318"></li>
+</ul><ul id="commtree_1817318"><li class="comment oneline" id="tree_1817328"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817328"></div>
+<div class="comment-item" id="comment_1817328">
+<div class="commentTop comment-top newcomment" id="comment_top_1817328">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2a8136aa.html" id="comment_link_1817328" name="comment_link_1817328" onclick="return D2.setFocusComment(1817328)">Re:</a>
+<span class="score" id="comment_score_1817328">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817328); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817328"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817328">たぶんこれに呼応して様々なFSでベンチしてくるのでは。直観的に化石NTFSが一番ウンコな気がする。<br/>
+ZFSはどうかなと思ったけど、似ているといわれてるBtrfsも同様に遅いみたいですね。<br/>
+HAMMERは構造的にDBに近い気がするので速いかも？</div>
+</div>
+<div class="commentSub" id="comment_sub_1817328"></div>
+</div>
+<div id="replyto_1817328"></div>
+<ul class="comment-group" id="group_1817328">
+<li class="hide" id="hiddens_1817328"></li>
+</ul><ul id="commtree_1817328"><li class="comment full contain" id="tree_1817493"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817493"></div>
+<div class="comment-item" id="comment_1817493">
+<div class="commentTop comment-top newcomment" id="comment_top_1817493">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1f359103.html" id="comment_link_1817493" name="comment_link_1817493" onclick="return D2.setFocusComment(1817493)">Re:Linuxの問題なの？</a>
+<span class="score" id="comment_score_1817493">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817493); return false">スコア:4</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817493">on 2010年08月30日 23時09分
+			 (<a href="../../../../../comment/1817493.html">#1817493</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817493"><p>Windows(NTFS)で一日数千件のログファイルを単一フォルダに吐き出すシステムを知ってる。ファイルのサイズは100byte未満。<br/>1ヶ月もするとそのフォルダをエクスプローラで表示するのに数十分かかるようになり、3ヶ月もするとログの書き出しに時間がかかり過ぎてシステムが止まった。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817493">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:Linuxの問題なの？')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817493'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817493'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817493'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_6c44e5ab.html" onclick="return D2.selectParent(1817328)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817493"></div>
+<ul class="comment-group" id="group_1817493">
+<li class="hide" id="hiddens_1817493"></li>
+</ul><ul id="commtree_1817493"><li class="comment hidden" id="tree_1817904"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817904"></div>
+<div class="comment-item" id="comment_1817904">
+</div>
+<div id="replyto_1817904"></div>
+<ul class="comment-group" id="group_1817904">
+<li class="hide" id="hiddens_1817904"></li>
+</ul><ul id="commtree_1817904"><li class="comment hidden" id="tree_1817950"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817950"></div>
+<div class="comment-item" id="comment_1817950">
+</div>
+<div id="replyto_1817950"></div>
+<ul class="comment-group" id="group_1817950">
+<li class="hide" id="hiddens_1817950"></li>
+</ul><ul id="commtree_1817950"><li class="comment hidden" id="tree_1818052"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1818052"></div>
+<div class="comment-item" id="comment_1818052">
+</div>
+<div id="replyto_1818052"></div>
+<ul class="comment-group" id="group_1818052">
+<li class="hide" id="hiddens_1818052"></li>
+</ul><ul id="commtree_1818052"><li class="comment full contain" id="tree_1818532"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1818532"></div>
+<div class="comment-item" id="comment_1818532">
+<div class="commentTop comment-top newcomment" id="comment_top_1818532">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1613fae0.html" id="comment_link_1818532" name="comment_link_1818532" onclick="return D2.setFocusComment(1818532)">Re:Linuxの問題なの？</a>
+<span class="score" id="comment_score_1818532">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1818532); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1818532">on 2010年09月01日 21時47分
+			 (<a href="../../../../../comment/1818532.html">#1818532</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1818532">補足<br/><br/>同一フォルダにファイル100万個でも、dirは即座にファイルのリストを出力し始める。<br/>再起動直後であっても。<br/><br/>Windowsナメんなよ。</div>
+</div>
+<div class="commentSub" id="comment_sub_1818532">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:Linuxの問題なの？')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1818532'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1818532'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1818532'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_1e316174.html" onclick="return D2.selectParent(1818052)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1818532"></div>
+<ul class="comment-group" id="group_1818532">
+<li class="hide" id="hiddens_1818532"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1817305"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817305"></div>
+<div class="comment-item" id="comment_1817305">
+<div class="commentTop comment-top newcomment" id="comment_top_1817305">
+<div class="title">
+<h4><a href="../../../../../comments.pl_017938d7.html" id="comment_link_1817305" name="comment_link_1817305" onclick="return D2.setFocusComment(1817305)">マルチスレッド化するとか</a>
+<span class="score" id="comment_score_1817305">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817305); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~cyber205/index.html">cyber205 (4374)</a>
+<span class="otherdetails" id="comment_otherdetails_1817305">on 2010年08月30日 18時40分
+			 (<a href="../../../../../comment/1817305.html">#1817305</a>)
+			<small>
+<a class="user_homepage_display" href="http://d.hatena.ne.jp/cyber205/?" title="http://d.hatena.ne.jp/cyber205/?">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~cyber205/journal/index.html" title="2022年11月05日  9時43分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817305"><p>コア数のたくさんあるCPUが普通にあるから、じういう時も<br/>処理能力だけは余ってるんじゃないかと思ったりするのですが。</p></div>
+</div>
+</div>
+<div id="replyto_1817305"></div>
+<ul class="comment-group" id="group_1817305">
+<li class="hide" id="hiddens_1817305"></li>
+</ul><ul id="commtree_1817305"><li class="comment oneline" id="tree_1817308"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817308"></div>
+<div class="comment-item" id="comment_1817308">
+<div class="commentTop comment-top newcomment" id="comment_top_1817308">
+<div class="title">
+<h4><a href="../../../../../comments.pl_542e7f90.html" id="comment_link_1817308" name="comment_link_1817308" onclick="return D2.setFocusComment(1817308)">Re:</a>
+<span class="score" id="comment_score_1817308">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817308); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817308"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817308">並列処理が効果を発揮できる条件なのでしょうか</div>
+</div>
+<div class="commentSub" id="comment_sub_1817308"></div>
+</div>
+<div id="replyto_1817308"></div>
+<ul class="comment-group" id="group_1817308">
+<li class="hide" id="hiddens_1817308"></li>
+</ul><ul id="commtree_1817308"><li class="comment full contain" id="tree_1817385"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817385"></div>
+<div class="comment-item" id="comment_1817385">
+<div class="commentTop comment-top newcomment" id="comment_top_1817385">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8a0def9f.html" id="comment_link_1817385" name="comment_link_1817385" onclick="return D2.setFocusComment(1817385)">Re:マルチスレッド化するとか</a>
+<span class="score" id="comment_score_1817385">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817385); return false">スコア:3</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817385">on 2010年08月30日 20時45分
+			 (<a href="../../../../../comment/1817385.html">#1817385</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817385"><p>「並列化すればいいんじゃないか」というような単純な一言というのは背景にある理解と対象の範囲によって適切にも不適切にもなってしまうので判定が難しいです。</p><p>単純にストレージの性能限界にぶつかっている場合はCPU側のファイルアクセスを並列化すると状態は悪化します。<br/>ストレージはシーケンシャルアクセスが得意でランダムアクセスは苦手だからです。この性能差はSSDを利用すれば大幅に緩和されますが、それでもなくなるわけではありません。<br/>ストレージに限らずネットワークなどもを含めてI/Oは一般的に小容量の大量アクセスを行うと実効性能が落ちます（余談ですがCPU処理を考える場合はメインメモリもI/Oの一つとして考える必要があるぐらい遅いですね）。</p><p>まじめに大幅な高速化を考えるなら既存のファイルシステムの部分的な並列化を目指すよりも、現代的なコンピューターの性能の絶対値やバランスの変化に最適化されたファイルシステムを設計するところからになるでしょう。</p><p>以前に比べると現在のPCは一般的にはCPUの並列処理能力が活用されずに余力があり、メモリとストレージの容量はユーザーが使用するデータ量に対して余裕があります。<br/>ファイルシステムの多くは省資源が基本でストレージの容量やCPUの計算能力の消費を最低限で済ませることが志向されていますので、その考え方、使用する資源の許容量の基準を変える中の一つに「CPUの処理を並列化する」というのも出てくると思います。<br/>ただし、PC用のOSのファイルシステムの場合、それが利用されるシステムの規模は現行製品だけでもPCとは言い難いCPU数を搭載したシステムからシングルコアのAtom搭載のネットブックまでの幅があります。過去の製品を数年前のものまで含めるだけでその性能差はさらに大きく広がります。ストレージも同様です。<br/>コンピューターの資源を積極的に利用するファイルシステムを導入したら大規模なシステムでは速くなったが自分のPCでは遅くなった、というようなことは歓迎されませんので実用を目的とする開発の場合、資源の利用に対しては保守的になるのが普通です。</p><p>素人の思いつきのようなものは既に考慮や取り組みがされていることが多いわけですが、実際の取り組みの例がZFS以降の最近実用化されたファイルシステムになるでしょう。並列処理についてもZFSでは圧縮ファイルシステムで活用されています。</p><p>ファイルシステムの歴史的な発展については連続的かつ活発に開発されているLinuxがわかりやすいと思いますが、ext2/3の世代、ReiserFS他の世代、BtrFSの世代でファイルシステムの設計が大きく異なっています。</p><p>昔は性能のバランスが違っていたという例を挙げると1998年にはUltra160 SCSIが提唱されており、その転送速度は160/MB/secに達していました。RAIDなどを用いた高価なストレージを接続すればそのインターフェース速度を十分活かせましたが、PCに接続した場合はCPUがそれを処理するのは大変でした。当時のメインメモリはPC100 SDRAMでインターフェース速度が800MB/sec、実効性能はその数分の一ですからメモリに読み込むだけで一仕事になってしまいます。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817385">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:マルチスレッド化するとか')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817385'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817385'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817385'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_4cae962d.html" onclick="return D2.selectParent(1817308)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817385"></div>
+<ul class="comment-group" id="group_1817385">
+<li class="hide" id="hiddens_1817385"></li>
+</ul></li><li class="comment full contain" id="tree_1817333"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817333"></div>
+<div class="comment-item" id="comment_1817333">
+<div class="commentTop comment-top newcomment" id="comment_top_1817333">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a40dd35e.html" id="comment_link_1817333" name="comment_link_1817333" onclick="return D2.setFocusComment(1817333)">Re:マルチスレッド化するとか</a>
+<span class="score" id="comment_score_1817333">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817333); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~cyber205/index.html">cyber205 (4374)</a>
+<span class="otherdetails" id="comment_otherdetails_1817333">on 2010年08月30日 19時22分
+			 (<a href="../../../../../comment/1817333.html">#1817333</a>)
+			<small>
+<a class="user_homepage_display" href="http://d.hatena.ne.jp/cyber205/?" title="http://d.hatena.ne.jp/cyber205/?">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~cyber205/journal/index.html" title="2022年11月05日  9時43分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817333"><p>なるほど、HDD側に並列処理が必要なわけね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817333">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:マルチスレッド化するとか')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817333'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817333'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817333'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_4cae962d.html" onclick="return D2.selectParent(1817308)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817333"></div>
+<ul class="comment-group" id="group_1817333">
+<li class="hide" id="hiddens_1817333"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_1817319"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817319"></div>
+<div class="comment-item" id="comment_1817319">
+<div class="commentTop comment-top newcomment" id="comment_top_1817319">
+<div class="title">
+<h4><a href="../../../../../comments.pl_fb4a8875.html" id="comment_link_1817319" name="comment_link_1817319" onclick="return D2.setFocusComment(1817319)">Re:</a>
+<span class="score" id="comment_score_1817319">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817319); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817319"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817319">RAIDにすれば症状が軽減されると書いてあるので、HDD側の問題だと思う。<br/>RAMディスクで処理する(いくらかかるんだ・・・？)ならCPU側の問題になりそうだけど。</div>
+</div>
+<div class="commentSub" id="comment_sub_1817319"></div>
+</div>
+<div id="replyto_1817319"></div>
+<ul class="comment-group" id="group_1817319">
+<li class="hide" id="hiddens_1817319"></li>
+</ul><ul id="commtree_1817319"><li class="comment full contain" id="tree_1817364"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817364"></div>
+<div class="comment-item" id="comment_1817364">
+<div class="commentTop comment-top newcomment" id="comment_top_1817364">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0b768564.html" id="comment_link_1817364" name="comment_link_1817364" onclick="return D2.setFocusComment(1817364)">Re:マルチスレッド化するとか</a>
+<span class="score" id="comment_score_1817364">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817364); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Ryo.F/index.html">Ryo.F (3896)</a>
+<span class="otherdetails" id="comment_otherdetails_1817364">on 2010年08月30日 20時23分
+			 (<a href="../../../../../comment/1817364.html">#1817364</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~Ryo.F/journal/index.html" title="2025年03月06日  8時06分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817364"><p>某商用UNIXでの話ですが、一つのディレクトリの下に32K個程のサブディレクトリを作ったら、それ以上ディレクトリが作れなくなりました。これはそのOSの仕様だそうです。ファイルは32K個以上作れるのに。<br/>で、そのディレクトリで</p><blockquote><div><p> <tt># ls</tt></p></div> </blockquote><p>と実行すると、サブディレクトリ名が表示され始めるまでに十数秒～数十秒かかっていました。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817364">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:マルチスレッド化するとか')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817364'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817364'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817364'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_9eb9e981.html" onclick="return D2.selectParent(1817319)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817364"></div>
+<ul class="comment-group" id="group_1817364">
+<li class="hide" id="hiddens_1817364"></li>
+</ul><ul id="commtree_1817364"><li class="comment hidden" id="tree_1817501"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817501"></div>
+<div class="comment-item" id="comment_1817501">
+</div>
+<div id="replyto_1817501"></div>
+<ul class="comment-group" id="group_1817501">
+<li class="hide" id="hiddens_1817501"></li>
+</ul><ul id="commtree_1817501"><li class="comment full contain" id="tree_1817574"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817574"></div>
+<div class="comment-item" id="comment_1817574">
+<div class="commentTop comment-top newcomment" id="comment_top_1817574">
+<div class="title">
+<h4><a href="../../../../../comments.pl_af5a031d.html" id="comment_link_1817574" name="comment_link_1817574" onclick="return D2.setFocusComment(1817574)">Re:マルチスレッド化するとか</a>
+<span class="score" id="comment_score_1817574">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817574); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Ryo.F/index.html">Ryo.F (3896)</a>
+<span class="otherdetails" id="comment_otherdetails_1817574">on 2010年08月31日  6時13分
+			 (<a href="../../../../../comment/1817574.html">#1817574</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~Ryo.F/journal/index.html" title="2025年03月06日  8時06分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817574"><p><div class="quote"><p>・子ディレクトリが持つ、".." エントリによって、親ディレクトリのリンクカウンタが消費される.<br/>・リンクカウンタは 16bit signed short.</p></div><p>カウンタが16bit signed shortで、サブディレクトリ毎に「..」と併せて2リンク消費するなら、16Kで限界が来てしまいませんか？</p><p>しかし、そういう制限ではなかったように記憶しています。うろ覚えですが。<br/>ファイルシステムの制限としては、32Kを超えてサブディレクトリを作れるけど、mkdirで制限しているとか何とか。<br/>＃本当にうろ覚えで申し訳ない。</p></p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817574">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:マルチスレッド化するとか')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817574'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817574'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817574'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_bca5bbbf.html" onclick="return D2.selectParent(1817501)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817574"></div>
+<ul class="comment-group" id="group_1817574">
+<li class="hide" id="hiddens_1817574"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment oneline" id="tree_1817331"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817331"></div>
+<div class="comment-item" id="comment_1817331">
+<div class="commentTop comment-top newcomment" id="comment_top_1817331">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3a826e16.html" id="comment_link_1817331" name="comment_link_1817331" onclick="return D2.setFocusComment(1817331)">Re:</a>
+<span class="score" id="comment_score_1817331">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817331); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817331"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817331"><p>lsってオプション無しでもファイル名でソートされて出てくるんだし、<br/>最大10億のinode情報をメモリに展開しなきゃいけないわけでしょう。<br/>それだけでメモリ何十GBとか必要になるんじゃないのかな・・。</p><p>実装知らないから推測ですけど、<br/>ページングおきまくってて重いんじゃないのかな、と。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817331"></div>
+</div>
+<div id="replyto_1817331"></div>
+<ul class="comment-group" id="group_1817331">
+<li class="hide" id="hiddens_1817331"></li>
+</ul><ul id="commtree_1817331"><li class="comment full contain" id="tree_1817368"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817368"></div>
+<div class="comment-item" id="comment_1817368">
+<div class="commentTop comment-top newcomment" id="comment_top_1817368">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b9786eaf.html" id="comment_link_1817368" name="comment_link_1817368" onclick="return D2.setFocusComment(1817368)">Re:マルチスレッド化するとか</a>
+<span class="score" id="comment_score_1817368">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817368); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Ryo.F/index.html">Ryo.F (3896)</a>
+<span class="otherdetails" id="comment_otherdetails_1817368">on 2010年08月30日 20時25分
+			 (<a href="../../../../../comment/1817368.html">#1817368</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~Ryo.F/journal/index.html" title="2025年03月06日  8時06分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817368"><p>まあ、普通は一つのディレクトリにファイルを十億個も作るなんてタコな設計にはしないから問題ないでしょう。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817368">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:マルチスレッド化するとか')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817368'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817368'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817368'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_dcf0f807.html" onclick="return D2.selectParent(1817331)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817368"></div>
+<ul class="comment-group" id="group_1817368">
+<li class="hide" id="hiddens_1817368"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1817365"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817365"></div>
+<div class="comment-item" id="comment_1817365">
+<div class="commentTop comment-top newcomment" id="comment_top_1817365">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6e759415.html" id="comment_link_1817365" name="comment_link_1817365" onclick="return D2.setFocusComment(1817365)">タイトル毎にフォルダを作成して整理</a>
+<span class="score" id="comment_score_1817365">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817365); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817365">on 2010年08月30日 20時24分
+			 (<a href="../../../../../comment/1817365.html">#1817365</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817365">&gt; 複数のパーティションに分割するとユーザーによるデータの管理が面倒になり<br/>
+<br/>
+10億個のファイルがある時点で、管理がすごく面倒だと思うんだけど。<br/>
+パーティション云々の問題じゃない気がするのは俺だけかな？</div>
+</div>
+</div>
+<div id="replyto_1817365"></div>
+<ul class="comment-group" id="group_1817365">
+<li class="hide" id="hiddens_1817365"></li>
+</ul></li><li class="comment full contain" id="tree_1817546"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817546"></div>
+<div class="comment-item" id="comment_1817546">
+<div class="commentTop comment-top newcomment" id="comment_top_1817546">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2a56afd8.html" id="comment_link_1817546" name="comment_link_1817546" onclick="return D2.setFocusComment(1817546)">"問題"ではなく"今後の課題"では？</a>
+<span class="score" id="comment_score_1817546">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817546); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~t-wata/index.html">t-wata (10969)</a>
+<span class="otherdetails" id="comment_otherdetails_1817546">on 2010年08月31日  1時20分
+			 (<a href="../../../../../comment/1817546.html">#1817546</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~t-wata/journal/index.html" title="2003年12月11日  0時27分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817546">しかし10億というと1日10万ファイル作成するとして1万日かかるわけで、そんなファイルシステムのfsckに2.5時間かかるのは妥当でしょう。<br/>
+表示に数日かかるというlsは問題だとは思いますが。<br/>
+まぁ、それでもファイル名が10文字だったとして、ファイル名の出力だけで10GBあるから、ある程度は仕方ないですね。<br/> <br/>
+私はcdした直後に反射的にlsを打ってしまうので、こういうシステムには関わりたくないですが。</div>
+</div>
+</div>
+<div id="replyto_1817546"></div>
+<ul class="comment-group" id="group_1817546">
+<li class="hide" id="hiddens_1817546"></li>
+</ul></li><li class="comment full contain" id="tree_1817615"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817615"></div>
+<div class="comment-item" id="comment_1817615">
+<div class="commentTop comment-top newcomment" id="comment_top_1817615">
+<div class="title">
+<h4><a href="../../../../../comments.pl_89c2fab3.html" id="comment_link_1817615" name="comment_link_1817615" onclick="return D2.setFocusComment(1817615)">Linuxが問題なんじゃない、人間が問題なんだ！</a>
+<span class="score" id="comment_score_1817615">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817615); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~baku3393/index.html">baku3393 (32616)</a>
+<span class="otherdetails" id="comment_otherdetails_1817615">on 2010年08月31日 10時20分
+			 (<a href="../../../../../comment/1817615.html">#1817615</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~baku3393/journal/index.html" title="2013年06月09日 10時12分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817615">求めるファイルが画面に出てきた所で[Ctrl+C]でlsを殺せば幾分時間は減ると思われます。<br/><br/>ファイル数が億のオーダーであることがわかっているなら「ls &gt; hogehoge.txt」するよね。普通。<br/>もうちょっと気が利くなら「ls hoge* &gt; hoge_list.txt」でしょ。<br/><br/>画面で見ようとするならそれはオペレータが問題ありすぎると思います。<br/><br/># 表示文字数の少ないコンソールと重たい回線は否応が無しに小技スキルを蓄積させるよねぇ…(泣)</div>
+<div class="sig" id="comment_sig_1817615">-- <br/>----
+ばくさん！＠一応IT土方</div>
+</div>
+</div>
+<div id="replyto_1817615"></div>
+<ul class="comment-group" id="group_1817615">
+<li class="hide" id="hiddens_1817615"></li>
+</ul><ul id="commtree_1817615"><li class="comment full contain" id="tree_1817674"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817674"></div>
+<div class="comment-item" id="comment_1817674">
+<div class="commentTop comment-top newcomment" id="comment_top_1817674">
+<div class="title">
+<h4><a href="../../../../../comments.pl_976e37e4.html" id="comment_link_1817674" name="comment_link_1817674" onclick="return D2.setFocusComment(1817674)">Re:Linuxが問題なんじゃない、人間が問題なんだ！</a>
+<span class="score" id="comment_score_1817674">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817674); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~saitoh/index.html">saitoh (10803)</a>
+<span class="otherdetails" id="comment_otherdetails_1817674">on 2010年08月31日 11時42分
+			 (<a href="../../../../../comment/1817674.html">#1817674</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817674">ls hoge* &gt; hoge_list.txt<br/>
+って、まずシェルがディレクトリを読んで、hoge*にマッチするファイル一覧を作ってアルファベット順にソートして、それからlsをfork&amp;execして、lsが引数の各ファイルを順次statする・・・という処理になります。
+ファイル数が億なディレクトリでこんな事を行うのはもっとドツボじゃ？
+なおexecの引数に渡せるデータサイズは128KB～2MB(OSによって違う)ので、hoge*にマッチするファイルが10000個とかあればもうそれでexecできません。<p>
+すでに指摘されているように、ls -f(statもsortもしない)がとりあえず一番速くファイル名一覧が得られます。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817674">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:Linuxが問題なんじゃない、人間が問題なんだ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817674'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817674'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817674'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_b35efdd2.html" onclick="return D2.selectParent(1817615)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817674"></div>
+<ul class="comment-group" id="group_1817674">
+<li class="hide" id="hiddens_1817674"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1817450"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817450"></div>
+<div class="comment-item" id="comment_1817450">
+<div class="commentTop comment-top newcomment" id="comment_top_1817450">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d633ff04.html" id="comment_link_1817450" name="comment_link_1817450" onclick="return D2.setFocusComment(1817450)">ls</a>
+<span class="score" id="comment_score_1817450">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817450); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~nox_dot/index.html">nox_dot (11614)</a>
+<span class="otherdetails" id="comment_otherdetails_1817450">on 2010年08月30日 22時12分
+			 (<a href="../../../../../comment/1817450.html">#1817450</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~nox_dot/journal/index.html" title="2011年08月31日 17時43分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817450"><p>場合にも寄るのでしょうが、alias で --color が入っていたら、これを切るだけでだいぶ早くなります。<br/>表示はだいぶ味気なくなりますが。</p></div>
+</div>
+</div>
+<div id="replyto_1817450"></div>
+<ul class="comment-group" id="group_1817450">
+<li class="hide" id="hiddens_1817450"></li>
+</ul></li><li class="comment full contain" id="tree_1817906"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817906"></div>
+<div class="comment-item" id="comment_1817906">
+<div class="commentTop comment-top newcomment" id="comment_top_1817906">
+<div class="title">
+<h4><a href="../../../../../comments.pl_cb8cbb11.html" id="comment_link_1817906" name="comment_link_1817906" onclick="return D2.setFocusComment(1817906)">Maildirなメールサーバなら</a>
+<span class="score" id="comment_score_1817906">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817906); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~gc00004/index.html">gc00004 (37765)</a>
+<span class="otherdetails" id="comment_otherdetails_1817906">on 2010年08月31日 20時04分
+			 (<a href="../../../../../comment/1817906.html">#1817906</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~gc00004/journal/index.html" title="2012年05月03日  4時21分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817906">通過したメールをpostfixのalways_bcc使ってアーカイブし、検索はIMAPクライアントで行うようなことしたらすぐに体験できますよ。<br/><br/>メーリングリストサーバーのメールやメルマガを通過したらそりゃあもう。。。</div>
+</div>
+</div>
+<div id="replyto_1817906"></div>
+<ul class="comment-group" id="group_1817906">
+<li class="hide" id="hiddens_1817906"></li>
+</ul></li><li class="comment full contain" id="tree_1817301"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817301"></div>
+<div class="comment-item" id="comment_1817301">
+<div class="commentTop comment-top newcomment" id="comment_top_1817301">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1e7fdad1.html" id="comment_link_1817301" name="comment_link_1817301" onclick="return D2.setFocusComment(1817301)">ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817301">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817301); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817301">on 2010年08月30日 18時38分
+			 (<a href="../../../../../comment/1817301.html">#1817301</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817301"><p>T/O</p></div>
+</div>
+</div>
+<div id="replyto_1817301"></div>
+<ul class="comment-group" id="group_1817301">
+<li class="hide" id="hiddens_1817301"></li>
+</ul><ul id="commtree_1817301"><li class="comment full contain" id="tree_1817357"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817357"></div>
+<div class="comment-item" id="comment_1817357">
+<div class="commentTop comment-top newcomment" id="comment_top_1817357">
+<div class="title">
+<h4><a href="../../../../../comments.pl_653be512.html" id="comment_link_1817357" name="comment_link_1817357" onclick="return D2.setFocusComment(1817357)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817357">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817357); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~tyuu/index.html">tyuu (9154)</a>
+<span class="otherdetails" id="comment_otherdetails_1817357">on 2010年08月30日 20時03分
+			 (<a href="../../../../../comment/1817357.html">#1817357</a>)
+			<small>
+<a class="user_homepage_display" href="http://tyuu.com/" title="http://tyuu.com/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~tyuu/journal/index.html" title="2004年02月11日 12時15分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817357"><p>*BSD の優位性というより UNIX の基礎な気がします。</p><p>/, /boot しか切られていないサーバを稀に見つけますが、<br/>/var のログがパンクして login できなくなるとか怖くなります。</p><p>ファイルの数にしたって一つのディレクトリに数万ファイルで ls は実用に耐えません。<br/>bash の補完も「何万ファイルあるけど、マジで？」と聞いてくるまでに数時間かかります。</p><p>FreeBSD は fsck に関しては<a href="http://ja.wikipedia.org/wiki/Background_fsck" rel="nofollow" title="wikipedia.org">Background fsck</a> [wikipedia.org]があるので、<br/>優位と言えば優位なのかも知れません。<br/>Solaris の恩恵を受けて ZFS を利用すれば、もっと色々と便利なのかも知れません。</p><p>Linux も LVM でパーティションの容量管理は比較的容易になったので、<br/>パーティショニングは昔のように千里眼である必要はありません。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817357">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817357'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817357'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817357'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_4566abd6.html" onclick="return D2.selectParent(1817301)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817357"></div>
+<ul class="comment-group" id="group_1817357">
+<li class="hide" id="hiddens_1817357"></li>
+</ul><ul id="commtree_1817357"><li class="comment full contain" id="tree_1817503"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817503"></div>
+<div class="comment-item" id="comment_1817503">
+<div class="commentTop comment-top newcomment" id="comment_top_1817503">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e8059ed9.html" id="comment_link_1817503" name="comment_link_1817503" onclick="return D2.setFocusComment(1817503)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817503">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817503); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~gonta/index.html">gonta (11642)</a>
+<span class="otherdetails" id="comment_otherdetails_1817503">on 2010年08月30日 23時23分
+			 (<a href="../../../../../comment/1817503.html">#1817503</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~gonta/journal/index.html" title="2006年11月12日 11時30分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817503"><p>昔のUNIXにありましたね。/があふれると、挙動が不安定になるやつ。だから、/var, /tmp, /homeは/と同じにするんじゃない、と。</p><p>他の方が書いている通り、最近のは無いと思いますよ。でも、慣例で分けてしまいます。VM上のテスト環境で、お任せモードでのインストールをするときだけ/の単発が出来上がりますが。</p></div>
+<div class="sig" id="comment_sig_1817503">-- <br/>-- gonta -- <br/>
+"May Macintosh be with you"</div>
+</div>
+<div class="commentSub" id="comment_sub_1817503">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817503'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817503'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817503'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_520d29de.html" onclick="return D2.selectParent(1817357)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817503"></div>
+<ul class="comment-group" id="group_1817503">
+<li class="hide" id="hiddens_1817503"></li>
+</ul></li><li class="comment full contain" id="tree_1817419"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817419"></div>
+<div class="comment-item" id="comment_1817419">
+<div class="commentTop comment-top newcomment" id="comment_top_1817419">
+<div class="title">
+<h4><a href="../../../../../comments.pl_33b06e2c.html" id="comment_link_1817419" name="comment_link_1817419" onclick="return D2.setFocusComment(1817419)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817419">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817419); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817419">on 2010年08月30日 21時30分
+			 (<a href="../../../../../comment/1817419.html">#1817419</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817419"><p>&gt;    /, /boot しか切られていないサーバを稀に見つけますが、<br/>&gt;    /var のログがパンクして login できなくなるとか怖くなります。</p><p>単一パーテーションのDebian Lenny で確認しました。<br/>領域がパンパンになるまで一般ユーザでファイルをたくさん作りましたが、<br/>スーパーユーザになると予約領域が使えるらしく、もう少し沢山書き込みができました。</p><p>続いて、スーパーユーザでも書き込めなくなるまで埋めましたが、コンソールログインには支障ありませんでした。</p><p># 流石に再起動するとカーネルパニックになったけどw</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817419">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817419'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817419'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817419'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_520d29de.html" onclick="return D2.selectParent(1817357)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817419"></div>
+<ul class="comment-group" id="group_1817419">
+<li class="hide" id="hiddens_1817419"></li>
+</ul></li><li class="comment full contain" id="tree_1817453"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817453"></div>
+<div class="comment-item" id="comment_1817453">
+<div class="commentTop comment-top newcomment" id="comment_top_1817453">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3a6bf627.html" id="comment_link_1817453" name="comment_link_1817453" onclick="return D2.setFocusComment(1817453)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817453">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817453); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~haratake/index.html">haratake (365)</a>
+<span class="otherdetails" id="comment_otherdetails_1817453">on 2010年08月30日 22時19分
+			 (<a href="../../../../../comment/1817453.html">#1817453</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817453"><p>&gt; /var のログがパンクして login できなくなるとか怖くなります。</p><p>どのファイルシステムがfullになっても、ログインが出来なくなることはないと思いますよ?<br/>ログは残らないですが。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817453">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817453'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817453'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817453'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_520d29de.html" onclick="return D2.selectParent(1817357)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817453"></div>
+<ul class="comment-group" id="group_1817453">
+<li class="hide" id="hiddens_1817453"></li>
+</ul><ul id="commtree_1817453"><li class="comment hidden" id="tree_1817490"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817490"></div>
+<div class="comment-item" id="comment_1817490">
+</div>
+<div id="replyto_1817490"></div>
+<ul class="comment-group" id="group_1817490">
+<li class="hide" id="hiddens_1817490"></li>
+</ul><ul id="commtree_1817490"><li class="comment full contain" id="tree_1817537"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817537"></div>
+<div class="comment-item" id="comment_1817537">
+<div class="commentTop comment-top newcomment" id="comment_top_1817537">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7c128a16.html" id="comment_link_1817537" name="comment_link_1817537" onclick="return D2.setFocusComment(1817537)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817537">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817537); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~haratake/index.html">haratake (365)</a>
+<span class="otherdetails" id="comment_otherdetails_1817537">on 2010年08月31日  0時34分
+			 (<a href="../../../../../comment/1817537.html">#1817537</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817537"><p>&gt; FreeBSD で立てた Web Server で log lotation の予想を超えて貯まったために /var 130% とか起こしてしまい、</p><p>デフォルトだと予備領域が10%なので、さすがに110%を超えないんじゃないですかね。</p><p>&gt; sshd すらスワップアウトされていたらしく login までに数分かかったことならあります。</p><p>数十分以上ってのもありますね。<br/>メモリ不足やプロセステーブルがあふれた時などは、<b>特攻隊コマンド</b>が役に立ちます。</p><p>&gt; exec su</p><p>パスワード間違えると、本当にそのままサヨナラです。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817537">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817537'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817537'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817537'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_9907f4f0.html" onclick="return D2.selectParent(1817490)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817537"></div>
+<ul class="comment-group" id="group_1817537">
+<li class="hide" id="hiddens_1817537"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1817478"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817478"></div>
+<div class="comment-item" id="comment_1817478">
+<div class="commentTop comment-top newcomment" id="comment_top_1817478">
+<div class="title">
+<h4><a href="../../../../../comments.pl_764f63f7.html" id="comment_link_1817478" name="comment_link_1817478" onclick="return D2.setFocusComment(1817478)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817478">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817478); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817478">on 2010年08月30日 22時42分
+			 (<a href="../../../../../comment/1817478.html">#1817478</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817478"><p>background fsckはまったくスケーラビリティがなく、<br/>起動前のsnapshotsにinode数に比例した時間がかかります。</p><p>十億ものファイルを持つファイルシステムをfsck -Bなんかしたら<br/>丸1日くらいピクリとも動かないんじゃないですかね。</p><p>background fsck前提のファイルシステムは<br/>newfs時に思い切りinodeの数を減らしましょう。<br/>減らせば減らすほどsnapshotsが速くなります。<br/>そうしないと使えたもんじゃありません。<br/>なんというかその、使わないのが一番です。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817478">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817478'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817478'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817478'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_520d29de.html" onclick="return D2.selectParent(1817357)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817478"></div>
+<ul class="comment-group" id="group_1817478">
+<li class="hide" id="hiddens_1817478"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_1817315"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817315"></div>
+<div class="comment-item" id="comment_1817315">
+<div class="commentTop comment-top newcomment" id="comment_top_1817315">
+<div class="title">
+<h4><a href="../../../../../comments.pl_08912dcd.html" id="comment_link_1817315" name="comment_link_1817315" onclick="return D2.setFocusComment(1817315)">Re:</a>
+<span class="score" id="comment_score_1817315">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817315); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817315"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817315"><p>*BSDで10億程度のファイルを上記の基準で処理したら、どうなるの？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817315"></div>
+</div>
+<div id="replyto_1817315"></div>
+<ul class="comment-group" id="group_1817315">
+<li class="hide" id="hiddens_1817315"></li>
+</ul><ul id="commtree_1817315"><li class="comment full contain" id="tree_1817332"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817332"></div>
+<div class="comment-item" id="comment_1817332">
+<div class="commentTop comment-top newcomment" id="comment_top_1817332">
+<div class="title">
+<h4><a href="../../../../../comments.pl_884287c9.html" id="comment_link_1817332" name="comment_link_1817332" onclick="return D2.setFocusComment(1817332)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817332">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817332); return false">スコア:5</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~Sukoya/index.html">Sukoya (33993)</a>
+<span class="otherdetails" id="comment_otherdetails_1817332">on 2010年08月30日 19時21分
+			 (<a href="../../../../../comment/1817332.html">#1817332</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~Sukoya/journal/index.html" title="2023年03月24日 16時13分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817332"><p>マジレスすると、そんなことをしなければいけないサーバを構築をしたニンゲンの首が吹き飛ぶ<br/>処理できる様にしろと客から光の速度でクレームがくる</p><p>お前の設計で会社がマジやばい</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817332">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817332'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817332'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817332'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_68137e2a.html" onclick="return D2.selectParent(1817315)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817332"></div>
+<ul class="comment-group" id="group_1817332">
+<li class="hide" id="hiddens_1817332"></li>
+</ul><ul id="commtree_1817332"><li class="comment full contain" id="tree_1817378"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817378"></div>
+<div class="comment-item" id="comment_1817378">
+<div class="commentTop comment-top newcomment" id="comment_top_1817378">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a51977c9.html" id="comment_link_1817378" name="comment_link_1817378" onclick="return D2.setFocusComment(1817378)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817378">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817378); return false">スコア:2</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~bitterbeer_sweetwine/index.html">bitterbeer_sweetwine (37563)</a>
+<span class="otherdetails" id="comment_otherdetails_1817378">on 2010年08月30日 20時36分
+			 (<a href="../../../../../comment/1817378.html">#1817378</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817378"><p>&gt;マジレスすると、そんなことをしなければいけないサーバを構築をしたニンゲンの首が吹き飛ぶ</p><p>以前、あるシステムを見てくれといわれて...<br/>あのぉ、lsが返ってこないんですけど...<br/>で、ディレクトリを一個あがって、ls -lしてみたらそのディレクトリのサイズが異常。<br/>リンクの数も、7桁。</p><p>「なんかいっぱいファイルが入っているみたいですけど、分割できませんか？」<br/>「それをしようとして、出来ないので困ってる」...</p><p>なんでも、社員情報を、社員番号.name.txt 社員番号.address.txt 社員番号.phone.txt<br/>社員番号.緊急連絡先.address.txt 社員番号.緊急連絡先.phone.txt 社員番号......<br/>１０万人(正社員／契約社員／外注出向者等)分程度を、ひとりについて20ファイルくらい<br/>にわけて、一カ所に入れて、簡易DBかわりに使っていたらしい。</p><p>なんでも、「下手にDB使うより簡単だし、検索もシェルでやるから簡単なんだ」とのことでした。<br/>もちろん、全部、平文なわけで、「どうしてこーゆーの作ったの？」と聞いたら、「前任者が、<br/>社員を一度に検索できるシステムを安く作れという命令で作った」そうだ。</p><p>各部署ではマル秘扱いの社員データを、毎日ダウンロードしてはマッチングして更新かけて<br/>いたのが、どうも遅いし、終わった気配がないので心配で聞いてきたらしい。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817378">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817378'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817378'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817378'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_b27134b0.html" onclick="return D2.selectParent(1817332)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817378"></div>
+<ul class="comment-group" id="group_1817378">
+<li class="hide" id="hiddens_1817378"></li>
+</ul><ul id="commtree_1817378"><li class="comment full contain" id="tree_1817387"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817387"></div>
+<div class="comment-item" id="comment_1817387">
+<div class="commentTop comment-top newcomment" id="comment_top_1817387">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4602cc99.html" id="comment_link_1817387" name="comment_link_1817387" onclick="return D2.setFocusComment(1817387)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817387">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817387); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~jsi/index.html">jsi (25633)</a>
+<span class="otherdetails" id="comment_otherdetails_1817387">on 2010年08月30日 20時48分
+			 (<a href="../../../../../comment/1817387.html">#1817387</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817387"><p>ある日再起動時にfsckが起動されて、丸1日かかったが何とかfsckを終えた。<br/>月末恒例の処理しようとしたら、何かエラーがでる。と。<br/>原因を調べたらファイルが存在しておらず、/lost+foundにファイルの残骸が。<br/>バックアップのtarファイルから復元しようとしたが、tarでバックアップを取っていた時点では既にメタデータがおかしかったらしくファイルとして存在していなかった。</p><p>※ 作り話ですが、ふつうにありそうですよね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817387">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817387'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817387'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817387'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_1579b165.html" onclick="return D2.selectParent(1817378)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817387"></div>
+<ul class="comment-group" id="group_1817387">
+<li class="hide" id="hiddens_1817387"></li>
+</ul><ul id="commtree_1817387"><li class="comment full contain" id="tree_1817532"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817532"></div>
+<div class="comment-item" id="comment_1817532">
+<div class="commentTop comment-top newcomment" id="comment_top_1817532">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f5cfe6e2.html" id="comment_link_1817532" name="comment_link_1817532" onclick="return D2.setFocusComment(1817532)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817532">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817532); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~bitterbeer_sweetwine/index.html">bitterbeer_sweetwine (37563)</a>
+<span class="otherdetails" id="comment_otherdetails_1817532">on 2010年08月31日  0時27分
+			 (<a href="../../../../../comment/1817532.html">#1817532</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817532"><p>&gt;バックアップのtarファイルから復元しようとしたが、tarでバックアップを取っていた時点では既にメタデータがおかしかったらしくファイルとして存在していなかった。</p><p>当時のtarにはたしか、8GB上限があってtarでは取れなかった。<br/>部分だけバックアップしようとして、tar cvf /dev/rmt0 10*.*.txtで取っていたらしいのだが、ある日「too many arguments」で落ちたらしい。<br/>その時は、もっと細分化してバックアップをとるとかで逃げたらしいけど、逃げ方が場当たりで、「1*は、100,101,102...で分けて、2番台は二桁で...9番台はそのまま」みたいなことやっていたね。</p><p>&gt; ※ 作り話ですが、ふつうにありそうですよね。</p><p>本当にあった怖い話の一種かもね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817532">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817532'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817532'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817532'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_e8bd6171.html" onclick="return D2.selectParent(1817387)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817532"></div>
+<ul class="comment-group" id="group_1817532">
+<li class="hide" id="hiddens_1817532"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1817594"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817594"></div>
+<div class="comment-item" id="comment_1817594">
+<div class="commentTop comment-top newcomment" id="comment_top_1817594">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e2244bf5.html" id="comment_link_1817594" name="comment_link_1817594" onclick="return D2.setFocusComment(1817594)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817594">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817594); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~harutin_99/index.html">harutin_99 (34900)</a>
+<span class="otherdetails" id="comment_otherdetails_1817594">on 2010年08月31日  8時58分
+			 (<a href="../../../../../comment/1817594.html">#1817594</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~harutin_99/journal/index.html" title="2023年04月17日 17時59分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817594"><p>従業員10万人て、超大企業じゃないですか。<br/>#開発費けちりすぎ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817594">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817594'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817594'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817594'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_1579b165.html" onclick="return D2.selectParent(1817378)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817594"></div>
+<ul class="comment-group" id="group_1817594">
+<li class="hide" id="hiddens_1817594"></li>
+</ul></li><li class="comment full contain" id="tree_1817418"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817418"></div>
+<div class="comment-item" id="comment_1817418">
+<div class="commentTop comment-top newcomment" id="comment_top_1817418">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e9185bf7.html" id="comment_link_1817418" name="comment_link_1817418" onclick="return D2.setFocusComment(1817418)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817418">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817418); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~130R/index.html">130R (31126)</a>
+<span class="otherdetails" id="comment_otherdetails_1817418">on 2010年08月30日 21時26分
+			 (<a href="../../../../../comment/1817418.html">#1817418</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~130R/journal/index.html" title="2019年03月22日 20時46分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817418"><p><a href="../../../../../it/article.pl_6c2e4be4.html" title="srad.jp">「既存のDB技術と一線を画し」</a> [srad.jp]した技術ですね!</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817418">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817418'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817418'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817418'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_1579b165.html" onclick="return D2.selectParent(1817378)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817418"></div>
+<ul class="comment-group" id="group_1817418">
+<li class="hide" id="hiddens_1817418"></li>
+</ul></li><li class="comment full contain" id="tree_1817446"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817446"></div>
+<div class="comment-item" id="comment_1817446">
+<div class="commentTop comment-top newcomment" id="comment_top_1817446">
+<div class="title">
+<h4><a href="../../../../../comments.pl_44de749d.html" id="comment_link_1817446" name="comment_link_1817446" onclick="return D2.setFocusComment(1817446)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817446">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817446); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~nox_dot/index.html">nox_dot (11614)</a>
+<span class="otherdetails" id="comment_otherdetails_1817446">on 2010年08月30日 22時10分
+			 (<a href="../../../../../comment/1817446.html">#1817446</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../~nox_dot/journal/index.html" title="2011年08月31日 17時43分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817446"><p>これほど、データベースを使った方が簡単な事例も少なそうですよね…。<br/>本当にご苦労様です。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817446">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817446'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817446'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817446'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_1579b165.html" onclick="return D2.selectParent(1817378)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817446"></div>
+<ul class="comment-group" id="group_1817446">
+<li class="hide" id="hiddens_1817446"></li>
+</ul></li><li class="comment full contain" id="tree_1818018"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1818018"></div>
+<div class="comment-item" id="comment_1818018">
+<div class="commentTop comment-top newcomment" id="comment_top_1818018">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a0c930b4.html" id="comment_link_1818018" name="comment_link_1818018" onclick="return D2.setFocusComment(1818018)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1818018">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1818018); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1818018">on 2010年09月01日  0時08分
+			 (<a href="../../../../../comment/1818018.html">#1818018</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1818018"><p><div class="quote"><p>なんでも、「下手にDB使うより簡単だし、検索もシェルでやるから簡単なんだ」とのことでした。<br/>もちろん、全部、平文なわけで、「どうしてこーゆーの作ったの？」と聞いたら、「前任者が、<br/>社員を一度に検索できるシステムを安く作れという命令で作った」そうだ。</p></div><p>性能やセキュリティが要件に入っていなかったのなら正しいかも。<br/>性能はともかくちゃんと動いていたわけだし、いろんな部署の人が使っていたわけだし。<br/>設計者もDBの方がいいことは知っていて（あるいは安く作れる方は破綻することを知っていて）、敢えてこういう実装にしたのではないかと深読みしてみました。</p><p>モデしてしまったのでAC</p></p></div>
+</div>
+<div class="commentSub" id="comment_sub_1818018">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1818018'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1818018'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1818018'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_1579b165.html" onclick="return D2.selectParent(1817378)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1818018"></div>
+<ul class="comment-group" id="group_1818018">
+<li class="hide" id="hiddens_1818018"></li>
+</ul></li><li class="comment hidden" id="tree_1817381"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817381"></div>
+<div class="comment-item" id="comment_1817381">
+</div>
+<div id="replyto_1817381"></div>
+<ul class="comment-group" id="group_1817381">
+<li class="hide" id="hiddens_1817381"></li>
+</ul><ul id="commtree_1817381"><li class="comment full contain" id="tree_1817523"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817523"></div>
+<div class="comment-item" id="comment_1817523">
+<div class="commentTop comment-top newcomment" id="comment_top_1817523">
+<div class="title">
+<h4><a href="../../../../../comments.pl_670e0324.html" id="comment_link_1817523" name="comment_link_1817523" onclick="return D2.setFocusComment(1817523)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817523">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817523); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~bitterbeer_sweetwine/index.html">bitterbeer_sweetwine (37563)</a>
+<span class="otherdetails" id="comment_otherdetails_1817523">on 2010年08月30日 23時59分
+			 (<a href="../../../../../comment/1817523.html">#1817523</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817523"><p>&gt;その程度なら社員番号の100番ごとにディレクトリ分けるだけで大幅にスピードアップできそうなものだが。</p><p>検索や洗い替えの処理とか、結構な数があって。それらが全て同じディレクトリにあることを前提に作られていたりする。<br/>なもんで、データコピーの時間もさることながら、そういったスクリプトとかを洗い出すのが大変だったな。<br/>結局、「まともなDBにしないと、今後も同じ様なことになる」ってなことで、要件定義から差し戻しにした。</p><p>NEWS-OSがまだBSD系だったころのお話。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817523">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817523'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817523'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817523'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_f007815d.html" onclick="return D2.selectParent(1817381)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817523"></div>
+<ul class="comment-group" id="group_1817523">
+<li class="hide" id="hiddens_1817523"></li>
+</ul></li></ul></li><li class="comment hidden" id="tree_1817508"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817508"></div>
+<div class="comment-item" id="comment_1817508">
+</div>
+<div id="replyto_1817508"></div>
+<ul class="comment-group" id="group_1817508">
+<li class="hide" id="hiddens_1817508"></li>
+</ul><ul id="commtree_1817508"><li class="comment full contain" id="tree_1817528"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817528"></div>
+<div class="comment-item" id="comment_1817528">
+<div class="commentTop comment-top newcomment" id="comment_top_1817528">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ffaa4457.html" id="comment_link_1817528" name="comment_link_1817528" onclick="return D2.setFocusComment(1817528)">Re:ここで*BSDの優位性をアピールっ！</a>
+<span class="score" id="comment_score_1817528">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817528); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~bitterbeer_sweetwine/index.html">bitterbeer_sweetwine (37563)</a>
+<span class="otherdetails" id="comment_otherdetails_1817528">on 2010年08月31日  0時11分
+			 (<a href="../../../../../comment/1817528.html">#1817528</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817528"><p>&gt;ファイルとjoinして、その処理を社員番号でFor構文か何かで繰り返し処理すれば良いんじゃないの？</p><p>前述したけど、検索するのが「色々できる」ってことで、各利用者が勝手に検索系のスクリプトを組んでいて、それがデータ形式依存たっぷりなわけでね。<br/>まずは「どういった使い方してるの？」を聞いたら、皆さん「rshで自分が書いたshellスクリプトでやっている」...で、そのデータをPC側で色々と料理していた。</p><p>セキュリティもへったくもありゃしないの。</p><p>でもって、データの容量的にも、当時のWSに付けるHDDの最大級をフルフル使っていて、サイズと処理速度が追いつかなかった。</p><p>&gt;作業の実際が分からないけど、役職ごとの処理が多ければ役職毎、部署毎の処理が多ければ部署毎にディレクトリを作れば検索速度が上がるんじゃないか？</p><p>部署／役職のリストもあって、そこには社員番号だけを使っていたらしい。<br/>なんでも、信頼できる最新のデータが、そのディレクトリにあるデータだってことで、部署／役職／勤務地等のデータには、社員のデータも一応色々と入っていたけど「あ、それメンテしてないから使わないことにしたんだ」...</p><p>さらに酷いことが発覚したというか、別の部署でもそのデータを使っていて、勝手に変えられないんだ！とか...</p><p>極端を言えば、部署外からのアクセスも出来ちゃう便利データだったわけで、「これはさすがにまずいだろう」と忠告したんですけどね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817528">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:ここで*BSDの優位性をアピールっ！')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817528'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817528'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817528'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_3b80e0cc.html" onclick="return D2.selectParent(1817508)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817528"></div>
+<ul class="comment-group" id="group_1817528">
+<li class="hide" id="hiddens_1817528"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1817334"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817334"></div>
+<div class="comment-item" id="comment_1817334">
+<div class="commentTop comment-top newcomment" id="comment_top_1817334">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2adef59f.html" id="comment_link_1817334" name="comment_link_1817334" onclick="return D2.setFocusComment(1817334)">SONY NEWSでls /dev</a>
+<span class="score" id="comment_score_1817334">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817334); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1817334">on 2010年08月30日 19時26分
+			 (<a href="../../../../../comment/1817334.html">#1817334</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817334">SONY NEWSで ls /devってやっても１０秒ぐらいかかっていたような希ガス</div>
+</div>
+</div>
+<div id="replyto_1817334"></div>
+<ul class="comment-group" id="group_1817334">
+<li class="hide" id="hiddens_1817334"></li>
+</ul><ul id="commtree_1817334"><li class="comment hidden" id="tree_1817360"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817360"></div>
+<div class="comment-item" id="comment_1817360">
+</div>
+<div id="replyto_1817360"></div>
+<ul class="comment-group" id="group_1817360">
+<li class="hide" id="hiddens_1817360"></li>
+</ul><ul id="commtree_1817360"><li class="comment full contain" id="tree_1817497"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817497"></div>
+<div class="comment-item" id="comment_1817497">
+<div class="commentTop comment-top newcomment" id="comment_top_1817497">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f94b0247.html" id="comment_link_1817497" name="comment_link_1817497" onclick="return D2.setFocusComment(1817497)">Re:SONY NEWSでls /dev</a>
+<span class="score" id="comment_score_1817497">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817497); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~saitoh/index.html">saitoh (10803)</a>
+<span class="otherdetails" id="comment_otherdetails_1817497">on 2010年08月30日 23時15分
+			 (<a href="../../../../../comment/1817497.html">#1817497</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817497">NEWS OS4.2.1は4.3BSDベースです。SVR4なのはNEWS　OS５とか６。
+lsを1回行うとinodeキャッシュされるので次のlsが早いってのは真実。</div>
+</div>
+<div class="commentSub" id="comment_sub_1817497">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:SONY NEWSでls /dev')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817497'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817497'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817497'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_1e73a9ea.html" onclick="return D2.selectParent(1817360)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817497"></div>
+<ul class="comment-group" id="group_1817497">
+<li class="hide" id="hiddens_1817497"></li>
+</ul></li></ul></li><li class="comment hidden" id="tree_1817553"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817553"></div>
+<div class="comment-item" id="comment_1817553">
+</div>
+<div id="replyto_1817553"></div>
+<ul class="comment-group" id="group_1817553">
+<li class="hide" id="hiddens_1817553"></li>
+</ul><ul id="commtree_1817553"><li class="comment full contain" id="tree_1817663"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817663"></div>
+<div class="comment-item" id="comment_1817663">
+<div class="commentTop comment-top newcomment" id="comment_top_1817663">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f27ba84c.html" id="comment_link_1817663" name="comment_link_1817663" onclick="return D2.setFocusComment(1817663)">Re:SONY NEWSでls /dev</a>
+<span class="score" id="comment_score_1817663">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817663); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~saitoh/index.html">saitoh (10803)</a>
+<span class="otherdetails" id="comment_otherdetails_1817663">on 2010年08月31日 11時29分
+			 (<a href="../../../../../comment/1817663.html">#1817663</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817663">一時期のNEWS-OSにもSunOSにもあった症状ですね。
+<p>
+ベタな実装をすると、ビットマップディスプレイをttyであるconsoleに見せかけるにはデバイスドライバのボトムハーフのところにビットマップ描画を行わせることになります。
+結果として描画はデバイスドライバがかなり高い割り込みレベル(spltty())で行います。
+なので、画面をスクロールする間にハードウェア割り込みを取りこぼしたりします。
+それを避けるための実装の副作用で、コンソールの文字表示が妙に遅かった。
+</p><p>
+確か、コンソールへの文字描画用にconsdだったか？daemonを一つ用意して解決したはず。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817663">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:SONY NEWSでls /dev')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817663'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817663'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817663'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_fead1f73.html" onclick="return D2.selectParent(1817553)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817663"></div>
+<ul class="comment-group" id="group_1817663">
+<li class="hide" id="hiddens_1817663"></li>
+</ul></li></ul></li></ul></li><li class="comment hidden" id="tree_1817624"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817624"></div>
+<div class="comment-item" id="comment_1817624">
+</div>
+<div id="replyto_1817624"></div>
+<ul class="comment-group" id="group_1817624">
+<li class="hide" id="hiddens_1817624"></li>
+</ul><ul id="commtree_1817624"><li class="comment full contain" id="tree_1817676"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817676"></div>
+<div class="comment-item" id="comment_1817676">
+<div class="commentTop comment-top newcomment" id="comment_top_1817676">
+<div class="title">
+<h4><a href="../../../../../comments.pl_156571b8.html" id="comment_link_1817676" name="comment_link_1817676" onclick="return D2.setFocusComment(1817676)">Re:何を今更………</a>
+<span class="score" id="comment_score_1817676">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817676); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~saitoh/index.html">saitoh (10803)</a>
+<span class="otherdetails" id="comment_otherdetails_1817676">on 2010年08月31日 11時48分
+			 (<a href="../../../../../comment/1817676.html">#1817676</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817676">もともとのUNIXは一つのディレクトリの中で指定されたファイルを探す処理は、線形サーチなので、1ディレクトリに多数のファイルがあると遅くなりますね。
+<p>
+線形サーチじゃないファイルシステムとしては、ext3(dir_indexオプションをつけた場合)とかXFSはB-treeを使っているそうですが、それでも遅かったんですね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817676">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:何を今更………')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817676'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817676'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817676'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_96519dd0.html" onclick="return D2.selectParent(1817624)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817676"></div>
+<ul class="comment-group" id="group_1817676">
+<li class="hide" id="hiddens_1817676"></li>
+</ul><ul id="commtree_1817676"><li class="comment full contain" id="tree_1817788"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817788"></div>
+<div class="comment-item" id="comment_1817788">
+<div class="commentTop comment-top newcomment" id="comment_top_1817788">
+<div class="title">
+<h4><a href="../../../../../comments.pl_73ab66c3.html" id="comment_link_1817788" name="comment_link_1817788" onclick="return D2.setFocusComment(1817788)">Re:何を今更………</a>
+<span class="score" id="comment_score_1817788">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817788); return false">スコア:3</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~jsi/index.html">jsi (25633)</a>
+<span class="otherdetails" id="comment_otherdetails_1817788">on 2010年08月31日 14時50分
+			 (<a href="../../../../../comment/1817788.html">#1817788</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817788"><p>FreeBSDでは線形探索の遅さをカバーできるようdirhashが実装されました。ハッシュテーブルのサイズが固定だったりして、必ずしもO(1)のオーダーで検索できない時代もありましたが、今は最適化されてかなり改善されたはずです。ちなみに、ハッシュテーブルの動的な確保は2008年ぐらいの話題ですね。</p><p>UFS2 Dirhash、メモリ確保開放動的化でサイズ上限向上 - 性能は不透明<br/><a href="http://journal.mycom.co.jp/articles/2008/10/28/bsdcon3/index.html" title="mycom.co.jp">http://journal.mycom.co.jp/articles/2008/10/28/bsdcon3/index.html</a> [mycom.co.jp]</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817788">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:何を今更………')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1817788'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817788'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1817788'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_c58d2842.html" onclick="return D2.selectParent(1817676)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817788"></div>
+<ul class="comment-group" id="group_1817788">
+<li class="hide" id="hiddens_1817788"></li>
+</ul></li><li class="comment full contain" id="tree_1818132"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1818132"></div>
+<div class="comment-item" id="comment_1818132">
+<div class="commentTop comment-top newcomment" id="comment_top_1818132">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e29d0726.html" id="comment_link_1818132" name="comment_link_1818132" onclick="return D2.setFocusComment(1818132)">Re:何を今更………</a>
+<span class="score" id="comment_score_1818132">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1818132); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../~taka2/index.html">taka2 (14791)</a>
+<span class="otherdetails" id="comment_otherdetails_1818132">on 2010年09月01日 10時36分
+			 (<a href="../../../../../comment/1818132.html">#1818132</a>)
+			<small>
+<a class="user_homepage_display" href="http://taka2.info/" title="http://taka2.info/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../~taka2/journal/index.html" title="2023年11月11日  7時50分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1818132"><p>メールソフトの MH なんかはフォルダがディレクトリに対応して1メール1ファイルで保存してるので、<br/>一つのフォルダにメールを貯め込みすぎるとすごく遅くなりましたね。</p><p>フォルダは階層的に作れるのですが、その処理のためにディレクトリ内にあるディレクトリを全て列挙する場合があって、<br/>メールをたくさん貯め込んだディレクトリでは「サブディレクトリがあるかどうか」を調べるだけでもとんでもなく時間がかかってました。</p><p>で、あるとき出た「ディレクトリのリンク数を調べ、それが2だったらサブディレクトリは存在しないのでその下は探索しない」という枝刈りパッチが出て、<br/>劇的に早くなったのを覚えています。あれは感動したなぁ。<br/>#サブディレクトリの無いディレクトリでは、親から自身を指すのと、自ディレクトリ内の . でリンクカウントが2。<br/>#サブディレクトリを作ると、サブディレクトリからの .. の数だけリンク数が増えていく、と。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1818132">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:何を今更………')+'&amp;url='+encodeURIComponent('https://srad.jp/comments.pl?sid=506159&amp;cid=1818132'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1818132'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://srad.jp/comments.pl?sid=506159&amp;cid=1818132'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_c58d2842.html" onclick="return D2.selectParent(1817676)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1818132"></div>
+<ul class="comment-group" id="group_1818132">
+<li class="hide" id="hiddens_1818132"></li>
+</ul></li></ul></li></ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 0;
+		D2.currents()['full']     = 45;
+		D2.currents()['oneline']  = 5;
+		// D2.currents_total(50);
+
+		D2.abbrev_comments({});
+		D2.noshow_comments([1817393,1817904,1817950,1818052,1817501,1817490,1817381,1817508,1817360,1817553,1817624]);
+		D2.pieces_comments([1817328,1817308,1817319,1817331,1817315]);
+		D2.init_hiddens([]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">50</span>/<span class="totalcommentcnt">97</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>Stay hungry, Stay foolish. -- Steven Paul Jobs<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../about.html">About</a></li>
+<li><a href="../../../../../faq/index.html">FAQ</a></li>
+<li><a href="../../../../index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../hof.html">殿堂入り</a></li>
+<li><a href="../../../../../authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

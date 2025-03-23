@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/18/01/07/0722205.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="../../../../../../mobile.srad.jp/story/18/01/07/0722205/index.html" rel="canonical">
+<title>スマートフォンのセンサーからPINコードを割り出す手法 | スラド セキュリティ</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="スマートフォンのセンサーからPINコードを割り出す手法 | スラド セキュリティ" property="og:title">
+<meta content="https://srad.jp/static/topics/cellphones_64.png" property="og:image"/>
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '60748068434680924',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content="ユーザーのパーミッションを得る必要がないスマートフォンの各種センサーから取得したデータと機械学習により、高い成功率でPINコードを推測できるという研究結果が発表された(論文: PDF、南洋理工大学のニュースリリース、HackReadの記事)。 画面に表示されたキーパッドからPINを入力する際には押すキーの位置によっ..." name="description"/>
+<meta content="ユーザーのパーミッションを得る必要がないスマートフォンの各種センサーから取得したデータと機械学習により、高い成功率でPINコードを推測できるという研究結果が発表された(論文: PDF、南洋理工大学のニュースリリース、HackReadの記事)。 画面に表示されたキーパッドからPINを入力する際には押すキーの位置によっ..." property="og:description"/>
+<meta content="スマートフォンのセンサーからPINコードを割り出す手法 | スラド セキュリティ" itemprop="name"/>
+<meta content="ユーザーのパーミッションを得る必要がないスマートフォンの各種センサーから取得したデータと機械学習により、高い成功率でPINコードを推測できるという研究結果が発表された(論文: PDF、南洋理工大学のニュースリリース、HackReadの記事)。 画面に表示されたキーパッドからPINを入力する際には押すキーの位置によっ..." itemprop="description"/>
+<link href="../../../../../../srad.jp/index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../../srad.jp/search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../../srad.jp/security.rss" rel="alternate" title="スラド security RSS" type="application/rss+xml"/>
+<link href="../../../../../../srad.jp/static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../../srad.jp/static/topics/cellphones_64.png" rel="image_src"/>
+<link href="../../../../../../srad.jp/static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../../srad.jp/static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../../srad.jp/static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/18/01/07/0722205/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'security';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//security.srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/18/01/07/0722205.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../../srad.jp/recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../../srad.jp/popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../../srad.jp/comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../../srad.jp/journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../../srad.jp/polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：セキュリティ</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="active" id="fhsection-security">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-11">セキュリティ</a><span></span>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="active" id="fhsection-security">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-11">セキュリティ</a><span></span>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="13497010" data-fhtype="story" id="firehose-13497010">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">13497010</span>
+<span class="type">story</span>
+</span>
+<header>
+<span class="topic" id="topic-13497010">
+<a href="../../../../../../srad.jp/stories/cellphone.html" onclick="return addfhfilter('cellphone');">
+<img alt="携帯電話" height="64" src="../../../../../../srad.jp/static/topics/cellphones_64.png" title="携帯電話" width="64"/>
+</a>
+</span>
+<h2 class="story">
+<span id="title-13497010"> <a href="../../../../../../mobile.srad.jp/story/18/01/07/0722205/index.html">スマートフォンのセンサーからPINコードを割り出す手法</a></span>
+<span class="comments commentcnt-13497010">37</span>
+</h2>
+<div class="details" id="details-13497010">ストーリー by headless
+	<time datetime="2018-01-07T18:21+09:00" id="fhtime-13497010">2018年01月07日 18時21分</time><br/>推測 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "スマートフォンのセンサーからPINコードを割り出す手法",
+  "datePublished": "2018-01-07T18:21+09:00",
+  "articleBody": "ユーザーのパーミッションを得る必要がないスマートフォンの各種センサーから取得したデータと機械学習により、高い成功率でPINコードを推測できるという研究結果が発表された(論文: PDF、南洋理工大学のニュースリリース、HackReadの記事)。 画面に表示されたキーパッドからPINを入力する際には押すキーの位置によって端末の傾きの変化などが異なる。そのため、センサーから取得したデータを処理することでPINを推測する研究は過去にも発表されている。データの取得方法としては、PIN全体の入力パターンを1つのデータとして取得する方法と1桁ごとに取得する方法が考えられる。全体を取得する場合は4桁でも10,000パターンのデータが必要なため、過去の研究では50パターンに限定するという手法がとられていた。今回の研究では1桁ごとに取得する方法を用いており、少ないパターンのデータですべての組み合わせに対応できるほか、桁数の異なるPINにも対応可能となる。 攻撃のシナリオとしては、まずターゲットの端末に送り込んだ攻撃用アプリでプリセットしたPINのパターンを入力させてデータを取得し、アルゴリズムに学習させる。次に実際のPINコード入力時のデータを取得し、学習結果からPINを推測するというものだ。学習データを取得する際には、前後のキー入力の組み合わせによる変化をカバーするため、厳選した70パターンのPINコードを5回ずつ入力させ、検証用に50パターンのランダムなPINコードも入力させている。研究ではボタンをPIN入力用のキーパッドと同じ配置にしたアプリを使用しているが、カジュアルゲームなどを装って学習データを取得する方法が提示されている。",
+  "image": "https://srad.jp/static/topics/cellphones_64.png"
+}
+</script>
+<div class="body" id="fhbody-13497010">
+<div class="contents_text p" id="text-13497010">
+        ユーザーのパーミッションを得る必要がないスマートフォンの各種センサーから取得したデータと機械学習により、高い成功率でPINコードを推測できるという研究結果が発表された(<a href="https://eprint.iacr.org/2017/1169.pdf">論文: PDF</a>、
+<a href="http://media.ntu.edu.sg/NewsReleases/Pages/newsdetail.aspx?news=e57faffc-24ea-4034-9181-f5fea9850690">南洋理工大学のニュースリリース</a>、
+<a href="https://www.hackread.com/smartphone-sensors-leak-four-digit-pin-code-to-hackers/">HackReadの記事</a>)。
+<br/> <br/>
+
+画面に表示されたキーパッドからPINを入力する際には押すキーの位置によって端末の傾きの変化などが異なる。そのため、センサーから取得したデータを処理することでPINを推測する研究は過去にも発表されている。データの取得方法としては、PIN全体の入力パターンを1つのデータとして取得する方法と1桁ごとに取得する方法が考えられる。全体を取得する場合は4桁でも10,000パターンのデータが必要なため、過去の研究では50パターンに限定するという手法がとられていた。今回の研究では1桁ごとに取得する方法を用いており、少ないパターンのデータですべての組み合わせに対応できるほか、桁数の異なるPINにも対応可能となる。
+<br/> <br/>
+
+攻撃のシナリオとしては、まずターゲットの端末に送り込んだ攻撃用アプリでプリセットしたPINのパターンを入力させてデータを取得し、アルゴリズムに学習させる。次に実際のPINコード入力時のデータを取得し、学習結果からPINを推測するというものだ。学習データを取得する際には、前後のキー入力の組み合わせによる変化をカバーするため、厳選した70パターンのPINコードを5回ずつ入力させ、検証用に50パターンのランダムなPINコードも入力させている。研究ではボタンをPIN入力用のキーパッドと同じ配置にしたアプリを使用しているが、カジュアルゲームなどを装って学習データを取得する方法が提示されている。
+        </div>
+<div class="bodytext p"><br/>
+
+結果としては、加速度センサー+ジャイロセンサーのデータとMLPニューラルネットワークの組み合わせによる成功率が最も高く、良好な測定条件では20回の試行で最高83.7%の成功率だったとのこと。50パターンのPINに限定した過去の研究成果では試行1回で74%の成功率が最高だ。今回の研究で条件をそろえた場合にはMLPニューラルネットワークでは60%の成功率しか得られなかったが、ランダムフォレストでは99.5%の成功率になったとのこと。
+<br/> <br/>
+
+このほか、3人の被験者から取得したデータを用いる実験も行われており、本人のデータのみを使用した場合よりも3人のデータを使用する方が成功率が高くなっている。さらに、他の2人のデータのみを使用した場合にも6%前後の成功率が得られ、まったくランダムな推測をする場合の30倍の成功率だという。
+<br/> <br/>
+
+論文ではこのような攻撃を避けるため、センサーの最大サンプリングレートを下げる方法やPIN入力時にセンサーを無効化する方法も考えられるが、これらは一時的な対策であり、センサーへのアクセス全体を再考すべきだと述べている。パーミッション不要なセンサーはPINだけでなくユーザーのプライバシーを侵害する可能性もあるとのことだ。</div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //mobile.srad.jp/story/18/01/07/0722205/ -->
+<!-- http://mobile.srad.jp/story/18/01/07/0722205/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://mobile.srad.jp/story/18/01/07/0722205/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://mobile.srad.jp/story/18/01/07/0722205/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/mobile.srad.jp/story/18/01/07/0722205/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../../srad.jp/about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">37</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-13497010"><a class="topic tag" href="../../../../../../srad.jp/tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3.html" rel="statictag" target="_blank">セキュリティ</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%83%8F%E3%83%BC%E3%83%89%E3%82%A6%E3%82%A7%E3%82%A2.html" rel="statictag" target="_blank">ハードウェア</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E6%90%BA%E5%B8%AF%E9%9B%BB%E8%A9%B1.html" rel="statictag" target="_blank">携帯電話</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../../../../../../science.srad.jp/story/18/01/07/0714228/index.html" id="hrefns">阪大ミスで30人不合格</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../../../../it.srad.jp/story/20/01/30/1542239/index.html">スマートフォンでの文字入力時のタップ音から入力文字は推測できる</a></h3><h3><a href="../../../../17/09/09/1940224/index.html">超音波でデジタルアシスタントデバイスを操作する「DolphinAttack」攻撃</a></h3><h3><a href="../../../../17/08/28/0937224/index.html">ドローンやVR機器で使われる加速度センサやジャイロセンサは超音波で誤動作する</a></h3><h3><a href="../../../../17/07/06/0438237/index.html">脳波を観測してパスワードを盗める可能性</a></h3><h3><a href="../../../../../../apple.srad.jp/story/16/12/09/2018216/index.html">ロンドン警視庁考案、容疑者にiPhoneのロックを解除させる新たな方法とは？</a></h3><h3><a href="../../../../../../hardware.srad.jp/story/16/08/17/0621239/index.html">ハードディスクのシーク音を利用してエアギャップ環境からデータを盗む「DiskFiltration」</a></h3><h3><a href="../../../../16/07/03/0042254/index.html">PCの冷却ファンのノイズを利用してエアギャップ環境からデータを盗み出す「Fansmitter」</a></h3><h3><a href="../../../../15/06/20/1633213/index.html">パソコンの発する電磁波をAMラジオで受信してRSA秘密鍵などを解析</a></h3><h3><a href="../../../../15/03/27/0528205/index.html">熱を使ってネットワークから隔離されたマシンと通信する手法が考案される</a></h3><h3><a href="../../../../14/09/18/0553257/index.html">パソコンの電位の揺らぎからRSA秘密鍵などが解析される</a></h3><h3><a href="../../../../../../yro.srad.jp/story/14/04/21/0635229/index.html">ビル・ゲイツ、盗撮を防ぐ技術の特許を取得</a></h3><h3><a href="../../../../13/12/22/2051236/index.html">パソコンの電源鳴きから4096ビットのRSA秘密鍵が解析される</a></h3><h3><a href="../../../../12/11/08/1924211/index.html">お隣の仮想マシンの暗号鍵を盗むサイドチャネル攻撃手法</a></h3><h3><a href="../../../../../../apple.srad.jp/story/11/10/22/223251/index.html">PCの横に置いたiPhoneをキーロガーに</a></h3><h3><a href="../../../../../../developers.srad.jp/story/18/03/16/0639210/index.html">Mozilla、プライバシーリスクのある4つのセンサーAPIを非推奨にする計画</a></h3><h3><a href="../../../../../../apple.srad.jp/story/19/04/19/0618214/index.html">iOS 12.2ではデフォルトでブラウザからのモーションデータ取得が禁止に、AR/VR界隈に影響か</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="../../../../../../mobile.srad.jp/story/18/01/07/0722205/index.html" title="スマートフォンのセンサーからPINコードを割り出す手法のストーリーへ戻る">スマートフォンのセンサーからPINコードを割り出す手法</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//mobile.srad.jp/story/18/01/07/0722205/';
+var parent_item_title = 'スマートフォンのセンサーからPINコードを割り出す手法';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="../../../../../../mobile.srad.jp/story/18/01/07/0722205/index.html" title="「スマートフォンのセンサーからPINコードを割り出す手法」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//security.srad.jp/search.pl?op=comments&amp;sid=727552" class="btn"><span class="totalcommentcnt">37</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//security.srad.jp/comments.pl?sid=727552"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_484f542d.html"><span>検索</span><span class="totalcommentcnt">37</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../../srad.jp/static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 3341039: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 3341050, 3341106 ], opid: 0 }, 3340981: { uid: 1, pid: 3340930, subject: "Re:PINロック自体が結構脆弱だと思う", read: 0, points: 0, kids: [  ], opid: 3340930 }, 3340976: { uid: 31656, pid: 3340943, read: 0, points: 0, kids: [  ], opid: 3340943 }, 3340925: { uid: 7374, pid: 3340892, subject: "Re:これの(念のため)回避は机に置いて入力すればいいのかな", read: 0, points: 1, kids: [  ], opid: 3340892 }, 3341875: { uid: 1, pid: 3341851, subject: "Re:感情論で判断するモデレータはスラドに要らない", read: 0, points: 0, kids: [  ], opid: 3341851 }, 3341145: { uid: 1, pid: 3341093, subject: "Re:キー配置", read: 0, points: 0, kids: [ 3341297, 3341318, 3341342, 3341495 ], opid: 3341093 }, 3340954: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 3340978, 3341014, 3341079 ], opid: 0 }, 3340918: { uid: 1668, pid: 3340890, subject: "Re:キー配置", read: 0, points: 2, kids: [ 3340952 ], opid: 3340890 }, 3341008: { uid: 1, pid: 3340995, subject: "Re:センサー以前の問題", read: 0, points: 0, kids: [  ], opid: 3340995 }, 3341495: { uid: 47970, pid: 3341145, subject: "Re:キー配置", read: 0, points: 2, kids: [  ], opid: 3341297 }, 3341079: { uid: 1, pid: 3340954, subject: "Re:未使用", read: 0, points: 0, kids: [  ], opid: 3340954 }, 3341163: { uid: 31656, pid: 3340978, read: 0, points: 0, kids: [ 3341418, 3341425 ], opid: 3340978 }, 3340952: { uid: 1, pid: 3340918, subject: "Re:キー配置", read: 0, points: 0, kids: [ 3341053 ], opid: 3340918 }, 3340995: { uid: 46237, pid: 3340943, subject: "Re:センサー以前の問題", read: 0, points: 1, kids: [ 3341008 ], opid: 3340943 }, 3341111: { uid: 1, pid: 3341106, subject: "Re:待て待て", read: 0, points: 0, kids: [  ], opid: 3341106 }, 3341318: { uid: 1, pid: 3341145, subject: "Re:キー配置", read: 0, points: 0, kids: [  ], opid: 3341145 }, 3341452: { uid: 10479, pid: 3341014, subject: "Re:PINコード", read: 0, points: 1, kids: [  ], opid: 3341014 }, 3340930: { uid: 1, pid: 3340892, read: 0, points: 0, kids: [ 3340981 ], opid: 3340892 }, 3341053: { uid: 1, pid: 3340952, subject: "Re:キー配置", read: 0, points: 0, kids: [ 3341093 ], opid: 3340952 }, 3341014: { uid: 1, pid: 3340954, read: 0, points: 0, kids: [ 3341452 ], opid: 3340954 }, 3341342: { uid: 1, pid: 3341145, subject: "Re:キー配置", read: 0, points: 0, kids: [  ], opid: 3341297 }, 3341000: { uid: 1, pid: 0, read: 0, points: 0, kids: [  ], opid: 0 }, 3340900: { uid: 1, pid: 3340890, subject: "Re:キー配置", read: 0, points: 0, kids: [ 3340909 ], opid: 3340890 }, 3340909: { uid: 1, pid: 3340900, subject: "Re:キー配置", read: 0, points: 0, kids: [  ], opid: 3340900 }, 3341093: { uid: 1, pid: 3341053, subject: "Re:キー配置", read: 0, points: 0, kids: [ 3341145 ], opid: 3341053 }, 3341851: { uid: 31656, pid: 3341425, read: 0, points: 1, kids: [ 3341875 ], opid: 3341425 }, 3341297: { uid: 32518, pid: 3341145, subject: "Re:キー配置", read: 0, points: 1, kids: [  ], opid: 3341145 }, 3340892: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 3340901, 3340925, 3340930 ], opid: 0 }, 3340978: { uid: 31656, pid: 3340954, read: 0, points: -1, kids: [ 3341163 ], opid: 3340954 }, 3340890: { uid: 47737, pid: 0, read: 0, points: 2, kids: [ 3340900, 3340918 ], opid: 0 }, 3340920: { uid: 46237, pid: 0, read: 0, points: 1, kids: [ 3340943 ], opid: 0 }, 3341425: { uid: 1, pid: 3341163, subject: "Re:ぼっちのモデレータを逆なでしたようだ", read: 0, points: 0, kids: [ 3341851 ], opid: 3341163 }, 3340901: { uid: 1, pid: 3340892, subject: "Re:これの(念のため)回避は机に置いて入力すればいいのかな", read: 0, points: 0, kids: [  ], opid: 3340892 }, 3340943: { uid: 1, pid: 3340920, subject: "Re:センサー以前の問題", read: 0, points: 0, kids: [ 3340976, 3340995 ], opid: 3340920 }, 3341050: { uid: 1, pid: 3341039, subject: "Re:待て待て", read: 0, points: 0, kids: [  ], opid: 3341039 }, 3341418: { uid: 1, pid: 3341163, subject: "Re:ぼっちのモデレータを逆なでしたようだ", read: 0, points: 0, kids: [  ], opid: 3341163 }, 3341106: { uid: 1, pid: 3341039, subject: "Re:待て待て", read: 0, points: 0, kids: [ 3341111 ], opid: 3341039 } });
+
+D2.thresh_totals({6:{6:{1:37,3:0,2:0}},4:{6:{1:37,3:0,2:0},4:{1:37,3:0,2:0},5:{1:37,3:0,2:0}},1:{6:{1:28,3:0,2:9},4:{1:28,3:0,2:9},1:{1:28,3:9,2:0},3:{1:28,3:1,2:8},2:{1:28,3:4,2:5},5:{1:28,3:0,2:9}},3:{6:{1:37,3:0,2:0},4:{1:37,3:0,2:0},3:{1:37,3:0,2:0},5:{1:37,3:0,2:0}},0:{6:{1:1,3:0,2:36},4:{1:1,3:0,2:36},1:{1:1,3:13,2:23},3:{1:1,3:1,2:35},0:{1:1,3:36,2:0},2:{1:1,3:4,2:32},5:{1:1,3:0,2:36}},2:{6:{1:34,3:0,2:3},4:{1:34,3:0,2:3},3:{1:34,3:1,2:2},2:{1:34,3:3,2:0},5:{1:34,3:0,2:3}},5:{6:{1:37,3:0,2:0},5:{1:37,3:0,2:0}},"-1":{6:{1:0,3:0,2:37},4:{1:0,3:0,2:37},1:{1:0,3:13,2:24},3:{1:0,3:1,2:36},0:{1:0,3:36,2:1},2:{1:0,3:4,2:33},5:{1:0,3:0,2:37},"-1":{1:0,3:37,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([3340890,3340920,3340892,3340954,3341000,3341039]);
+D2.root_comments_hash({3341039:1,3341000:1,3340892:1,3340890:1,3340954:1,3340920:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(727552);
+
+D2.d2_seen('3340890,2,8,1,8,9,2,5,5,13,9,2,22,2,3,14,5,8,6,25,11,3,26,14,13,5,34,18,134,21,24,76,7,27,43,356,24');
+D2.more_comments_num(0);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_3340890"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340890"></div>
+<div class="comment-item" id="comment_3340890">
+<div class="commentTop comment-top newcomment" id="comment_top_3340890">
+<div class="title">
+<h4><a href="../../../../../comments.pl_933dd90f.html" id="comment_link_3340890" name="comment_link_3340890" onclick="return D2.setFocusComment(3340890)">キー配置</a>
+<span class="score" id="comment_score_3340890">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340890); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~hakikuma/index.html">hakikuma (47737)</a>
+<span class="otherdetails" id="comment_otherdetails_3340890">on 2018年01月07日 18時38分
+			 (<a href="../../../../../../srad.jp/comment/3340890.html">#3340890</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340890">PIN入力時のテンキー配置が常に固定だとこういう脆弱性が発生するわけね。<br/>つまり、キー配置が毎回ランダムであればこの問題は解決できそう。</div>
+</div>
+</div>
+<div id="replyto_3340890"></div>
+<ul class="comment-group" id="group_3340890">
+<li class="hide" id="hiddens_3340890"></li>
+</ul><ul id="commtree_3340890"><li class="comment full contain" id="tree_3340918"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340918"></div>
+<div class="comment-item" id="comment_3340918">
+<div class="commentTop comment-top newcomment" id="comment_top_3340918">
+<div class="title">
+<h4><a href="../../../../../comments.pl_df6fd717.html" id="comment_link_3340918" name="comment_link_3340918" onclick="return D2.setFocusComment(3340918)">Re:キー配置</a>
+<span class="score" id="comment_score_3340918">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340918); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~ogino/index.html">ogino (1668)</a>
+<span class="otherdetails" id="comment_otherdetails_3340918">on 2018年01月07日 19時37分
+			 (<a href="../../../../../../srad.jp/comment/3340918.html">#3340918</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~ogino/journal/index.html" title="2023年11月17日  7時14分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340918"><p>「シャッフル」ボタンを用意するなり、強制的にランダムだったり、それって銀行 ATM と同じですね。<br/><a href="https://www.excite.co.jp/News/bit/00091185379175.html" title="excite.co.jp">ATMの数字ボタンの並びがかわってきている？</a> [excite.co.jp] </p><p><div class="quote"><p>そんななか、目に付いたのは、三菱東京UFJ銀行の「シャッフルボタン」だ。<br/>「この『シャッフルボタン』（スクランブル化）は、合併前からそれぞれ設けているもので、東京三菱銀行では平成17年5月から、UFJ銀行では18年6月から導入しています」と、広報担当者は言う。<br/>導入された理由は、やはり「暗証番号が他人にわからないよう、手の動きから判別されないようにするため」とのこと。</p><p>一方、シャッフルボタンを自分で押すのではなく、ボタンそのものが勝手に入れ替わるようにしているのは、三井住友銀行だった。<br/>「これは、暗証番号の『ランダム表示』といって、導入のきっかけは、やはり同じ列にしていると、暗証番号が読み解かれてしまう可能性があるためです」（広報担当者）<br/>これは17年12月から導入されたもので、毎回、数字がランダムに表示されているとのこと。ただし、パターン数などは、「犯罪につながりかねないので、公表していません」ということだった。</p></div></p></div>
+</div>
+<div class="commentSub" id="comment_sub_3340918">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:キー配置')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3340918'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3340918'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3340918'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_89df825e.html" onclick="return D2.selectParent(3340890)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3340918"></div>
+<ul class="comment-group" id="group_3340918">
+<li class="hide" id="hiddens_3340918"></li>
+</ul><ul id="commtree_3340918"><li class="comment oneline" id="tree_3340952"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340952"></div>
+<div class="comment-item" id="comment_3340952">
+<div class="commentTop comment-top newcomment" id="comment_top_3340952">
+<div class="title">
+<h4><a href="../../../../../comments.pl_52e1b2eb.html" id="comment_link_3340952" name="comment_link_3340952" onclick="return D2.setFocusComment(3340952)">Re:</a>
+<span class="score" id="comment_score_3340952">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340952); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3340952"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340952"><p>&gt; ただし、パターン数などは、「犯罪につながりかねないので、公表していません」ということだった。</p><p>それ聞いたり公表したりする必要あるんか？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3340952"></div>
+</div>
+<div id="replyto_3340952"></div>
+<ul class="comment-group" id="group_3340952">
+<li class="hide" id="hiddens_3340952"></li>
+</ul><ul id="commtree_3340952"><li class="comment oneline" id="tree_3341053"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341053"></div>
+<div class="comment-item" id="comment_3341053">
+<div class="commentTop comment-top newcomment" id="comment_top_3341053">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a2ca3aa7.html" id="comment_link_3341053" name="comment_link_3341053" onclick="return D2.setFocusComment(3341053)">Re:</a>
+<span class="score" id="comment_score_3341053">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341053); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341053"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341053"><p>10!通りではなく、（何故か）数通りのパターンしかないってことだろうな。<br/>全パターン、ソースにハードコーディングしてありそう。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341053"></div>
+</div>
+<div id="replyto_3341053"></div>
+<ul class="comment-group" id="group_3341053">
+<li class="hide" id="hiddens_3341053"></li>
+</ul><ul id="commtree_3341053"><li class="comment oneline" id="tree_3341093"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341093"></div>
+<div class="comment-item" id="comment_3341093">
+<div class="commentTop comment-top newcomment" id="comment_top_3341093">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8f770be4.html" id="comment_link_3341093" name="comment_link_3341093" onclick="return D2.setFocusComment(3341093)">Re:</a>
+<span class="score" id="comment_score_3341093">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341093); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341093"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341093"><p>「全てランダムにすると組み合わせが膨大になるので、<br/>　テストはそのうちの何パターンかのみ行うということでよろしいでしょうか」<br/>「何言ってんだ。全パターンテストするんだよ」<br/>「……全てランダムにすると、打ち間違いやすいパターンなどもでてきますから、<br/>　最初から限られたパターンのみ実装するということでいかかでしょうか。<br/>　ほら、例えば８と９が入れ替わっただけのようなパターンなどは除外すべきでしょうし」<br/>「それもそうか」</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341093"></div>
+</div>
+<div id="replyto_3341093"></div>
+<ul class="comment-group" id="group_3341093">
+<li class="hide" id="hiddens_3341093"></li>
+</ul><ul id="commtree_3341093"><li class="comment oneline" id="tree_3341145"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341145"></div>
+<div class="comment-item" id="comment_3341145">
+<div class="commentTop comment-top newcomment" id="comment_top_3341145">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6ed23df5.html" id="comment_link_3341145" name="comment_link_3341145" onclick="return D2.setFocusComment(3341145)">Re:</a>
+<span class="score" id="comment_score_3341145">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341145); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341145"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341145"><p>意外と正論かと思ってしまいしました。<br/>「完全ランダムに並べ替える」だと、シャッフルルーチンがバグっていて<br/>「希に1が無く9がダブったキーパッドが表示される」ようなへぼいヘマをかます可能性が微レ存で、<br/>それをテストで洗い出すのは困難だし、コードレビューレベルで動作に問題ないことを保証する手間を考えると、パターン数を絞った方が楽そうだ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341145"></div>
+</div>
+<div id="replyto_3341145"></div>
+<ul class="comment-group" id="group_3341145">
+<li class="hide" id="hiddens_3341145"></li>
+</ul><ul id="commtree_3341145"><li class="comment full contain" id="tree_3341297"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341297"></div>
+<div class="comment-item" id="comment_3341297">
+<div class="commentTop comment-top newcomment" id="comment_top_3341297">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c872b923.html" id="comment_link_3341297" name="comment_link_3341297" onclick="return D2.setFocusComment(3341297)">Re:キー配置</a>
+<span class="score" id="comment_score_3341297">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341297); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~hillrf2006/index.html">hillrf2006 (32518)</a>
+<span class="otherdetails" id="comment_otherdetails_3341297">on 2018年01月08日 21時16分
+			 (<a href="../../../../../../srad.jp/comment/3341297.html">#3341297</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341297"><p>＞「希に1が無く9がダブったキーパッドが表示される」ようなへぼいヘマをかます可能性が微レ存で、</p><p>シャッフルなんだから、仕様上、ダブルわけないじゃんって、<br/>だれも突っ込まなかったら、それはそれで怖い。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341297">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:キー配置')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341297'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341297'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341297'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_6768a521.html" onclick="return D2.selectParent(3341145)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3341297"></div>
+<ul class="comment-group" id="group_3341297">
+<li class="hide" id="hiddens_3341297"></li>
+</ul></li><li class="comment oneline" id="tree_3341318"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341318"></div>
+<div class="comment-item" id="comment_3341318">
+<div class="commentTop comment-top newcomment" id="comment_top_3341318">
+<div class="title">
+<h4><a href="../../../../../comments.pl_50c3b5a4.html" id="comment_link_3341318" name="comment_link_3341318" onclick="return D2.setFocusComment(3341318)">Re:</a>
+<span class="score" id="comment_score_3341318">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341318); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341318"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341318"><p>シャッフルを謳った製品でランダムに並べ替えてもその殆どが<br/>「感覚的にランダムに見えない」せいで、<br/>結局固定パターンの使い回しにしたことがあったな。<br/>感覚的にはそれで充分だった。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341318"></div>
+</div>
+<div id="replyto_3341318"></div>
+<ul class="comment-group" id="group_3341318">
+<li class="hide" id="hiddens_3341318"></li>
+</ul></li><li class="comment oneline" id="tree_3341342"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341342"></div>
+<div class="comment-item" id="comment_3341342">
+<div class="commentTop comment-top newcomment" id="comment_top_3341342">
+<div class="title">
+<h4><a href="../../../../../comments.pl_02569294.html" id="comment_link_3341342" name="comment_link_3341342" onclick="return D2.setFocusComment(3341342)">Re:</a>
+<span class="score" id="comment_score_3341342">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341342); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341342"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341342"><p>仕様が正しくとも、設計やら製造やらテストやらがクソなら<br/>いくらでもバグらせることができるでしょう(<a href="https://encrypted.google.com/search?q=%E3%83%80%E3%83%A1%E3%82%B8%E3%83%A3%E3%83%BC" rel="nofollow" title="google.com">ゲームだけど座標計算しくっておかしな配置をする例</a> [google.com])<br/>って、だれも突っ込まなかったら、それはそれで怖い。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341342"></div>
+</div>
+<div id="replyto_3341342"></div>
+<ul class="comment-group" id="group_3341342">
+<li class="hide" id="hiddens_3341342"></li>
+</ul></li><li class="comment full contain" id="tree_3341495"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341495"></div>
+<div class="comment-item" id="comment_3341495">
+<div class="commentTop comment-top newcomment" id="comment_top_3341495">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6707834e.html" id="comment_link_3341495" name="comment_link_3341495" onclick="return D2.setFocusComment(3341495)">Re:キー配置</a>
+<span class="score" id="comment_score_3341495">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341495); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~nnnhhh/index.html">nnnhhh (47970)</a>
+<span class="otherdetails" id="comment_otherdetails_3341495">on 2018年01月09日 12時15分
+			 (<a href="../../../../../../srad.jp/comment/3341495.html">#3341495</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~nnnhhh/journal/index.html" title="2023年08月10日 10時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341495"><p>仕様通りが保証されるんならテストなんかいらんじゃろ…</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341495">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:キー配置')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341495'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341495'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341495'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_b1ccf00a.html" onclick="return D2.selectParent(3341297)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3341495"></div>
+<ul class="comment-group" id="group_3341495">
+<li class="hide" id="hiddens_3341495"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3340900"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340900"></div>
+<div class="comment-item" id="comment_3340900">
+<div class="commentTop comment-top newcomment" id="comment_top_3340900">
+<div class="title">
+<h4><a href="../../../../../comments.pl_5a7fe59b.html" id="comment_link_3340900" name="comment_link_3340900" onclick="return D2.setFocusComment(3340900)">Re:</a>
+<span class="score" id="comment_score_3340900">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340900); return false">スコア:0</a>, 荒らし)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3340900"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340900"><p><div class="quote"><p>キー配置が毎回ランダムであればこの問題は解決できそう。</p></div><p>当たりもランダムにすれば完璧だね！</p><p># そして確変突入</p></p></div>
+</div>
+<div class="commentSub" id="comment_sub_3340900"></div>
+</div>
+<div id="replyto_3340900"></div>
+<ul class="comment-group" id="group_3340900">
+<li class="hide" id="hiddens_3340900"></li>
+</ul><ul id="commtree_3340900"><li class="comment oneline" id="tree_3340909"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340909"></div>
+<div class="comment-item" id="comment_3340909">
+<div class="commentTop comment-top newcomment" id="comment_top_3340909">
+<div class="title">
+<h4><a href="../../../../../comments.pl_53e1652e.html" id="comment_link_3340909" name="comment_link_3340909" onclick="return D2.setFocusComment(3340909)">Re:</a>
+<span class="score" id="comment_score_3340909">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340909); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3340909"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340909"><p>どんだけパチ脳なんだよ</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3340909"></div>
+</div>
+<div id="replyto_3340909"></div>
+<ul class="comment-group" id="group_3340909">
+<li class="hide" id="hiddens_3340909"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_3340920"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340920"></div>
+<div class="comment-item" id="comment_3340920">
+<div class="commentTop comment-top newcomment" id="comment_top_3340920">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2bc9dfcd.html" id="comment_link_3340920" name="comment_link_3340920" onclick="return D2.setFocusComment(3340920)">センサー以前の問題</a>
+<span class="score" id="comment_score_3340920">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340920); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~ppextend11/index.html">ppextend11 (46237)</a>
+<span class="otherdetails" id="comment_otherdetails_3340920">on 2018年01月07日 19時41分
+			 (<a href="../../../../../../srad.jp/comment/3340920.html">#3340920</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~ppextend11/journal/index.html" title="2018年02月21日  1時35分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340920"><p>&gt;攻撃のシナリオとしては、まずターゲットの端末に送り込んだ攻撃用アプリ</p></div>
+</div>
+</div>
+<div id="replyto_3340920"></div>
+<ul class="comment-group" id="group_3340920">
+<li class="hide" id="hiddens_3340920"></li>
+</ul><ul id="commtree_3340920"><li class="comment oneline" id="tree_3340943"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340943"></div>
+<div class="comment-item" id="comment_3340943">
+<div class="commentTop comment-top newcomment" id="comment_top_3340943">
+<div class="title">
+<h4><a href="../../../../../comments.pl_31c9de27.html" id="comment_link_3340943" name="comment_link_3340943" onclick="return D2.setFocusComment(3340943)">Re:</a>
+<span class="score" id="comment_score_3340943">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340943); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3340943"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340943"><p>＞カジュアルゲームなどを装って学習データを取得する方法が提示されている</p><p>記事読めよ</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3340943"></div>
+</div>
+<div id="replyto_3340943"></div>
+<ul class="comment-group" id="group_3340943">
+<li class="hide" id="hiddens_3340943"></li>
+</ul><ul id="commtree_3340943"><li class="comment full contain" id="tree_3340995"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340995"></div>
+<div class="comment-item" id="comment_3340995">
+<div class="commentTop comment-top newcomment" id="comment_top_3340995">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d6912a26.html" id="comment_link_3340995" name="comment_link_3340995" onclick="return D2.setFocusComment(3340995)">Re:センサー以前の問題</a>
+<span class="score" id="comment_score_3340995">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340995); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~ppextend11/index.html">ppextend11 (46237)</a>
+<span class="otherdetails" id="comment_otherdetails_3340995">on 2018年01月08日  0時19分
+			 (<a href="../../../../../../srad.jp/comment/3340995.html">#3340995</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~ppextend11/journal/index.html" title="2018年02月21日  1時35分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340995"><p>だから怪しいアプリ入れちゃダメ<br/>情報はセンサーに限らずどこでも取っていくだろう<br/>何を(誰を)信用するかだよ</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3340995">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:センサー以前の問題')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3340995'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3340995'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3340995'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_b3dcab40.html" onclick="return D2.selectParent(3340943)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3340995"></div>
+<ul class="comment-group" id="group_3340995">
+<li class="hide" id="hiddens_3340995"></li>
+</ul><ul id="commtree_3340995"><li class="comment oneline" id="tree_3341008"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341008"></div>
+<div class="comment-item" id="comment_3341008">
+<div class="commentTop comment-top newcomment" id="comment_top_3341008">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7cfa3716.html" id="comment_link_3341008" name="comment_link_3341008" onclick="return D2.setFocusComment(3341008)">Re:</a>
+<span class="score" id="comment_score_3341008">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341008); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341008"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341008"><p>それらセキュリティ上考慮すべきいくつかの項目があるとして<br/>センサー「以前」かどうかは視点によって変わるのでは？</p><p>一般的に影響評価と対策効果（耐性）で順序は反転するだろう<br/># DLP問題が難しいからDLP仮定は弱い？とか未だに混乱</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341008"></div>
+</div>
+<div id="replyto_3341008"></div>
+<ul class="comment-group" id="group_3341008">
+<li class="hide" id="hiddens_3341008"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_3340976"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340976"></div>
+<div class="comment-item" id="comment_3340976">
+<div class="commentTop comment-top newcomment" id="comment_top_3340976">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c4c3e22f.html" id="comment_link_3340976" name="comment_link_3340976" onclick="return D2.setFocusComment(3340976)">偽のPIN入力画面を表示するアプリにしておけば</a>
+<span class="score" id="comment_score_3340976">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340976); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~masakun/index.html">masakun (31656)</a>
+<span class="otherdetails" id="comment_otherdetails_3340976"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340976"><p>カジュアルゲームに装うのは結構だが、偽の PIN 入力画面を用意しておけば、画面<br/>ロックがかかったものと思ってうっかりユーザーが入力してくれるんじゃないの。</p><p>そうしたらセンサーのデータから云々しなくても手っ取り早いのにね。</p><p># だからそういう研究じゃないって</p></div>
+<div class="sig" id="comment_sig_3340976">-- <br/>モデレータは基本役立たずなの気にしてないよ</div>
+</div>
+<div class="commentSub" id="comment_sub_3340976"></div>
+</div>
+<div id="replyto_3340976"></div>
+<ul class="comment-group" id="group_3340976">
+<li class="hide" id="hiddens_3340976"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_3340892"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340892"></div>
+<div class="comment-item" id="comment_3340892">
+<div class="commentTop comment-top newcomment" id="comment_top_3340892">
+<div class="title">
+<h4><a href="../../../../../comments.pl_23d2ac8c.html" id="comment_link_3340892" name="comment_link_3340892" onclick="return D2.setFocusComment(3340892)">これの(念のため)回避は机に置いて入力すればいいのかな</a>
+<span class="score" id="comment_score_3340892">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340892); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3340892">on 2018年01月07日 18時42分
+			 (<a href="../../../../../../srad.jp/comment/3340892.html">#3340892</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340892"><p>普段は指紋センサ使用なので<br/>あまりpinを入力することは無い(再起動したときくらい)のですが<br/>よくもまあいろいろ手段を思いつくものだとそこに感心</p><p>いずれこれらに対抗するべくランダム配置のスクリーンキーボードとかになるのか<br/>そうなると面倒だなあ</p></div>
+</div>
+</div>
+<div id="replyto_3340892"></div>
+<ul class="comment-group" id="group_3340892">
+<li class="hide" id="hiddens_3340892"></li>
+</ul><ul id="commtree_3340892"><li class="comment full contain" id="tree_3340925"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340925"></div>
+<div class="comment-item" id="comment_3340925">
+<div class="commentTop comment-top newcomment" id="comment_top_3340925">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7bc3e0dc.html" id="comment_link_3340925" name="comment_link_3340925" onclick="return D2.setFocusComment(3340925)">Re:これの(念のため)回避は机に置いて入力すればいいのかな</a>
+<span class="score" id="comment_score_3340925">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340925); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~albireo/index.html">albireo (7374)</a>
+<span class="otherdetails" id="comment_otherdetails_3340925">on 2018年01月07日 19時48分
+			 (<a href="../../../../../../srad.jp/comment/3340925.html">#3340925</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~albireo/journal/index.html" title="2003年05月26日  3時12分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340925"><p>フリック入力にするだけでも推測は難しくなりそう。<br/>あと途中で傾けたり持ち替えたり。</p><p>現実的なところでは「キーパッド表示中は加速度やジャイロをOFFにして、別プロセスからも読み出せないようにする」という修正なら、OSレベルで一括対応できるし副作用は比較的少ないかもしれない。(悪影響がないとは言い切れないけど)</p></div>
+<div class="sig" id="comment_sig_3340925">-- <br/>うじゃうじゃ</div>
+</div>
+<div class="commentSub" id="comment_sub_3340925">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:これの(念のため)回避は机に置いて入力すればいいのかな')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3340925'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3340925'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3340925'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_cec6b91e.html" onclick="return D2.selectParent(3340892)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3340925"></div>
+<ul class="comment-group" id="group_3340925">
+<li class="hide" id="hiddens_3340925"></li>
+</ul></li><li class="comment oneline" id="tree_3340901"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340901"></div>
+<div class="comment-item" id="comment_3340901">
+<div class="commentTop comment-top newcomment" id="comment_top_3340901">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7bcd8935.html" id="comment_link_3340901" name="comment_link_3340901" onclick="return D2.setFocusComment(3340901)">Re:</a>
+<span class="score" id="comment_score_3340901">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340901); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3340901"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340901"><p>机上の空論ってやつだね！</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3340901"></div>
+</div>
+<div id="replyto_3340901"></div>
+<ul class="comment-group" id="group_3340901">
+<li class="hide" id="hiddens_3340901"></li>
+</ul></li><li class="comment oneline" id="tree_3340930"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340930"></div>
+<div class="comment-item" id="comment_3340930">
+<div class="commentTop comment-top newcomment" id="comment_top_3340930">
+<div class="title">
+<h4><a href="../../../../../comments.pl_44ec7a37.html" id="comment_link_3340930" name="comment_link_3340930" onclick="return D2.setFocusComment(3340930)">PINロック自体が結構脆弱だと思う</a>
+<span class="score" id="comment_score_3340930">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340930); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3340930"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340930"><p>入力操作がどこかのカメラから録画されていればすぐ開錠されてしまう。<br/>というかちょっと覗かれていただけでも。<br/>外で使うもんだからね。</p><p>だから親コメの通り指紋認証にするなり、PINでの防御にあまり期待を置かない方がいいと思う。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3340930"></div>
+</div>
+<div id="replyto_3340930"></div>
+<ul class="comment-group" id="group_3340930">
+<li class="hide" id="hiddens_3340930"></li>
+</ul><ul id="commtree_3340930"><li class="comment oneline" id="tree_3340981"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340981"></div>
+<div class="comment-item" id="comment_3340981">
+<div class="commentTop comment-top newcomment" id="comment_top_3340981">
+<div class="title">
+<h4><a href="../../../../../comments.pl_07698b33.html" id="comment_link_3340981" name="comment_link_3340981" onclick="return D2.setFocusComment(3340981)">Re:</a>
+<span class="score" id="comment_score_3340981">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340981); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3340981"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340981"><p>激しくヘドバンしながら操作するようにしたら、いずれの危険も回避出来る。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3340981"></div>
+</div>
+<div id="replyto_3340981"></div>
+<ul class="comment-group" id="group_3340981">
+<li class="hide" id="hiddens_3340981"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_3340954"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340954"></div>
+<div class="comment-item" id="comment_3340954">
+<div class="commentTop comment-top newcomment" id="comment_top_3340954">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8255ff3f.html" id="comment_link_3340954" name="comment_link_3340954" onclick="return D2.setFocusComment(3340954)">未使用</a>
+<span class="score" id="comment_score_3340954">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3340954); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3340954">on 2018年01月07日 22時02分
+			 (<a href="../../../../../../srad.jp/comment/3340954.html">#3340954</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3340954">PINコード使って居なければ盗まれることも無いな<br/>ネックストラップで置き忘れないようにしているから、勝手に弄られることも無いし</div>
+</div>
+</div>
+<div id="replyto_3340954"></div>
+<ul class="comment-group" id="group_3340954">
+<li class="hide" id="hiddens_3340954"></li>
+</ul><ul id="commtree_3340954"><li class="comment oneline" id="tree_3341014"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341014"></div>
+<div class="comment-item" id="comment_3341014">
+<div class="commentTop comment-top newcomment" id="comment_top_3341014">
+<div class="title">
+<h4><a href="../../../../../comments.pl_38b9c8e1.html" id="comment_link_3341014" name="comment_link_3341014" onclick="return D2.setFocusComment(3341014)">PINコード</a>
+<span class="score" id="comment_score_3341014">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341014); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341014"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341014"><p>特に「PINコード」ってがっつり書いちゃうと、「例のあのPINコード」という固有名詞みたいなのを意味する様に見えちゃうけど、多分、原文はそうじゃないので要注意な。英語で「PIN」って言ったら広く一般の「暗証番号」の意味。ここでは、「数値入力ぐらいだったら、加速度・角速度センサーで取れるぞ」というのが本題。</p><p>なお、「例のあの」は「SIMの不正使用を避けるために設定するPINコード」とか、「ウェブで電話番号を入力すると送られてくる4桁のPINコード」とか、人によってちょいちょい解釈が違ってる。</p><p>なので、解釈がズレてることがままあると言うのに気付かずにコミュニケーションが混乱したり、英語のソフトやハードやサービスに触れてる時に「なぜ『例のあのPINコード』をここで入力させられるんだ？」と混乱することが割とよくある。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341014"></div>
+</div>
+<div id="replyto_3341014"></div>
+<ul class="comment-group" id="group_3341014">
+<li class="hide" id="hiddens_3341014"></li>
+</ul><ul id="commtree_3341014"><li class="comment full contain" id="tree_3341452"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341452"></div>
+<div class="comment-item" id="comment_3341452">
+<div class="commentTop comment-top newcomment" id="comment_top_3341452">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7c86440e.html" id="comment_link_3341452" name="comment_link_3341452" onclick="return D2.setFocusComment(3341452)">Re:PINコード</a>
+<span class="score" id="comment_score_3341452">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341452); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~nim/index.html">nim (10479)</a>
+<span class="otherdetails" id="comment_otherdetails_3341452">on 2018年01月09日 10時26分
+			 (<a href="../../../../../../srad.jp/comment/3341452.html">#3341452</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341452"><p>PIN は Personal Identification Number なわけで、「PINコード」の「… Number Code」って何やねん感。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341452">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:PINコード')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341452'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341452'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341452'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_7f2f5e5a.html" onclick="return D2.selectParent(3341014)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3341452"></div>
+<ul class="comment-group" id="group_3341452">
+<li class="hide" id="hiddens_3341452"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_3341079"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341079"></div>
+<div class="comment-item" id="comment_3341079">
+<div class="commentTop comment-top newcomment" id="comment_top_3341079">
+<div class="title">
+<h4><a href="../../../../../comments.pl_5f55aed3.html" id="comment_link_3341079" name="comment_link_3341079" onclick="return D2.setFocusComment(3341079)">Re:</a>
+<span class="score" id="comment_score_3341079">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341079); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341079"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341079"><p>いいこと聞いた、こいつのスマホ盗んじゃえ</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341079"></div>
+</div>
+<div id="replyto_3341079"></div>
+<ul class="comment-group" id="group_3341079">
+<li class="hide" id="hiddens_3341079"></li>
+</ul></li><li class="comment hidden" id="tree_3340978"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3340978"></div>
+<div class="comment-item" id="comment_3340978">
+</div>
+<div id="replyto_3340978"></div>
+<ul class="comment-group" id="group_3340978">
+<li class="hide" id="hiddens_3340978"></li>
+</ul><ul id="commtree_3340978"><li class="comment oneline" id="tree_3341163"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341163"></div>
+<div class="comment-item" id="comment_3341163">
+<div class="commentTop comment-top newcomment" id="comment_top_3341163">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2a74fb4f.html" id="comment_link_3341163" name="comment_link_3341163" onclick="return D2.setFocusComment(3341163)">ぼっちのモデレータを逆なでしたようだ</a>
+<span class="score" id="comment_score_3341163">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341163); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~masakun/index.html">masakun (31656)</a>
+<span class="otherdetails" id="comment_otherdetails_3341163"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341163"><p>彼女なり嫁なり同居人がいる場合は、風呂の最中に盗み見られる危険が付きまとうからな<br/>何らかのセキュリティコードを使わず物理的に身に着けることでセキュリティを維持するというのはぼっちの特権だよ。</p><p># だから君が付けるべきは「荒らし」でなく「すば洞」</p></div>
+<div class="sig" id="comment_sig_3341163">-- <br/>モデレータは基本役立たずなの気にしてないよ</div>
+</div>
+<div class="commentSub" id="comment_sub_3341163"></div>
+</div>
+<div id="replyto_3341163"></div>
+<ul class="comment-group" id="group_3341163">
+<li class="hide" id="hiddens_3341163"></li>
+</ul><ul id="commtree_3341163"><li class="comment oneline" id="tree_3341418"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341418"></div>
+<div class="comment-item" id="comment_3341418">
+<div class="commentTop comment-top newcomment" id="comment_top_3341418">
+<div class="title">
+<h4><a href="../../../../../comments.pl_266a4ef5.html" id="comment_link_3341418" name="comment_link_3341418" onclick="return D2.setFocusComment(3341418)">Re:</a>
+<span class="score" id="comment_score_3341418">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341418); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341418"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341418"><p>矛盾し破綻した主張をして「荒らしじゃない」と言い張るのは滑稽だな</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341418"></div>
+</div>
+<div id="replyto_3341418"></div>
+<ul class="comment-group" id="group_3341418">
+<li class="hide" id="hiddens_3341418"></li>
+</ul></li><li class="comment oneline" id="tree_3341425"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341425"></div>
+<div class="comment-item" id="comment_3341425">
+<div class="commentTop comment-top newcomment" id="comment_top_3341425">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3a231db2.html" id="comment_link_3341425" name="comment_link_3341425" onclick="return D2.setFocusComment(3341425)">Re:</a>
+<span class="score" id="comment_score_3341425">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341425); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341425"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341425"><p>#3340954とかの普通の人は彼女なり嫁なり同居人からスマホを守る必要はあんま無いって事なんじゃないですかね。</p><p>「独りぼっち」に絞ったのはハズしているので「すば洞」は付かないし、<br/>誰かの思いを逆なでする事に気付いているのなら「荒らし」は当然ですよね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341425"></div>
+</div>
+<div id="replyto_3341425"></div>
+<ul class="comment-group" id="group_3341425">
+<li class="hide" id="hiddens_3341425"></li>
+</ul><ul id="commtree_3341425"><li class="comment full contain" id="tree_3341851"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341851"></div>
+<div class="comment-item" id="comment_3341851">
+<div class="commentTop comment-top newcomment" id="comment_top_3341851">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8e4fa15d.html" id="comment_link_3341851" name="comment_link_3341851" onclick="return D2.setFocusComment(3341851)">感情論で判断するモデレータはスラドに要らない</a>
+<span class="score" id="comment_score_3341851">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341851); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~masakun/index.html">masakun (31656)</a>
+<span class="otherdetails" id="comment_otherdetails_3341851">on 2018年01月10日  5時00分
+			 (<a href="../../../../../../srad.jp/comment/3341851.html">#3341851</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~masakun/journal/index.html" title="2023年11月02日  6時49分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341851"><p>たとえひとりでも逆なでする可能性のあるコメントがすべて「荒らし」なら、雑談なんてできないぜ。</p><p># モデレーションの輪に加わる前に、スラドの FAQ 読んで来いよ。</p></div>
+<div class="sig" id="comment_sig_3341851">-- <br/>モデレータは基本役立たずなの気にしてないよ</div>
+</div>
+<div class="commentSub" id="comment_sub_3341851">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('感情論で判断するモデレータはスラドに要らない')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341851'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341851'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=727552&amp;cid=3341851'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_253b7e3b.html" onclick="return D2.selectParent(3341425)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3341851"></div>
+<ul class="comment-group" id="group_3341851">
+<li class="hide" id="hiddens_3341851"></li>
+</ul><ul id="commtree_3341851"><li class="comment oneline" id="tree_3341875"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341875"></div>
+<div class="comment-item" id="comment_3341875">
+<div class="commentTop comment-top newcomment" id="comment_top_3341875">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1d27fd9f.html" id="comment_link_3341875" name="comment_link_3341875" onclick="return D2.setFocusComment(3341875)">Re:</a>
+<span class="score" id="comment_score_3341875">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341875); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341875"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341875"><p>親コメントが「独りぼっち」なのか「家族にはノーガード」なのかはわからないですよね。<br/>残念ながら深みに欠けているので、決して「すば洞」ではないと思います。<br/>ツッコミ待ちの親コメントへのツッコミと考えれば、「おもしろおかしい」でしょうか。<br/>でも、親コメントがリアル「独りぼっち」の可能性もあるわけで、<br/>それをあなたのような書き方で指摘する事は単なるケンカの火種、余計な一言だと思います。<br/>「荒らし」というよりは「フレームの元」ですね。<br/>じゃあどうすれば良かったのか。「独りぼっち」は指摘せずに、<br/>家族（同居人）に対するガード方法を聞けば良かったのです。</p><p>ところで、感情論でモデレートしすぎるのは問題だと思いますけど、<br/>感情論で判断するモデレータはスラドに要らないというのもまた<br/>論理的と言うより感情的な判断だと思います。<br/>感情論でのモデレートを完全に排除したら、スラドは非社会的な人間の巣窟と<br/>見なされても仕方ないような場所になるんじゃないでしょうか。<br/>社会には感情というものを大切にして、判断しなきゃいけない事も沢山あります。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341875"></div>
+</div>
+<div id="replyto_3341875"></div>
+<ul class="comment-group" id="group_3341875">
+<li class="hide" id="hiddens_3341875"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li><li id="hidestring_3340954"><noscript><b class="more"><a href="../../../../../comments.pl_54302364.html">1個のコメント</a> が現在のしきい値以下です。</b></noscript></li></ul></li><li class="comment full contain" id="tree_3341000"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341000"></div>
+<div class="comment-item" id="comment_3341000">
+<div class="commentTop comment-top newcomment" id="comment_top_3341000">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0054d267.html" id="comment_link_3341000" name="comment_link_3341000" onclick="return D2.setFocusComment(3341000)">関連リンク：ジャイロセンサがマイク代わりになるセキュリティホール</a>
+<span class="score" id="comment_score_3341000">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341000); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341000">on 2018年01月08日  0時25分
+			 (<a href="../../../../../../srad.jp/comment/3341000.html">#3341000</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341000"><p><a href="../../../../../../yro.srad.jp/story/14/10/15/0924205/index.html" title="yro.srad.jp">スマートフォンのジャイロセンサを使って周囲の音声を解析する</a> [yro.srad.jp]</p><p>センサ系はやはり怖いね。</p></div>
+</div>
+</div>
+<div id="replyto_3341000"></div>
+<ul class="comment-group" id="group_3341000">
+<li class="hide" id="hiddens_3341000"></li>
+</ul></li><li class="comment full contain" id="tree_3341039"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341039"></div>
+<div class="comment-item" id="comment_3341039">
+<div class="commentTop comment-top newcomment" id="comment_top_3341039">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7f5c38d6.html" id="comment_link_3341039" name="comment_link_3341039" onclick="return D2.setFocusComment(3341039)">待て待て</a>
+<span class="score" id="comment_score_3341039">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341039); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341039">on 2018年01月08日  3時36分
+			 (<a href="../../../../../../srad.jp/comment/3341039.html">#3341039</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341039"><p>PINコードって取得した後どうすんの？<br/>外部アプリから入力出来るの？<br/>アプリ側からPINを入力出来るならロック掛からないようにチマチマやれば、ブルートフォースで行った方が楽じゃね？<br/>まさか、PINコード割り出したら直接入力する為に、位置情報使って訪ねてくる？それは怖いわ。</p><p># GPS以外のセンサーにもパーミッション付ければ解決じゃね？バックグラウンドでハードウェアリソース使うと電池減るから、任意にオフに出来ると良いよね。</p></div>
+</div>
+</div>
+<div id="replyto_3341039"></div>
+<ul class="comment-group" id="group_3341039">
+<li class="hide" id="hiddens_3341039"></li>
+</ul><ul id="commtree_3341039"><li class="comment oneline" id="tree_3341050"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341050"></div>
+<div class="comment-item" id="comment_3341050">
+<div class="commentTop comment-top newcomment" id="comment_top_3341050">
+<div class="title">
+<h4><a href="../../../../../comments.pl_cfae7d42.html" id="comment_link_3341050" name="comment_link_3341050" onclick="return D2.setFocusComment(3341050)">Re:</a>
+<span class="score" id="comment_score_3341050">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341050); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341050"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341050"><p>まず、沢山集めるだろ、<br/>で電話番号と紐つけてPINを教えるサイトを作るんだよ。もちろん金をとる。<br/>スマホ盗んだヤツはそこへいくらか払えば端末を即座に解除できる。その後どうするかなんて知らんよ。もうカネはもらったから。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341050"></div>
+</div>
+<div id="replyto_3341050"></div>
+<ul class="comment-group" id="group_3341050">
+<li class="hide" id="hiddens_3341050"></li>
+</ul></li><li class="comment oneline" id="tree_3341106"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341106"></div>
+<div class="comment-item" id="comment_3341106">
+<div class="commentTop comment-top newcomment" id="comment_top_3341106">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b4bcbda5.html" id="comment_link_3341106" name="comment_link_3341106" onclick="return D2.setFocusComment(3341106)">Re:</a>
+<span class="score" id="comment_score_3341106">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341106); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341106"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341106"><p><a href="../../../../../../srad.jp/comment/3341014.html" title="srad.jp">このコメント</a> [srad.jp]にも書いたけど、そのPINコードじゃないやつが危ないんじゃないかな。</p><p>例えば、GoogleとかAmazonとかのお買い物券のスクラッチを削って出てくる数字とか。入力をバックグラウンドで監視しておいて、入力されたっぽかったら先回りして攻撃者のアカウントにチャージしちゃうという攻撃が成立する。先回りが難しいなら、最後の1桁を当てずっぽうで10回やるという方法とかでも。</p><p>Googleギフトカードがそうかは知らないけど、以前に海外で使った何かのプリペイド携帯電話のチャージカードの取扱説明書には、「スクラッチを削って出てきたPINをSNSでこの番号に送ればチャージが完了する」という文脈で「PIN」って単語が使われてた。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341106"></div>
+</div>
+<div id="replyto_3341106"></div>
+<ul class="comment-group" id="group_3341106">
+<li class="hide" id="hiddens_3341106"></li>
+</ul><ul id="commtree_3341106"><li class="comment oneline" id="tree_3341111"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3341111"></div>
+<div class="comment-item" id="comment_3341111">
+<div class="commentTop comment-top newcomment" id="comment_top_3341111">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8e2b3e03.html" id="comment_link_3341111" name="comment_link_3341111" onclick="return D2.setFocusComment(3341111)">Re:</a>
+<span class="score" id="comment_score_3341111">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3341111); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3341111"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3341111"><p>認証連携で2FAのコードを叩いてるところを盗み取るのかも<br/>特にTOTPだとそれを使ってパスワードリセットするとか2FA無効化の手続きを通すという攻撃はあり得る</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3341111"></div>
+</div>
+<div id="replyto_3341111"></div>
+<ul class="comment-group" id="group_3341111">
+<li class="hide" id="hiddens_3341111"></li>
+</ul></li></ul></li></ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 1;
+		D2.currents()['full']     = 13;
+		D2.currents()['oneline']  = 23;
+		// D2.currents_total(37);
+
+		D2.abbrev_comments({});
+		D2.noshow_comments([3340978]);
+		D2.pieces_comments([3340952,3341053,3341093,3341145,3341318,3341342,3340900,3340909,3340943,3341008,3340976,3340901,3340930,3340981,3341014,3341079,3341163,3341418,3341425,3341875,3341050,3341106,3341111]);
+		D2.init_hiddens([3340954]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">37</span>/<span class="totalcommentcnt">37</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>開いた括弧は必ず閉じる -- あるプログラマー<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../../srad.jp/about.html">About</a></li>
+<li><a href="../../../../../../srad.jp/faq/index.html">FAQ</a></li>
+<li><a href="../../../../../../srad.jp/story/index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../../srad.jp/hof.html">殿堂入り</a></li>
+<li><a href="../../../../../../srad.jp/authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../../srad.jp/topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../../srad.jp/index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

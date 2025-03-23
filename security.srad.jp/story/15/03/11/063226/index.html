@@ -1,0 +1,2442 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/15/03/11/063226.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>TLS/SSL実装に20年前からの脆弱性、影響範囲は広範 | スラド セキュリティ</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="TLS/SSL実装に20年前からの脆弱性、影響範囲は広範 | スラド セキュリティ" property="og:title">
+<meta content="https://srad.jp/static/topics/security_64.png" property="og:image"/>
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '211773888759272878',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content="あるAnonymous Coward 曰く、InriaとMicrosoft Researchの合同チームからなるmiTLSが、TLS/SSL実装に「FREAK」と呼ばれる新たな脆弱性を発見した（miTLSの告知サイト、ZDNet）。SSLには米国がかつて行っていた暗号の輸出規制に対応するため、輸出暗号と呼ばれる弱い暗号が定義されている。FREAKはサーバーが輸出暗号をサ..." name="description"/>
+<meta content="あるAnonymous Coward 曰く、InriaとMicrosoft Researchの合同チームからなるmiTLSが、TLS/SSL実装に「FREAK」と呼ばれる新たな脆弱性を発見した（miTLSの告知サイト、ZDNet）。SSLには米国がかつて行っていた暗号の輸出規制に対応するため、輸出暗号と呼ばれる弱い暗号が定義されている。FREAKはサーバーが輸出暗号をサ..." property="og:description"/>
+<meta content="TLS/SSL実装に20年前からの脆弱性、影響範囲は広範 | スラド セキュリティ" itemprop="name"/>
+<meta content="あるAnonymous Coward 曰く、InriaとMicrosoft Researchの合同チームからなるmiTLSが、TLS/SSL実装に「FREAK」と呼ばれる新たな脆弱性を発見した（miTLSの告知サイト、ZDNet）。SSLには米国がかつて行っていた暗号の輸出規制に対応するため、輸出暗号と呼ばれる弱い暗号が定義されている。FREAKはサーバーが輸出暗号をサ..." itemprop="description"/>
+<link href="../../../../../../srad.jp/index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../../srad.jp/search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../../srad.jp/security.rss" rel="alternate" title="スラド security RSS" type="application/rss+xml"/>
+<link href="../../../../../../srad.jp/static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../../srad.jp/static/topics/security_64.png" rel="image_src"/>
+<link href="../../../../../../srad.jp/static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../../srad.jp/static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../../srad.jp/static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/15/03/11/063226/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'security';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//security.srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/15/03/11/063226.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../../srad.jp/recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../../srad.jp/popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../../srad.jp/comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../../srad.jp/journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../../srad.jp/polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：セキュリティ</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="active" id="fhsection-security">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-11">セキュリティ</a><span></span>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="active" id="fhsection-security">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-11">セキュリティ</a><span></span>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="11958300" data-fhtype="story" id="firehose-11958300">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">11958300</span>
+<span class="type">story</span>
+</span>
+<header>
+<span class="topic" id="topic-11958300">
+<a href="../../../../../../srad.jp/stories/security.html" onclick="return addfhfilter('security');">
+<img alt="セキュリティ" height="64" src="../../../../../../srad.jp/static/topics/security_64.png" title="セキュリティ" width="64"/>
+</a>
+</span>
+<h2 class="story">
+<span id="title-11958300"> <a href="index.html">TLS/SSL実装に20年前からの脆弱性、影響範囲は広範</a></span>
+<span class="comments commentcnt-11958300">41</span>
+</h2>
+<div class="details" id="details-11958300">ストーリー by <a href="http://hylom.net/">hylom</a>
+<time datetime="2015-03-11T15:45+09:00" id="fhtime-11958300">2015年03月11日 15時45分</time><br/>各社対応をリリース中 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "TLS/SSL実装に20年前からの脆弱性、影響範囲は広範",
+  "datePublished": "2015-03-11T15:45+09:00",
+  "articleBody": "あるAnonymous Coward 曰く、InriaとMicrosoft Researchの合同チームからなるmiTLSが、TLS/SSL実装に「FREAK」と呼ばれる新たな脆弱性を発見した（miTLSの告知サイト、ZDNet）。SSLには米国がかつて行っていた暗号の輸出規制に対応するため、輸出暗号と呼ばれる弱い暗号が定義されている。FREAKはサーバーが輸出暗号をサポートしているとき、バグのあるクライアント実装に強制的に輸出暗号を使わせるというもの。バグのあるクライアントには、現時点でOpenSSLの1.0.1kより古いバージョン、BoringSSLの2014 年11月10日以前のバージョン、LibreSSLの2.1.2より古いバージョン、サポートされているすべてのバージョンのSchannel（Windows標準のTLSスタック）、OpenTransport（OS Xのシステム標準のTLSスタック）、AndroidおよびOS X上のChrome 40以前などが確認されている。サーバー側の対策は輸出暗号を無効にすることで、クライアント側の対策はバグが修正されたバージョンに更新すること、それまではRSA鍵交換を無効にすることが挙げられる。",
+  "image": "https://srad.jp/static/topics/security_64.png"
+}
+</script>
+<div class="body" id="fhbody-11958300">
+<div class="contents_text p" id="text-11958300">
+        あるAnonymous Coward 曰く、<blockquote><div><p>InriaとMicrosoft Researchの合同チームからなるmiTLSが、TLS/SSL実装に「FREAK」と呼ばれる新たな脆弱性を発見した（<a href="https://www.smacktls.com/">miTLSの告知サイト</a>、<a href="http://japan.zdnet.com/article/35061501/">ZDNet</a>）。
+</p><p>
+SSLには米国がかつて行っていた暗号の輸出規制に対応するため、輸出暗号と呼ばれる弱い暗号が定義されている。FREAKはサーバーが輸出暗号をサポートしているとき、バグのあるクライアント実装に強制的に輸出暗号を使わせるというもの。
+</p><p>
+バグのあるクライアントには、現時点でOpenSSLの1.0.1kより古いバージョン、BoringSSLの2014 年11月10日以前のバージョン、LibreSSLの2.1.2より古いバージョン、サポートされているすべてのバージョンのSchannel（Windows標準のTLSスタック）、OpenTransport（OS Xのシステム標準のTLSスタック）、AndroidおよびOS X上のChrome 40以前などが確認されている。
+</p><p>
+サーバー側の対策は輸出暗号を無効にすることで、クライアント側の対策はバグが修正されたバージョンに更新すること、それまではRSA鍵交換を無効にすることが挙げられる。</p></div></blockquote>
+</div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //security.srad.jp/story/15/03/11/063226/ -->
+<!-- http://security.srad.jp/story/15/03/11/063226/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://security.srad.jp/story/15/03/11/063226/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://security.srad.jp/story/15/03/11/063226/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/security.srad.jp/story/15/03/11/063226/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../../srad.jp/about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">41</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-11958300"><a class="popular topic tag" href="../../../../../../srad.jp/tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/security.html" rel="statictag" target="_blank">security</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3.html" rel="statictag" target="_blank">セキュリティ</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../../../../../../apple.srad.jp/story/15/03/11/0558218/index.html" id="hrefns">古き時代のMac OSのアイコンのスケッチ、MOMAに収蔵されることに</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../../14/12/12/069210/index.html">SSL 3.0の脆弱性「POODLE」はTLSにも影響する</a></h3><h3><a href="../../../../14/10/15/0850246/index.html">SSL 3.0に深刻な脆弱性が見つかる</a></h3><h3><a href="../../../../14/06/06/0738230/index.html">OpenSSLに新たな脆弱性が発見される</a></h3><h3><a href="../../../../11/09/29/0223240/index.html">SSL3.0/TLS1.0 に脆弱性</a></h3><h3><a href="../../../09/05/2140223/index.html">Chrome 45のセキュリティ改善により、開けないサイトが現れる(更新)</a></h3><h3><a href="../../../../17/08/13/0524243/index.html">TLS 1.0を無効化したIBMのクラウド、問題が発生して再び有効化</a></h3><h3><a href="../../../../../../it.srad.jp/story/16/10/22/043249/index.html">Linuxカーネルに11年以上前から存在する特権昇格の脆弱性「Dirty COW」が修正される</a></h3><h3><a href="../../../../../../it.srad.jp/story/20/02/07/1942212/index.html">sudoに10年以上前から存在した特権昇格の脆弱性が修正される</a></h3><h3><a href="../../../../16/03/04/0630202/index.html">クロスプロトコル攻撃が可能となるSSLv2の脆弱性「DROWN」</a></h3><h3><a href="../../../../22/11/01/1339223/index.html">OpenSSLに重大な脆弱性（追記アリ）</a></h3><h3><a href="../../../../../../hardware.srad.jp/story/21/07/25/0825256/index.html">HP / Samsung / Xerox のプリンタードライバーに 16 年前から存在した脆弱性</a></h3><h3><a href="../../../../22/01/30/0023217/index.html">Polkit に 12 年前の最初のバージョンから存在した脆弱性「Pwnkit」</a></h3><h3><a href="../../../../21/01/30/0012214/index.html">sudoに10年近く前から存在した脆弱性が修正される</a></h3><h3><a href="../../../../../../it.srad.jp/story/15/09/25/2136230/index.html">Firefox 41、14年前に報告されたバグの修正でAdblock Plus使用時のメモリー消費量が大幅に減少</a></h3><h3><a href="../../../../21/06/12/044230/index.html">Linuxでプロセスの権限を設定するpolkit、7年以上前から存在した特権昇格の脆弱性が見つかる</a></h3><h3><a href="../../../../20/07/18/0624243/index.html">Windows Serverに17年前から存在していたバグが修正される</a></h3><h3><a href="../../../07/24/1939224/index.html">TLS 1.0無効化における障害は?</a></h3><h3><a href="../../../04/19/1726231/index.html">WindowsのHTTPプロトコルスタックにリモートでコードが実行される脆弱性</a></h3><h3><a href="../../../../../../it.srad.jp/story/17/09/08/2019249/index.html">11年前にLinux版のFirefox 2で報告されたバグ、Firefox 57で修正へ</a></h3><h3><a href="../../../07/23/0610243/index.html">Salesforce、TLS 1.0のサポート終了を表明</a></h3><h3><a href="../../../06/01/0555202/index.html">クレジットカード処理におけるTLS 1.0の使用が非推奨に</a></h3><h3><a href="../../../../17/05/03/0442234/index.html">一部の大手サイトでTLS 1.0無効化が始まる</a></h3><h3><a href="../../../../16/08/13/0639203/index.html">Microsoft、IE11とMicrosoft EdgeのRC4暗号を計画より4か月遅れて無効化</a></h3><h3><a href="../../../../../../it.srad.jp/story/15/12/26/0643209/index.html">米ワシントン州、ソフトウェアのバグで受刑者の3％を早く出所させていた</a></h3><h3><a href="../../../04/15/0354220/index.html">WindowsでURLのリダイレクトを悪用して認証情報を盗み取る手法が明らかに</a></h3><h3><a href="../../../09/02/0653216/index.html">RC4暗号化、来年ついに終焉へ</a></h3><h3><a href="../../../06/30/0458229/index.html">SSL 3.0の廃止を求めるRFC 7568がリリースされる</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="TLS/SSL実装に20年前からの脆弱性、影響範囲は広範のストーリーへ戻る">TLS/SSL実装に20年前からの脆弱性、影響範囲は広範</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//security.srad.jp/story/15/03/11/063226/';
+var parent_item_title = 'TLS/SSL実装に20年前からの脆弱性、影響範囲は広範';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「TLS/SSL実装に20年前からの脆弱性、影響範囲は広範」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//security.srad.jp/search.pl?op=comments&amp;sid=653719" class="btn"><span class="totalcommentcnt">41</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//security.srad.jp/comments.pl?sid=653719"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_dbb2485c.html"><span>検索</span><span class="totalcommentcnt">41</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../../srad.jp/static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 2777350: { uid: 16025, pid: 2776723, subject: "Re:Microsoftは", read: 0, points: 2, kids: [  ], opid: 2776723 }, 2775971: { uid: 1, pid: 2775888, subject: "Re:Microsoftは", read: 0, points: -1, kids: [ 2775984, 2776723 ], opid: 2775888 }, 2775888: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 2775952, 2775971, 2776466 ], opid: 0 }, 2775791: { uid: 10479, pid: 2775781, subject: "Re:FREAK脆弱性チェック方法", read: 0, points: 3, kids: [  ], opid: 2775781 }, 2775937: { uid: 39616, pid: 0, read: 0, points: 2, kids: [ 2776562, 2776629 ], opid: 0 }, 2775887: { uid: 1, pid: 2775859, subject: "Re:20年前には脆弱性では無かった", read: 0, points: 0, kids: [  ], opid: 2775859 }, 2776894: { uid: 1, pid: 2776723, subject: "Re:Microsoftは", read: 0, points: 0, kids: [ 2777282 ], opid: 2776723 }, 2776686: { uid: 1, pid: 2776562, subject: "Re:TLSと聞くと", read: 0, points: 0, kids: [  ], opid: 2776562 }, 2775764: { uid: 1, pid: 0, read: 0, points: 1, kids: [ 2775771 ], opid: 0 }, 2775948: { uid: 1, pid: 2775859, subject: "Re:20年前には脆弱性では無かった", read: 0, points: 1, kids: [  ], opid: 2775859 }, 2776629: { uid: 1, pid: 2775937, subject: "Re:TLSと聞くと", read: 0, points: 0, kids: [  ], opid: 2775937 }, 2775910: { uid: 11178, pid: 2775827, subject: "Re:FREAK脆弱性チェック方法", read: 0, points: 1, kids: [ 2775923 ], opid: 2775827 }, 2775923: { uid: 1, pid: 2775910, subject: "Re:FREAK脆弱性チェック方法", read: 0, points: -1, kids: [  ], opid: 2775910 }, 2775984: { uid: 1, pid: 2775971, subject: "Re:Microsoftは", read: 0, points: 0, kids: [ 2775985 ], opid: 2775971 }, 2775781: { uid: 1, pid: 0, read: 0, points: 4, kids: [ 2775791, 2775827 ], opid: 0 }, 2775842: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 2775886, 2775897 ], opid: 0 }, 2776834: { uid: 1, pid: 2776466, subject: "Re:Microsoftは", read: 0, points: 0, kids: [ 2778392 ], opid: 2776466 }, 2775771: { uid: 1, pid: 2775764, subject: "Re:もううんざり", read: 0, points: 0, kids: [  ], opid: 2775764 }, 2775767: { uid: 1, pid: 0, read: 0, points: 1, kids: [ 2775775 ], opid: 0 }, 2776466: { uid: 1, pid: 2775888, subject: "Re:Microsoftは", read: 0, points: 0, kids: [ 2776834 ], opid: 2775888 }, 2777282: { uid: 1, pid: 2776894, subject: "Re:Microsoftは", read: 0, points: 0, kids: [  ], opid: 2776894 }, 2778392: { uid: 1, pid: 2776834, subject: "Re:Microsoftは", read: 0, points: 0, kids: [  ], opid: 2776834 }, 2775985: { uid: 1, pid: 2775984, subject: "Re:Microsoftは", read: 0, points: 0, kids: [  ], opid: 2775984 }, 2775803: { uid: 1, pid: 2775775, subject: "Re:編集のお仕事", read: 0, points: 0, kids: [  ], opid: 2775775 }, 2775859: { uid: 38066, pid: 0, read: 0, points: 1, kids: [ 2775861, 2775870, 2775887, 2775948 ], opid: 0 }, 2775964: { uid: 38066, pid: 2775870, subject: "Re:20年前には脆弱性では無かった", read: 0, points: 1, kids: [  ], opid: 2775870 }, 2780548: { uid: 1, pid: 0, read: 0, points: 0, kids: [  ], opid: 0 }, 2775897: { uid: 1, pid: 2775842, subject: "Re:バグじゃないような", read: 0, points: 0, kids: [ 2775940 ], opid: 2775842 }, 2776723: { uid: 1, pid: 2775971, subject: "Re:Microsoftは", read: 0, points: 0, kids: [ 2776894, 2777350 ], opid: 2775971 }, 2775861: { uid: 1, pid: 2775859, subject: "Re:20年前には脆弱性では無かった", read: 0, points: 0, kids: [  ], opid: 2775859 }, 2775775: { uid: 1, pid: 2775767, read: 0, points: 1, kids: [ 2775803 ], opid: 2775767 }, 2775952: { uid: 1, pid: 2775888, subject: "Re:Microsoftは", read: 0, points: 0, kids: [  ], opid: 2775888 }, 2775870: { uid: 41940, pid: 2775859, subject: "Re:20年前には脆弱性では無かった", read: 0, points: 1, kids: [ 2775964 ], opid: 2775859 }, 2775940: { uid: 1, pid: 2775897, subject: "Re:バグじゃないような", read: 0, points: 0, kids: [ 2775960 ], opid: 2775897 }, 2775827: { uid: 1, pid: 2775781, subject: "Re:FREAK脆弱性チェック方法", read: 0, points: 0, kids: [ 2775910 ], opid: 2775781 }, 2776562: { uid: 1, pid: 2775937, subject: "Re:TLSと聞くと", read: 0, points: 0, kids: [ 2776686 ], opid: 2775937 }, 2775886: { uid: 1, pid: 2775842, subject: "Re:バグじゃないような", read: 0, points: 0, kids: [  ], opid: 2775842 }, 2775776: { uid: 1, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 2775920: { uid: 1, pid: 2775758, read: 0, points: 1, kids: [  ], opid: 2775758 }, 2775758: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 2775920 ], opid: 0 }, 2775960: { uid: 1, pid: 2775940, subject: "Re:バグじゃないような", read: 0, points: 0, kids: [  ], opid: 2775940 } });
+
+D2.thresh_totals({6:{6:{1:41,3:0,2:0}},4:{6:{1:40,3:0,2:1},4:{1:40,3:1,2:0},5:{1:40,3:1,2:0}},1:{6:{1:27,3:0,2:14},4:{1:27,3:1,2:13},1:{1:27,3:14,2:0},3:{1:27,3:4,2:10},2:{1:27,3:8,2:6},5:{1:27,3:1,2:13}},3:{6:{1:39,3:0,2:2},4:{1:39,3:1,2:1},3:{1:39,3:2,2:0},5:{1:39,3:1,2:1}},0:{6:{1:2,3:0,2:39},4:{1:2,3:1,2:38},1:{1:2,3:18,2:21},3:{1:2,3:4,2:35},0:{1:2,3:39,2:0},2:{1:2,3:8,2:31},5:{1:2,3:1,2:38}},2:{6:{1:36,3:0,2:5},4:{1:36,3:1,2:4},3:{1:36,3:4,2:1},2:{1:36,3:5,2:0},5:{1:36,3:1,2:4}},5:{6:{1:41,3:0,2:0},5:{1:41,3:0,2:0}},"-1":{6:{1:0,3:0,2:41},4:{1:0,3:1,2:40},1:{1:0,3:18,2:23},3:{1:0,3:4,2:37},0:{1:0,3:39,2:2},2:{1:0,3:8,2:33},5:{1:0,3:1,2:40},"-1":{1:0,3:41,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([2775781,2775776,2775937,2775764,2775767,2775859,2775758,2775842,2775888,2780548]);
+D2.root_comments_hash({2775767:1,2775888:1,2775937:1,2775776:1,2775859:1,2775781:1,2780548:1,2775764:1,2775758:1,2775842:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(653719);
+
+D2.d2_seen('2775758,6,3,4,4,1,5,10,12,24,15,17,2,9,16,1,1,9,13,10,3,14,3,8,4,8,4,7,13,1,481,96,67,57,37,111,60,388,68,1042,2156');
+D2.more_comments_num(0);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_2775781"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775781"></div>
+<div class="comment-item" id="comment_2775781">
+<div class="commentTop comment-top newcomment" id="comment_top_2775781">
+<div class="title">
+<h4><a href="../../../../../comments.pl_5a1005d6.html" id="comment_link_2775781" name="comment_link_2775781" onclick="return D2.setFocusComment(2775781)">FREAK脆弱性チェック方法</a>
+<span class="score" id="comment_score_2775781">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775781); return false">スコア:4</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775781">on 2015年03月11日 16時26分
+			 (<a href="../../../../../../srad.jp/comment/2775781.html">#2775781</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775781"><p>シマンテック SSL Toolbox<br/><a href="https://ssltools.websecurity.symantec.com/checker/" rel="nofollow" title="symantec.com">https://ssltools.websecurity.symantec.com/checker/</a> [symantec.com]</p><p>または、SSL Server Test（時間が掛かります）<br/><a href="https://www.ssllabs.com/ssltest/" rel="nofollow" title="ssllabs.com">https://www.ssllabs.com/ssltest/</a> [ssllabs.com]</p><p>もしくは、コマンドラインツールを使って検証<br/>（EXP から始まるものが含まれているかを確認すれば良い）<br/><a href="https://github.com/jvehent/cipherscan" rel="nofollow" title="github.com">https://github.com/jvehent/cipherscan</a> [github.com]</p><p>Webサーバーサイドでの対策は、opensslバージョンアップだけでなくて、<br/>SSLCipherSuite で EXPを無効化する必要があると認識しています。</p></div>
+</div>
+</div>
+<div id="replyto_2775781"></div>
+<ul class="comment-group" id="group_2775781">
+<li class="hide" id="hiddens_2775781"></li>
+</ul><ul id="commtree_2775781"><li class="comment full contain" id="tree_2775791"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775791"></div>
+<div class="comment-item" id="comment_2775791">
+<div class="commentTop comment-top newcomment" id="comment_top_2775791">
+<div class="title">
+<h4><a href="../../../../../comments.pl_21f3e66b.html" id="comment_link_2775791" name="comment_link_2775791" onclick="return D2.setFocusComment(2775791)">Re:FREAK脆弱性チェック方法</a>
+<span class="score" id="comment_score_2775791">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775791); return false">スコア:3</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~nim/index.html">nim (10479)</a>
+<span class="otherdetails" id="comment_otherdetails_2775791">on 2015年03月11日 16時40分
+			 (<a href="../../../../../../srad.jp/comment/2775791.html">#2775791</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775791"><p>＞Webサーバーサイドでの対策は、opensslバージョンアップだけでなくて、<br/>＞SSLCipherSuite で EXPを無効化する必要があると認識しています。</p><p>むしろ、OpenSSL のアップデートは必要なくて、ただ CipherSuite に -EXP とか !EXP を足せばいいはず。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775791">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:FREAK脆弱性チェック方法')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775791'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775791'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775791'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_f7a12826.html" onclick="return D2.selectParent(2775781)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2775791"></div>
+<ul class="comment-group" id="group_2775791">
+<li class="hide" id="hiddens_2775791"></li>
+</ul></li><li class="comment oneline" id="tree_2775827"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775827"></div>
+<div class="comment-item" id="comment_2775827">
+<div class="commentTop comment-top newcomment" id="comment_top_2775827">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9772fb7c.html" id="comment_link_2775827" name="comment_link_2775827" onclick="return D2.setFocusComment(2775827)">Re:</a>
+<span class="score" id="comment_score_2775827">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775827); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775827"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775827"><p>&gt;または、SSL Server Test（時間が掛かります）<br/>&gt;https://www.ssllabs.com/ssltest/</p><p>いままでA判定出てたしつよい暗号を使うよう SSLCipherSuite を定義しているから関係ないぜ、とおもってたが、<br/>再度やってみたら評価基準が変わったのか WEAK 判定が出た (A判定は変わらないが) ので<br/>既にやったことのある人も再度やってみるがよし。</p><p>DHEまわりが 1024bit で WEAK 判定されたが Apache2.2 系ではなすすべ無し。つらい。<br/>Apache2.4.7 以降と nginx なら適宜設定すれば大丈夫らしい。<br/>DHEを切ると IE11 が繋がらなくなるようなので、これを切るわけにはいかないようだ。つらい。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775827"></div>
+</div>
+<div id="replyto_2775827"></div>
+<ul class="comment-group" id="group_2775827">
+<li class="hide" id="hiddens_2775827"></li>
+</ul><ul id="commtree_2775827"><li class="comment full contain" id="tree_2775910"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775910"></div>
+<div class="comment-item" id="comment_2775910">
+<div class="commentTop comment-top newcomment" id="comment_top_2775910">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1175e3db.html" id="comment_link_2775910" name="comment_link_2775910" onclick="return D2.setFocusComment(2775910)">Re:FREAK脆弱性チェック方法</a>
+<span class="score" id="comment_score_2775910">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775910); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~annoymouse%20coward/index.html">annoymouse coward (11178)</a>
+<span class="otherdetails" id="comment_otherdetails_2775910">on 2015年03月11日 20時24分
+			 (<a href="../../../../../../srad.jp/comment/2775910.html">#2775910</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~annoymouse%20coward/journal/index.html" title="2019年01月29日  8時35分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775910"><p>新しい脆弱性が発見されて，しかもそれは２０年前から存在してた脆弱性なんだから<br/>判定がWEAKに変化して当然だと思います</p><p>今回の脆弱性を発見した InriaとMicrosoft Researchの合同チームは<br/>最近精力的にTLS/SSLの見直しをおこなっていることで有名になっています</p><p>例えば，網羅的にテストを行なう自動検証用ツールを作ったりしていて，論文も大量に出しています<br/>かなりの予算と人数を投入して作業しているようですし，検証手順も新しい切り口が多いので<br/>これからも次々と脆弱性が発見されるはずです</p><p>ですからTLS/SSL周りは今後も定期的にチェックした方が良いと思います．</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775910">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:FREAK脆弱性チェック方法')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775910'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775910'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775910'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_bc814636.html" onclick="return D2.selectParent(2775827)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2775910"></div>
+<ul class="comment-group" id="group_2775910">
+<li class="hide" id="hiddens_2775910"></li>
+</ul><ul id="commtree_2775910"><li class="comment hidden" id="tree_2775923"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775923"></div>
+<div class="comment-item" id="comment_2775923">
+</div>
+<div id="replyto_2775923"></div>
+<ul class="comment-group" id="group_2775923">
+<li class="hide" id="hiddens_2775923"></li>
+</ul></li><li id="hidestring_2775910"><noscript><b class="more"><a href="../../../../../comments.pl_6d43de2a.html">1個のコメント</a> が現在のしきい値以下です。</b></noscript></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2775776"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775776"></div>
+<div class="comment-item" id="comment_2775776">
+<div class="commentTop comment-top newcomment" id="comment_top_2775776">
+<div class="title">
+<h4><a href="../../../../../comments.pl_16449318.html" id="comment_link_2775776" name="comment_link_2775776" onclick="return D2.setFocusComment(2775776)">OpenTransport???</a>
+<span class="score" id="comment_score_2775776">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775776); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775776">on 2015年03月11日 16時23分
+			 (<a href="../../../../../../srad.jp/comment/2775776.html">#2775776</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775776"><p><div class="quote"><p>OpenTransport（OS Xのシステム標準のTLSスタック）</p></div><p>いや、<a href="https://ja.wikipedia.org/wiki/Open_Transport" rel="nofollow" title="wikipedia.org">もう10年ちかく前に</a> [wikipedia.org] <a href="https://ja.wikipedia.org/wiki/Classic" rel="nofollow" title="wikipedia.org">OSから削除されてる</a> [wikipedia.org]APIのことを言われてもね……。</p><p># SecureTransportの間違いなのは知ってるのでAC</p></p></div>
+</div>
+</div>
+<div id="replyto_2775776"></div>
+<ul class="comment-group" id="group_2775776">
+<li class="hide" id="hiddens_2775776"></li>
+</ul></li><li class="comment full contain" id="tree_2775937"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775937"></div>
+<div class="comment-item" id="comment_2775937">
+<div class="commentTop comment-top newcomment" id="comment_top_2775937">
+<div class="title">
+<h4><a href="../../../../../comments.pl_876835f7.html" id="comment_link_2775937" name="comment_link_2775937" onclick="return D2.setFocusComment(2775937)">TLSと聞くと</a>
+<span class="score" id="comment_score_2775937">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775937); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~wolf03/index.html">wolf03 (39616)</a>
+<span class="otherdetails" id="comment_otherdetails_2775937">on 2015年03月11日 21時13分
+			 (<a href="../../../../../../srad.jp/comment/2775937.html">#2775937</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~wolf03/journal/index.html" title="2023年09月03日 23時49分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775937">仲間由紀恵とか思い出す・・・・</div>
+</div>
+</div>
+<div id="replyto_2775937"></div>
+<ul class="comment-group" id="group_2775937">
+<li class="hide" id="hiddens_2775937"></li>
+</ul><ul id="commtree_2775937"><li class="comment oneline" id="tree_2776562"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2776562"></div>
+<div class="comment-item" id="comment_2776562">
+<div class="commentTop comment-top newcomment" id="comment_top_2776562">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c623ffcc.html" id="comment_link_2776562" name="comment_link_2776562" onclick="return D2.setFocusComment(2776562)">Re:</a>
+<span class="score" id="comment_score_2776562">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2776562); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2776562"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2776562"><p>テンカワアキトやずっぽりお見通しのずっとずっと昔の話でしたっけ？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2776562"></div>
+</div>
+<div id="replyto_2776562"></div>
+<ul class="comment-group" id="group_2776562">
+<li class="hide" id="hiddens_2776562"></li>
+</ul><ul id="commtree_2776562"><li class="comment oneline" id="tree_2776686"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2776686"></div>
+<div class="comment-item" id="comment_2776686">
+<div class="commentTop comment-top newcomment" id="comment_top_2776686">
+<div class="title">
+<h4><a href="../../../../../comments.pl_97504187.html" id="comment_link_2776686" name="comment_link_2776686" onclick="return D2.setFocusComment(2776686)">Re:</a>
+<span class="score" id="comment_score_2776686">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2776686); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2776686"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2776686"><p>Wikipediaだと<br/>1996年11月 トゥルー・ラブストーリー(主題歌、CM)<br/>1998年 8月 機動戦艦ナデシコ 劇場版(ラピス・ラズリ 役)<br/>2000年 7月 TRICKシリーズ(山田奈緒子 役)</p><p>そんな離れてないというか、TRICKが結構昔というか・・・</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2776686"></div>
+</div>
+<div id="replyto_2776686"></div>
+<ul class="comment-group" id="group_2776686">
+<li class="hide" id="hiddens_2776686"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_2776629"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2776629"></div>
+<div class="comment-item" id="comment_2776629">
+<div class="commentTop comment-top newcomment" id="comment_top_2776629">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d655f2ae.html" id="comment_link_2776629" name="comment_link_2776629" onclick="return D2.setFocusComment(2776629)">Re:</a>
+<span class="score" id="comment_score_2776629">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2776629); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2776629"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2776629"><p>名曲ですね<br/>Rで主題歌が変わったのはがっかりでした</p><p># みさきまじかわいい</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2776629"></div>
+</div>
+<div id="replyto_2776629"></div>
+<ul class="comment-group" id="group_2776629">
+<li class="hide" id="hiddens_2776629"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_2775764"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775764"></div>
+<div class="comment-item" id="comment_2775764">
+<div class="commentTop comment-top newcomment" id="comment_top_2775764">
+<div class="title">
+<h4><a href="../../../../../comments.pl_418daccd.html" id="comment_link_2775764" name="comment_link_2775764" onclick="return D2.setFocusComment(2775764)">もううんざり</a>
+<span class="score" id="comment_score_2775764">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775764); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775764">on 2015年03月11日 16時03分
+			 (<a href="../../../../../../srad.jp/comment/2775764.html">#2775764</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775764"><p>SSLをやめてHTTPを使おう</p></div>
+</div>
+</div>
+<div id="replyto_2775764"></div>
+<ul class="comment-group" id="group_2775764">
+<li class="hide" id="hiddens_2775764"></li>
+</ul><ul id="commtree_2775764"><li class="comment oneline" id="tree_2775771"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775771"></div>
+<div class="comment-item" id="comment_2775771">
+<div class="commentTop comment-top newcomment" id="comment_top_2775771">
+<div class="title">
+<h4><a href="../../../../../comments.pl_fae2b978.html" id="comment_link_2775771" name="comment_link_2775771" onclick="return D2.setFocusComment(2775771)">Re:</a>
+<span class="score" id="comment_score_2775771">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775771); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775771"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775771"><p><a href="http://ja.wikipedia.org/wiki/%E3%82%B5%E3%82%A4%E3%83%90%E3%83%BC%E3%83%BB%E3%83%8E%E3%83%BC%E3%82%AC%E3%83%BC%E3%83%89%E6%88%A6%E6%B3%95" rel="nofollow" title="wikipedia.org">サイバー・ノーガード戦法</a> [wikipedia.org]ですね、分かります。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775771"></div>
+</div>
+<div id="replyto_2775771"></div>
+<ul class="comment-group" id="group_2775771">
+<li class="hide" id="hiddens_2775771"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_2775767"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775767"></div>
+<div class="comment-item" id="comment_2775767">
+<div class="commentTop comment-top newcomment" id="comment_top_2775767">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2b3870a0.html" id="comment_link_2775767" name="comment_link_2775767" onclick="return D2.setFocusComment(2775767)">WindowsとOS X</a>
+<span class="score" id="comment_score_2775767">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775767); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775767">on 2015年03月11日 16時08分
+			 (<a href="../../../../../../srad.jp/comment/2775767.html">#2775767</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775767"><p>まるでWindowsとOS Xでは未対応のような書き方だが、どちらのOSでも最新のfixで対応済み。</p><p>告知サイトの脆弱性情報：</p><p><div class="quote"><p>SecureTransport (CVE-2015-1067, CVE-2015-2235): versions before iOS 8.2, AppleTV 7.1, and OS X Security Update 2015-002 are vulnerable. Update your OS.<br/>SChannel (CVE-2015-1637): before KB3046049 is vulnerable. See the security bulletin. Update your OS.</p> </div><p>KB3046049は3/9に配賦されている。3/11のタレコミでこれでは、デマを流しているといわれても仕方ない。</p></p></div>
+</div>
+</div>
+<div id="replyto_2775767"></div>
+<ul class="comment-group" id="group_2775767">
+<li class="hide" id="hiddens_2775767"></li>
+</ul><ul id="commtree_2775767"><li class="comment full contain" id="tree_2775775"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775775"></div>
+<div class="comment-item" id="comment_2775775">
+<div class="commentTop comment-top newcomment" id="comment_top_2775775">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7b23ae60.html" id="comment_link_2775775" name="comment_link_2775775" onclick="return D2.setFocusComment(2775775)">編集のお仕事</a>
+<span class="score" id="comment_score_2775775">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775775); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775775">on 2015年03月11日 16時22分
+			 (<a href="../../../../../../srad.jp/comment/2775775.html">#2775775</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775775"><p>タレコミは 3/9 で，しかも「現時点」ではなく「タレコミ時点で」となっているね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775775">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('編集のお仕事')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775775'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775775'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775775'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_226b0313.html" onclick="return D2.selectParent(2775767)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2775775"></div>
+<ul class="comment-group" id="group_2775775">
+<li class="hide" id="hiddens_2775775"></li>
+</ul><ul id="commtree_2775775"><li class="comment oneline" id="tree_2775803"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775803"></div>
+<div class="comment-item" id="comment_2775803">
+<div class="commentTop comment-top newcomment" id="comment_top_2775803">
+<div class="title">
+<h4><a href="../../../../../comments.pl_93632d38.html" id="comment_link_2775803" name="comment_link_2775803" onclick="return D2.setFocusComment(2775803)">Re:</a>
+<span class="score" id="comment_score_2775803">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775803); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775803"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775803"><p>追記or修正よろ＞編集方々</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775803"></div>
+</div>
+<div id="replyto_2775803"></div>
+<ul class="comment-group" id="group_2775803">
+<li class="hide" id="hiddens_2775803"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2775859"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775859"></div>
+<div class="comment-item" id="comment_2775859">
+<div class="commentTop comment-top newcomment" id="comment_top_2775859">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0d3c8fd1.html" id="comment_link_2775859" name="comment_link_2775859" onclick="return D2.setFocusComment(2775859)">20年前には脆弱性では無かった</a>
+<span class="score" id="comment_score_2775859">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775859); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~JULY/index.html">JULY (38066)</a>
+<span class="otherdetails" id="comment_otherdetails_2775859">on 2015年03月11日 18時39分
+			 (<a href="../../../../../../srad.jp/comment/2775859.html">#2775859</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775859"><p>当時、米国外で SSL を使おうとしたら、当然、その「輸出グレード」の暗号しか選択肢が無かったわけで、その当時としては脆弱性でもなんでも無い。</p><p>まぁ、輸出グレードの暗号が、強度的に十分かどうかは、当時から「このくらいの金額と時間をかければ解ける」みたいな話はあったけど、少なくとも、今、輸出グレードの暗号を解読するよりは、遥かに難しい状態だった事は確か。</p><p>だから、あくまでも「今となっては強度が不十分な暗号を使わせてしまう事ができる」というのが問題なのであって、「20 年前からの脆弱性」というのはおかしい。</p></div>
+</div>
+</div>
+<div id="replyto_2775859"></div>
+<ul class="comment-group" id="group_2775859">
+<li class="hide" id="hiddens_2775859"></li>
+</ul><ul id="commtree_2775859"><li class="comment full contain" id="tree_2775870"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775870"></div>
+<div class="comment-item" id="comment_2775870">
+<div class="commentTop comment-top newcomment" id="comment_top_2775870">
+<div class="title">
+<h4><a href="../../../../../comments.pl_adbc57f7.html" id="comment_link_2775870" name="comment_link_2775870" onclick="return D2.setFocusComment(2775870)">Re:20年前には脆弱性では無かった</a>
+<span class="score" id="comment_score_2775870">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775870); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kentok/index.html">kentok (41940)</a>
+<span class="otherdetails" id="comment_otherdetails_2775870">on 2015年03月11日 19時04分
+			 (<a href="../../../../../../srad.jp/comment/2775870.html">#2775870</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775870"><p>違います。<br/>このバグは高強度の暗号が使えるはずのアメリカ内でも<br/>弱い暗号がつかわれてしまうというものです。</p></div>
+<div class="sig" id="comment_sig_2775870">-- <br/>-- 風は東京に吹いているか</div>
+</div>
+<div class="commentSub" id="comment_sub_2775870">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:20年前には脆弱性では無かった')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775870'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775870'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775870'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_d82c1b8f.html" onclick="return D2.selectParent(2775859)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2775870"></div>
+<ul class="comment-group" id="group_2775870">
+<li class="hide" id="hiddens_2775870"></li>
+</ul><ul id="commtree_2775870"><li class="comment full contain" id="tree_2775964"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775964"></div>
+<div class="comment-item" id="comment_2775964">
+<div class="commentTop comment-top newcomment" id="comment_top_2775964">
+<div class="title">
+<h4><a href="../../../../../comments.pl_01fc27d5.html" id="comment_link_2775964" name="comment_link_2775964" onclick="return D2.setFocusComment(2775964)">Re:20年前には脆弱性では無かった</a>
+<span class="score" id="comment_score_2775964">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775964); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~JULY/index.html">JULY (38066)</a>
+<span class="otherdetails" id="comment_otherdetails_2775964">on 2015年03月11日 22時13分
+			 (<a href="../../../../../../srad.jp/comment/2775964.html">#2775964</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775964"><p>あっ、そうか。確かに米国内（および、輸出規制対象ではない国）においては、意図せずに暗号がダウングレードさせられる脆弱性になりますね。</p><p>ところで、輸出グレードの暗号にダウングレードさせられる脆弱性が、90 年代の実装から存在していた、となると、OpenSSL ではなく SSLeay の時代までさかのぼることになりますね。Microsoft も IE3 とかの時代から引き継がれていたのかなぁ。</p><p>逆に、Mozilla の NSS では問題が見つかってないとなると、その前身の　Netscape の実装には問題が無かったのかなぁ。それとも、どこかで修正されていたりしたのかなぁ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775964">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:20年前には脆弱性では無かった')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775964'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775964'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775964'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_718c3f61.html" onclick="return D2.selectParent(2775870)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2775964"></div>
+<ul class="comment-group" id="group_2775964">
+<li class="hide" id="hiddens_2775964"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_2775948"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775948"></div>
+<div class="comment-item" id="comment_2775948">
+<div class="commentTop comment-top newcomment" id="comment_top_2775948">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6fffd0dc.html" id="comment_link_2775948" name="comment_link_2775948" onclick="return D2.setFocusComment(2775948)">Re:20年前には脆弱性では無かった</a>
+<span class="score" id="comment_score_2775948">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775948); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775948">on 2015年03月11日 21時36分
+			 (<a href="../../../../../../srad.jp/comment/2775948.html">#2775948</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775948"><p>二つの問題の合わせ技で、</p><p>・攻撃者が被害者の使う暗号を変更できる<br/>・脆弱な暗号が双方で利用可能である</p><p>ということだと思います。攻撃を防ぐポイントが2箇所にありますし、2つの問題と言えるのでは。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775948">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:20年前には脆弱性では無かった')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775948'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775948'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775948'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_d82c1b8f.html" onclick="return D2.selectParent(2775859)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2775948"></div>
+<ul class="comment-group" id="group_2775948">
+<li class="hide" id="hiddens_2775948"></li>
+</ul></li><li class="comment oneline" id="tree_2775861"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775861"></div>
+<div class="comment-item" id="comment_2775861">
+<div class="commentTop comment-top newcomment" id="comment_top_2775861">
+<div class="title">
+<h4><a href="../../../../../comments.pl_cb8de0e2.html" id="comment_link_2775861" name="comment_link_2775861" onclick="return D2.setFocusComment(2775861)">Re:</a>
+<span class="score" id="comment_score_2775861">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775861); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775861"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775861"><p>「世界中に脆弱性を作らせた米政府の責任を追及する！」とか言えばいいんでしょうか？<br/>というか、いまだに当時の輸出グレードの証明書使っているところがあったんかい。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775861"></div>
+</div>
+<div id="replyto_2775861"></div>
+<ul class="comment-group" id="group_2775861">
+<li class="hide" id="hiddens_2775861"></li>
+</ul></li><li class="comment oneline" id="tree_2775887"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775887"></div>
+<div class="comment-item" id="comment_2775887">
+<div class="commentTop comment-top newcomment" id="comment_top_2775887">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2111a48a.html" id="comment_link_2775887" name="comment_link_2775887" onclick="return D2.setFocusComment(2775887)">Re:</a>
+<span class="score" id="comment_score_2775887">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775887); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775887"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775887"><p>米国内で実装されたのSSLが国外向けに輸出グレード暗号スイートを出していたということではなくて？</p><p>PGPのソースコードの書籍持ち出しが懐かしいな</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775887"></div>
+</div>
+<div id="replyto_2775887"></div>
+<ul class="comment-group" id="group_2775887">
+<li class="hide" id="hiddens_2775887"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_2775758"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775758"></div>
+<div class="comment-item" id="comment_2775758">
+<div class="commentTop comment-top newcomment" id="comment_top_2775758">
+<div class="title">
+<h4><a href="../../../../../comments.pl_724d946d.html" id="comment_link_2775758" name="comment_link_2775758" onclick="return D2.setFocusComment(2775758)">Windows標準のTLSスタック
+</a>
+<span class="score" id="comment_score_2775758">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775758); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775758">on 2015年03月11日 15時57分
+			 (<a href="../../../../../../srad.jp/comment/2775758.html">#2775758</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775758"><p>&gt; サポートされているすべてのバージョンのSchannel（Windows標準のTLSスタック）<br/>3月の更新でFREAK対応があったそうだけど、これはそれに含まれているのかな。</p></div>
+</div>
+</div>
+<div id="replyto_2775758"></div>
+<ul class="comment-group" id="group_2775758">
+<li class="hide" id="hiddens_2775758"></li>
+</ul><ul id="commtree_2775758"><li class="comment full contain" id="tree_2775920"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775920"></div>
+<div class="comment-item" id="comment_2775920">
+<div class="commentTop comment-top newcomment" id="comment_top_2775920">
+<div class="title">
+<h4><a href="../../../../../comments.pl_872c676e.html" id="comment_link_2775920" name="comment_link_2775920" onclick="return D2.setFocusComment(2775920)">Re:Windows標準のTLSスタック</a>
+<span class="score" id="comment_score_2775920">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775920); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775920">on 2015年03月11日 20時52分
+			 (<a href="../../../../../../srad.jp/comment/2775920.html">#2775920</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775920"><p>タレコミ時点(3/9)では影響あったけど、今回のMS15-031 (KB3046049)でServer2003およびVista以降では修正済み<br/><a href="https://technet.microsoft.com/library/security/MS15-031" rel="nofollow" title="microsoft.com">https://technet.microsoft.com/library/security/MS15-031</a> [microsoft.com]<br/>XPの死亡理由がまた一つ増えた</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775920">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:Windows標準のTLSスタック')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775920'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775920'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2775920'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_db7f3a61.html" onclick="return D2.selectParent(2775758)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2775920"></div>
+<ul class="comment-group" id="group_2775920">
+<li class="hide" id="hiddens_2775920"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_2775842"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775842"></div>
+<div class="comment-item" id="comment_2775842">
+<div class="commentTop comment-top newcomment" id="comment_top_2775842">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6b10c206.html" id="comment_link_2775842" name="comment_link_2775842" onclick="return D2.setFocusComment(2775842)">バグじゃないような</a>
+<span class="score" id="comment_score_2775842">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775842); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775842">on 2015年03月11日 17時56分
+			 (<a href="../../../../../../srad.jp/comment/2775842.html">#2775842</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775842"><p>当時の仕様なのでは</p></div>
+</div>
+</div>
+<div id="replyto_2775842"></div>
+<ul class="comment-group" id="group_2775842">
+<li class="hide" id="hiddens_2775842"></li>
+</ul><ul id="commtree_2775842"><li class="comment oneline" id="tree_2775886"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775886"></div>
+<div class="comment-item" id="comment_2775886">
+<div class="commentTop comment-top newcomment" id="comment_top_2775886">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4dcabd78.html" id="comment_link_2775886" name="comment_link_2775886" onclick="return D2.setFocusComment(2775886)">Re:</a>
+<span class="score" id="comment_score_2775886">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775886); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775886"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775886"><p>輸出暗号が存在すること自体は当時のみならず今でも仕様。<br/>クライアントが輸出暗号の使用をネゴシエーションしていないのに使わされるのは、当時も今もバグ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775886"></div>
+</div>
+<div id="replyto_2775886"></div>
+<ul class="comment-group" id="group_2775886">
+<li class="hide" id="hiddens_2775886"></li>
+</ul></li><li class="comment oneline" id="tree_2775897"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775897"></div>
+<div class="comment-item" id="comment_2775897">
+<div class="commentTop comment-top newcomment" id="comment_top_2775897">
+<div class="title">
+<h4><a href="../../../../../comments.pl_09c37da8.html" id="comment_link_2775897" name="comment_link_2775897" onclick="return D2.setFocusComment(2775897)">Re:</a>
+<span class="score" id="comment_score_2775897">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775897); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775897"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775897"><p>＞バグのあるクライアント実装に強制的に輸出暗号を使わせるというもの。</p><p>これが？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775897"></div>
+</div>
+<div id="replyto_2775897"></div>
+<ul class="comment-group" id="group_2775897">
+<li class="hide" id="hiddens_2775897"></li>
+</ul><ul id="commtree_2775897"><li class="comment oneline" id="tree_2775940"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775940"></div>
+<div class="comment-item" id="comment_2775940">
+<div class="commentTop comment-top newcomment" id="comment_top_2775940">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d1e47d5e.html" id="comment_link_2775940" name="comment_link_2775940" onclick="return D2.setFocusComment(2775940)">Re:</a>
+<span class="score" id="comment_score_2775940">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775940); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775940"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775940"><p>要請した物と違う種類の暗号が返ってきてるのにそれをそのまま利用するってのはバグじゃないですかね？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775940"></div>
+</div>
+<div id="replyto_2775940"></div>
+<ul class="comment-group" id="group_2775940">
+<li class="hide" id="hiddens_2775940"></li>
+</ul><ul id="commtree_2775940"><li class="comment oneline" id="tree_2775960"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775960"></div>
+<div class="comment-item" id="comment_2775960">
+<div class="commentTop comment-top newcomment" id="comment_top_2775960">
+<div class="title">
+<h4><a href="../../../../../comments.pl_65ab0cb1.html" id="comment_link_2775960" name="comment_link_2775960" onclick="return D2.setFocusComment(2775960)">Re:</a>
+<span class="score" id="comment_score_2775960">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775960); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775960"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775960"><p>SSLCipherSuite でつよい暗号を定義した上で、<br/>Apache なら SSLHonorCipherOrder を On にするんだ。<br/><span class="substr"> </span> <a href="http://httpd.apache.org/docs/2.2/mod/mod_ssl.html#sslhonorcipherorder" rel="nofollow" title="apache.org">http://httpd.apache.org/docs/2.2/mod/mod_ssl.html#sslhonorcipherorder</a> [apache.org] <br/>nginx なら ssl_prefer_server_ciphers を on だ。<br/> <a href="http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_prefer_server_ciphers" rel="nofollow" title="nginx.org">http://nginx.org/en/docs/http/ngx_http_ssl_module.htm</a> [nginx.org]</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775960"></div>
+</div>
+<div id="replyto_2775960"></div>
+<ul class="comment-group" id="group_2775960">
+<li class="hide" id="hiddens_2775960"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2775888"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775888"></div>
+<div class="comment-item" id="comment_2775888">
+<div class="commentTop comment-top newcomment" id="comment_top_2775888">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ad68c2fc.html" id="comment_link_2775888" name="comment_link_2775888" onclick="return D2.setFocusComment(2775888)">Microsoftは</a>
+<span class="score" id="comment_score_2775888">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775888); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775888">on 2015年03月11日 19時43分
+			 (<a href="../../../../../../srad.jp/comment/2775888.html">#2775888</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775888"><p>パッチリリース前にこれを公開したMicrosoft Researchの無責任さを非難しないの?</p></div>
+</div>
+</div>
+<div id="replyto_2775888"></div>
+<ul class="comment-group" id="group_2775888">
+<li class="hide" id="hiddens_2775888"></li>
+</ul><ul id="commtree_2775888"><li class="comment oneline" id="tree_2775952"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775952"></div>
+<div class="comment-item" id="comment_2775952">
+<div class="commentTop comment-top newcomment" id="comment_top_2775952">
+<div class="title">
+<h4><a href="../../../../../comments.pl_96c413c7.html" id="comment_link_2775952" name="comment_link_2775952" onclick="return D2.setFocusComment(2775952)">Re:</a>
+<span class="score" id="comment_score_2775952">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775952); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775952"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775952"><p>&gt; パッチリリース前にこれを公開したMicrosoft Researchの無責任さを非難しないの?</p><p>せっかくの良い指摘が「これ」が何なのか書いてないから伝わってませんな</p><p>勘違いでなければこんな感じかと思われます</p><p>１：MSがパッチリリース前に手動で対策する手段として<br/>　　グループポリシエディタを使って書き換える方法を掲載</p><p>２：Windows Updateでパッチ公開<br/>　　※ただし１で手動訂正していた場合には設定を戻しておかないと<br/>　　　再起動後にネット接続が正常にできなくなる場合がある<br/>　　　ということをパッチリリースページに補足掲載</p><p>３：自動アップデートが当たってネットに接続できなくなった方が阿鼻叫喚<span class="substr"> </span></p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775952"></div>
+</div>
+<div id="replyto_2775952"></div>
+<ul class="comment-group" id="group_2775952">
+<li class="hide" id="hiddens_2775952"></li>
+</ul></li><li class="comment oneline" id="tree_2776466"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2776466"></div>
+<div class="comment-item" id="comment_2776466">
+<div class="commentTop comment-top newcomment" id="comment_top_2776466">
+<div class="title">
+<h4><a href="../../../../../comments.pl_395a0b30.html" id="comment_link_2776466" name="comment_link_2776466" onclick="return D2.setFocusComment(2776466)">Re:</a>
+<span class="score" id="comment_score_2776466">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2776466); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2776466"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2776466"><p>MS信者は置いとくとして<br/>少なくとも、MSはMS Researchをたたかないと<br/>つじつま合わないよね。</p><p>あれだけ、Googleたたいたんだから<br/>まさか、自分の息のかかったところは<br/>パッチ公開前に脆弱性公表してもいいなんて言わないよね</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2776466"></div>
+</div>
+<div id="replyto_2776466"></div>
+<ul class="comment-group" id="group_2776466">
+<li class="hide" id="hiddens_2776466"></li>
+</ul><ul id="commtree_2776466"><li class="comment oneline" id="tree_2776834"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2776834"></div>
+<div class="comment-item" id="comment_2776834">
+<div class="commentTop comment-top newcomment" id="comment_top_2776834">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7c256a38.html" id="comment_link_2776834" name="comment_link_2776834" onclick="return D2.setFocusComment(2776834)">Re:</a>
+<span class="score" id="comment_score_2776834">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2776834); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2776834"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2776834"><p>Gは対応策ないまま公開、今回はある状態で公開。<br/>違うよね？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2776834"></div>
+</div>
+<div id="replyto_2776834"></div>
+<ul class="comment-group" id="group_2776834">
+<li class="hide" id="hiddens_2776834"></li>
+</ul><ul id="commtree_2776834"><li class="comment oneline" id="tree_2778392"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2778392"></div>
+<div class="comment-item" id="comment_2778392">
+<div class="commentTop comment-top newcomment" id="comment_top_2778392">
+<div class="title">
+<h4><a href="../../../../../comments.pl_03c0deab.html" id="comment_link_2778392" name="comment_link_2778392" onclick="return D2.setFocusComment(2778392)">Re:</a>
+<span class="score" id="comment_score_2778392">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2778392); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2778392"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2778392"><p>その対応策とやらは、一般人のどのくらいの人がやったの？<br/>ここ読んで出直してきたら？<br/><a href="http://blogs.technet.com/b/jpsecurity/archive/2010/07/28/3347185.aspx" rel="nofollow" title="technet.com">http://blogs.technet.com/b/jpsecurity/archive/2010/07/28/3347185.aspx</a> [technet.com]</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2778392"></div>
+</div>
+<div id="replyto_2778392"></div>
+<ul class="comment-group" id="group_2778392">
+<li class="hide" id="hiddens_2778392"></li>
+</ul></li></ul></li></ul></li><li class="comment hidden" id="tree_2775971"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775971"></div>
+<div class="comment-item" id="comment_2775971">
+</div>
+<div id="replyto_2775971"></div>
+<ul class="comment-group" id="group_2775971">
+<li class="hide" id="hiddens_2775971"></li>
+</ul><ul id="commtree_2775971"><li class="comment oneline" id="tree_2775984"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775984"></div>
+<div class="comment-item" id="comment_2775984">
+<div class="commentTop comment-top newcomment" id="comment_top_2775984">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4a1b40a8.html" id="comment_link_2775984" name="comment_link_2775984" onclick="return D2.setFocusComment(2775984)">Re:</a>
+<span class="score" id="comment_score_2775984">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775984); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775984"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775984"><p><a href="index.html" title="srad.jp">http://security.srad.jp/story/15/03/11/063226/</a> [srad.jp]<br/>この話だっけ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775984"></div>
+</div>
+<div id="replyto_2775984"></div>
+<ul class="comment-group" id="group_2775984">
+<li class="hide" id="hiddens_2775984"></li>
+</ul><ul id="commtree_2775984"><li class="comment oneline" id="tree_2775985"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2775985"></div>
+<div class="comment-item" id="comment_2775985">
+<div class="commentTop comment-top newcomment" id="comment_top_2775985">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f4f1fb70.html" id="comment_link_2775985" name="comment_link_2775985" onclick="return D2.setFocusComment(2775985)">Re:</a>
+<span class="score" id="comment_score_2775985">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2775985); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2775985"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2775985"><p><a href="../../../01/18/013207/index.html" title="srad.jp">http://security.srad.jp/story/15/01/18/013207/</a> [srad.jp]<br/>すまない、貼り間違えた。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2775985"></div>
+</div>
+<div id="replyto_2775985"></div>
+<ul class="comment-group" id="group_2775985">
+<li class="hide" id="hiddens_2775985"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_2776723"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2776723"></div>
+<div class="comment-item" id="comment_2776723">
+<div class="commentTop comment-top newcomment" id="comment_top_2776723">
+<div class="title">
+<h4><a href="../../../../../comments.pl_57d3c66e.html" id="comment_link_2776723" name="comment_link_2776723" onclick="return D2.setFocusComment(2776723)">Re:</a>
+<span class="score" id="comment_score_2776723">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2776723); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2776723"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2776723"><p>マイナスモデ付けるぐらいならまともな反論書いてくださいよ<br/>それができないから信者扱いされるんです。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2776723"></div>
+</div>
+<div id="replyto_2776723"></div>
+<ul class="comment-group" id="group_2776723">
+<li class="hide" id="hiddens_2776723"></li>
+</ul><ul id="commtree_2776723"><li class="comment full contain" id="tree_2777350"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2777350"></div>
+<div class="comment-item" id="comment_2777350">
+<div class="commentTop comment-top newcomment" id="comment_top_2777350">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d978bb34.html" id="comment_link_2777350" name="comment_link_2777350" onclick="return D2.setFocusComment(2777350)">Re:Microsoftは</a>
+<span class="score" id="comment_score_2777350">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2777350); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Birdhead/index.html">Birdhead (16025)</a>
+<span class="otherdetails" id="comment_otherdetails_2777350">&lt;<a href="mailto:reversethis-%7Bpj.en.noid.3k%7D%20%7Bta%7D%20%7B3enim%7D">reversethis-{pj.en.noid.3k} {ta} {3enim}</a>&gt;
+			on 2015年03月14日  7時04分
+			 (<a href="../../../../../../srad.jp/comment/2777350.html">#2777350</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~Birdhead/journal/index.html" title="2018年02月08日  3時07分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2777350"><p>マイナスモデを付けた人は反論できないんですよ（そのストーリに付けた全モデレートがキャンセルされる）。<br/>どのモデレートのことについていっているのか知りませんけど。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2777350">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:Microsoftは')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2777350'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2777350'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=653719&amp;cid=2777350'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_895b8bdd.html" onclick="return D2.selectParent(2776723)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2777350"></div>
+<ul class="comment-group" id="group_2777350">
+<li class="hide" id="hiddens_2777350"></li>
+</ul></li><li class="comment oneline" id="tree_2776894"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2776894"></div>
+<div class="comment-item" id="comment_2776894">
+<div class="commentTop comment-top newcomment" id="comment_top_2776894">
+<div class="title">
+<h4><a href="../../../../../comments.pl_48001df5.html" id="comment_link_2776894" name="comment_link_2776894" onclick="return D2.setFocusComment(2776894)">Re:</a>
+<span class="score" id="comment_score_2776894">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2776894); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2776894"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2776894"><p>フレームのもとにマイナスモデが付く現実と、<br/>あなたに見える敵に、マイナスモデを付ける理由を与えている事実を理解しなさい。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2776894"></div>
+</div>
+<div id="replyto_2776894"></div>
+<ul class="comment-group" id="group_2776894">
+<li class="hide" id="hiddens_2776894"></li>
+</ul><ul id="commtree_2776894"><li class="comment oneline" id="tree_2777282"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2777282"></div>
+<div class="comment-item" id="comment_2777282">
+<div class="commentTop comment-top newcomment" id="comment_top_2777282">
+<div class="title">
+<h4><a href="../../../../../comments.pl_38a75e5e.html" id="comment_link_2777282" name="comment_link_2777282" onclick="return D2.setFocusComment(2777282)">Re:</a>
+<span class="score" id="comment_score_2777282">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2777282); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2777282"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2777282"><p>なんで自分の物差しで他人を測ろうとするんでしょうかね？<br/>私はもっとうまいやり方があるんじゃないかと言いたいだけなんですよ</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2777282"></div>
+</div>
+<div id="replyto_2777282"></div>
+<ul class="comment-group" id="group_2777282">
+<li class="hide" id="hiddens_2777282"></li>
+</ul></li></ul></li></ul></li></ul></li><li id="hidestring_2775888"><noscript><b class="more"><a href="../../../../../comments.pl_07758961.html">1個のコメント</a> が現在のしきい値以下です。</b></noscript></li></ul></li><li class="comment full contain" id="tree_2780548"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2780548"></div>
+<div class="comment-item" id="comment_2780548">
+<div class="commentTop comment-top newcomment" id="comment_top_2780548">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f195e79e.html" id="comment_link_2780548" name="comment_link_2780548" onclick="return D2.setFocusComment(2780548)">馬鹿なアメリカ</a>
+<span class="score" id="comment_score_2780548">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2780548); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2780548">on 2015年03月19日 10時35分
+			 (<a href="../../../../../../srad.jp/comment/2780548.html">#2780548</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2780548"><p>いつもながらアメリカのせいで世界中が迷惑する。アメリカは統合失調症の精神異常者か誇大妄想、強迫観念が異常な精神疾患者らで組織された国家ですね。</p><p>アメリカ製品にはいつも巨大な脆弱性がある。</p></div>
+</div>
+</div>
+<div id="replyto_2780548"></div>
+<ul class="comment-group" id="group_2780548">
+<li class="hide" id="hiddens_2780548"></li>
+</ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 2;
+		D2.currents()['full']     = 18;
+		D2.currents()['oneline']  = 21;
+		// D2.currents_total(41);
+
+		D2.abbrev_comments({2775952:352,2775960:81});
+		D2.noshow_comments([2775923,2775971]);
+		D2.pieces_comments([2775827,2776562,2776686,2776629,2775771,2775803,2775861,2775887,2775886,2775897,2775940,2775960,2775952,2776466,2776834,2778392,2775984,2775985,2776723,2776894,2777282]);
+		D2.init_hiddens([2775910,2775888]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">41</span>/<span class="totalcommentcnt">41</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>吾輩はリファレンスである。名前はまだ無い -- perlの中の人<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../../srad.jp/about.html">About</a></li>
+<li><a href="../../../../../../srad.jp/faq/index.html">FAQ</a></li>
+<li><a href="../../../../../../srad.jp/story/index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../../srad.jp/hof.html">殿堂入り</a></li>
+<li><a href="../../../../../../srad.jp/authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../../srad.jp/topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../../srad.jp/index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

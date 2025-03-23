@@ -1,0 +1,3251 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/15/06/20/175235.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>ゼロ除算発生時にデフォルトの値を返すようにしたら、深刻な問題が発生する？ | スラド サイエンス</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="ゼロ除算発生時にデフォルトの値を返すようにしたら、深刻な問題が発生する？ | スラド サイエンス" property="og:title">
+<meta content="https://srad.jp/static/topics/programming_64.png" property="og:image"/>
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '539694075909432681',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content="プログラムでゼロ除算が発生したときに、何らかのデフォルト値を返すようにすることは有害かどうか、というAsk Slashdot記事に1,000件以上のコメントが付き、大いに盛り上がっているようだ。 話としては、ゼロ除算のチェックに疲れ果てたベテランプログラマーが、ゼロ除算発生時に「0」を返すなどの処理をシステム全体の..." name="description"/>
+<meta content="プログラムでゼロ除算が発生したときに、何らかのデフォルト値を返すようにすることは有害かどうか、というAsk Slashdot記事に1,000件以上のコメントが付き、大いに盛り上がっているようだ。 話としては、ゼロ除算のチェックに疲れ果てたベテランプログラマーが、ゼロ除算発生時に「0」を返すなどの処理をシステム全体の..." property="og:description"/>
+<meta content="ゼロ除算発生時にデフォルトの値を返すようにしたら、深刻な問題が発生する？ | スラド サイエンス" itemprop="name"/>
+<meta content="プログラムでゼロ除算が発生したときに、何らかのデフォルト値を返すようにすることは有害かどうか、というAsk Slashdot記事に1,000件以上のコメントが付き、大いに盛り上がっているようだ。 話としては、ゼロ除算のチェックに疲れ果てたベテランプログラマーが、ゼロ除算発生時に「0」を返すなどの処理をシステム全体の..." itemprop="description"/>
+<link href="../../../../../../srad.jp/index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../../srad.jp/search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../../srad.jp/science.rss" rel="alternate" title="スラド science RSS" type="application/rss+xml"/>
+<link href="../../../../../../srad.jp/static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../../srad.jp/static/topics/programming_64.png" rel="image_src"/>
+<link href="../../../../../../srad.jp/static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../../srad.jp/static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../../srad.jp/static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/15/06/20/175235/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'science';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//science.srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/15/06/20/175235.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../../srad.jp/recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../../srad.jp/popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../../srad.jp/comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../../srad.jp/journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../../srad.jp/polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：サイエンス</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="active" id="fhsection-science">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-10">サイエンス</a><span></span>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="" id="fhsection-security">
+<a class="data-title" href="../../../../../../security.srad.jp/index.html" id="fhsectiontitle-11">セキュリティ</a>
+</li>
+<li class="active" id="fhsection-science">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-10">サイエンス</a><span></span>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="12187100" data-fhtype="story" id="firehose-12187100">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">12187100</span>
+<span class="type">story</span>
+</span>
+<header>
+<span class="topic" id="topic-12187100">
+<a href="../../../../../../srad.jp/stories/programming.html" onclick="return addfhfilter('programming');">
+<img alt="プログラミング" height="64" src="../../../../../../srad.jp/static/topics/programming_64.png" title="プログラミング" width="64"/>
+</a>
+</span>
+<h2 class="story">
+<span id="title-12187100"> <a href="index.html">ゼロ除算発生時にデフォルトの値を返すようにしたら、深刻な問題が発生する？</a></span>
+<span class="comments commentcnt-12187100">199</span>
+</h2>
+<div class="details" id="details-12187100">ストーリー by headless
+	<time datetime="2015-06-21T19:34+09:00" id="fhtime-12187100">2015年06月21日 19時34分</time><br/>除算 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "ゼロ除算発生時にデフォルトの値を返すようにしたら、深刻な問題が発生する？",
+  "datePublished": "2015-06-21T19:34+09:00",
+  "articleBody": "プログラムでゼロ除算が発生したときに、何らかのデフォルト値を返すようにすることは有害かどうか、というAsk Slashdot記事に1,000件以上のコメントが付き、大いに盛り上がっているようだ。 話としては、ゼロ除算のチェックに疲れ果てたベテランプログラマーが、ゼロ除算発生時に「0」を返すなどの処理をシステム全体のデフォルトとして設定することを夢見るというもの。0以外ではどのような値がゼロ除算の結果として適切か、とも尋ねている。皆さんのご意見はいかがだろうか。",
+  "image": "https://srad.jp/static/topics/programming_64.png"
+}
+</script>
+<div class="body" id="fhbody-12187100">
+<div class="contents_text p" id="text-12187100">
+        プログラムでゼロ除算が発生したときに、何らかのデフォルト値を返すようにすることは有害かどうか、という<a href="http://ask.slashdot.org/story/15/06/18/1634205/ask-slashdot-whats-the-harm-in-a-default-setting-for-div-by-zero">Ask Slashdot記事</a>に1,000件以上のコメントが付き、大いに盛り上がっているようだ。
+<br/> <br/>
+
+話としては、ゼロ除算のチェックに疲れ果てたベテランプログラマーが、ゼロ除算発生時に「0」を返すなどの処理をシステム全体のデフォルトとして設定することを夢見るというもの。0以外ではどのような値がゼロ除算の結果として適切か、とも尋ねている。皆さんのご意見はいかがだろうか。
+        </div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //science.srad.jp/story/15/06/20/175235/ -->
+<!-- http://science.srad.jp/story/15/06/20/175235/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://science.srad.jp/story/15/06/20/175235/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://science.srad.jp/story/15/06/20/175235/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/science.srad.jp/story/15/06/20/175235/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../../srad.jp/about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">199</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-12187100"><a class="topic tag" href="../../../../../../srad.jp/tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%82%B9%E3%83%A9%E3%83%89%E3%81%AB%E8%81%9E%E3%81%91%EF%BC%81.html" rel="statictag" target="_blank">スラドに聞け！</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%83%87%E3%83%99%E3%83%AD%E3%83%83%E3%83%91%E3%83%BC.html" rel="statictag" target="_blank">デベロッパー</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E6%95%B0%E5%AD%A6.html" rel="statictag" target="_blank">数学</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../../../../../../mobile.srad.jp/story/15/06/20/173207/index.html" id="hrefns">Nokia CEO、携帯電話事業の再開を明言</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../../../../developers.srad.jp/story/15/04/19/0731204/index.html">前置インクリメント(++x) よりも後置インクリメント(x++) のほうが高速？</a></h3><h3><a href="../../../../../../developers.srad.jp/story/15/02/14/2017207/index.html">C言語の開発者によるgoto文の使い方を対象とした実証研究の結果、「goto文は無害だと考えられる」</a></h3><h3><a href="../../../../14/11/25/1740205/index.html">「全ての素数の積は偶数」は正しいか</a></h3><h3><a href="../../../../../../askslashdot.srad.jp/story/14/09/06/0510257/index.html">悩まされてしまうプログラミング言語の奇妙な特徴は？</a></h3><h3><a href="../../../../../../developers.srad.jp/story/14/06/28/0326209/index.html">ビルド失敗の原因は？</a></h3><h3><a href="../../../../../../apple.srad.jp/story/14/02/24/094232/index.html">iOS7.0.6で修正された「最悪のセキュリティバグ」はありがちなコーディングミスで発生していた</a></h3><h3><a href="../../../../../../developers.srad.jp/story/13/09/03/0215228/index.html">世界最悪のプログラミング環境は？</a></h3><h3><a href="../../../../13/07/02/081209/index.html">オーストラリア空軍の求人広告、間違いがあり応募不可能に</a></h3><h3><a href="../../../../../../developers.srad.jp/story/13/05/03/2255209/index.html">同僚の雑な仕事に対応するには</a></h3><h3><a href="../../../../../../developers.srad.jp/story/13/02/05/0255214/index.html">関数型言語を採用するプロジェクトが増加、果たして本当に開発効率は高いのか？</a></h3><h3><a href="../../../../12/11/27/0220247/index.html">「9割る0は0」と教えている小学校が存在する？</a></h3><h3><a href="../../../../../../developers.srad.jp/story/11/06/07/0151249/index.html">誤差を許容することで劇的な省電力を目指すコンピューティング</a></h3><h3><a href="../../../../../../srad.jp/story/11/04/06/088243/index.html">Tron:Legacy でアノ人が使っていたのは Emacs の eshell だった</a></h3><h3><a href="../../../../../../developers.srad.jp/story/08/07/22/1057248/index.html">いいコーディング規約、悪いコーディング規約？</a></h3><h3><a href="../../../../../../developers.srad.jp/story/15/10/23/2131239/index.html">ついつい使ってしまうプログラミングの悪いテクニックは？</a></h3><h3><a href="../../../../../../apple.srad.jp/story/15/07/05/089238/index.html">Siriに聞け: 0割る0は？</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="ゼロ除算発生時にデフォルトの値を返すようにしたら、深刻な問題が発生する？のストーリーへ戻る">ゼロ除算発生時にデフォルトの値を返すようにしたら、深刻な問題が発生する？</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//science.srad.jp/story/15/06/20/175235/';
+var parent_item_title = 'ゼロ除算発生時にデフォルトの値を返すようにしたら、深刻な問題が発生する？';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「ゼロ除算発生時にデフォルトの値を返すようにしたら、深刻な問題が発生する？」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//science.srad.jp/search.pl?op=comments&amp;sid=661070" class="btn"><span class="totalcommentcnt">199</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//science.srad.jp/comments.pl?sid=661070"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_12e27d7c.html"><span>検索</span><span class="totalcommentcnt">199</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../../srad.jp/static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 2834837: { uid: 23086, pid: 2834733, subject: "Re:C言語なら", read: 0, points: 1, kids: [  ], opid: 2834733 }, 2834730: { uid: 41273, pid: 2834671, subject: "Re:一部の世界では正しい", read: 0, points: 1, kids: [ 2834839 ], opid: 2834671 }, 2834739: { uid: undefined, pid: 2834686, read: 0, points: -2, kids: [ 2834780, 2834835 ], opid: undefined }, 2834806: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 2834808 ], opid: undefined }, 2834684: { uid: undefined, pid: 2834672, read: 0, points: -2, kids: [ 2834733 ], opid: undefined }, 2834839: { uid: 1, pid: 2834730, subject: "Re:一部の世界では正しい", read: 0, points: 2, kids: [  ], opid: 2834730 }, 2834769: { uid: 27776, pid: 0, read: 0, points: 4, kids: [  ], opid: 0 }, 2834906: { uid: 31598, pid: 2834904, subject: "Re:一部の世界では正しい", read: 0, points: 2, kids: [  ], opid: 2834904 }, 2834889: { uid: 10969, pid: 2834760, subject: "Re:一部の世界では正しい", read: 0, points: 2, kids: [ 2834904, 2835157 ], opid: 2834760 }, 2834904: { uid: 31598, pid: 2834889, subject: "Re:一部の世界では正しい", read: 0, points: 2, kids: [ 2834906 ], opid: 2834889 }, 2834925: { uid: 1, pid: 2834881, subject: "Re:出なかった", read: 0, points: 1, kids: [  ], opid: 2834881 }, 2834755: { uid: undefined, pid: 2834717, read: 0, points: -2, kids: [ 2834758 ], opid: undefined }, 2834866: { uid: 1, pid: 2834686, subject: "Re:……いや、だから……", read: 0, points: 1, kids: [  ], opid: 2834686 }, 2834794: { uid: 1, pid: 2834683, subject: "Re:エラーはエラーとして現出させよ", read: 0, points: 1, kids: [ 2834809 ], opid: 2834683 }, 2835003: { uid: 1, pid: 2834809, subject: "Re:エラーはエラーとして現出させよ", read: 0, points: 2, kids: [  ], opid: 2834809 }, 2834753: { uid: 33181, pid: 2834747, subject: "Re:提案", read: 0, points: 2, kids: [  ], opid: 2834747 }, 2834803: { uid: undefined, pid: 2834703, read: 0, points: -2, kids: [ 2834870 ], opid: undefined }, 2834671: { uid: 1, pid: 0, read: 0, points: 5, kids: [ 2834711, 2834730, 2834822, 2834893, 2834959 ], opid: 0 }, 2834805: { uid: undefined, pid: 2834773, read: 0, points: -2, kids: [ 2834841 ], opid: undefined }, 2834835: { uid: 1042, pid: 2834739, subject: "Re:……いや、だから……", read: 0, points: 2, kids: [  ], opid: 2834739 }, 2834854: { uid: 1, pid: 2834822, subject: "Re:一部の世界では正しい", read: 0, points: 1, kids: [ 2834937 ], opid: 2834822 }, 2834832: { uid: 45149, pid: 2834725, subject: "Re:マルヒ", read: 0, points: 1, kids: [ 2834872 ], opid: 2834725 }, 2835157: { uid: 32369, pid: 2834889, subject: "Re:一部の世界では正しい", read: 0, points: 2, kids: [  ], opid: 2834889 }, 2834809: { uid: undefined, pid: 2834794, read: 0, points: -2, kids: [ 2835003 ], opid: undefined }, 2834900: { uid: 11941, pid: 2834711, subject: "Re:一部の世界では正しい", read: 0, points: 2, kids: [ 2834988 ], opid: 2834711 }, 2834733: { uid: undefined, pid: 2834684, read: 0, points: -2, kids: [ 2834837 ], opid: undefined }, 2834821: { uid: 2409, pid: 0, read: 0, points: 3, kids: [  ], opid: 0 }, 2834988: { uid: 10969, pid: 2834900, subject: "Re:一部の世界では正しい", read: 0, points: 2, kids: [ 2835007 ], opid: 2834900 }, 2834802: { uid: 1, pid: 2834773, subject: "Re:割り算させない", read: 0, points: 1, kids: [ 2834836 ], opid: 2834773 }, 2834859: { uid: 20313, pid: 2834711, subject: "Re:一部の世界では正しい", read: 0, points: 1, kids: [  ], opid: 2834711 }, 2834937: { uid: 10969, pid: 2834854, subject: "Re:一部の世界では正しい", read: 0, points: 2, kids: [  ], opid: 2834854 }, 2834893: { uid: 1, pid: 2834671, subject: "Re:一部の世界では正しい", read: 0, points: 1, kids: [  ], opid: 2834671 }, 2834780: { uid: undefined, pid: 2834739, read: 0, points: -2, kids: [ 2834789 ], opid: undefined }, 2834683: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 2834751, 2834794, 2834845 ], opid: undefined }, 2834663: { uid: 31598, pid: 0, read: 0, points: 2, kids: [ 2834670 ], opid: 0 }, 2834846: { uid: 45149, pid: 2834686, subject: "Re:……いや、だから……", read: 0, points: 1, kids: [  ], opid: 2834686 }, 2834670: { uid: undefined, pid: 2834663, read: 0, points: -2, kids: [ 2834703 ], opid: undefined }, 2834747: { uid: undefined, pid: 2834741, read: 0, points: -2, kids: [ 2834753 ], opid: undefined }, 2834808: { uid: 8040, pid: 2834806, subject: "Re:除算ってそんなに出てきますかねぇ", read: 0, points: 2, kids: [  ], opid: 2834806 }, 2834717: { uid: 36555, pid: 0, read: 0, points: 2, kids: [ 2834736, 2834755 ], opid: 0 }, 2834845: { uid: 1, pid: 2834683, subject: "Re:エラーはエラーとして現出させよ", read: 0, points: 1, kids: [  ], opid: 2834683 }, 2834741: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 2834747 ], opid: undefined }, 2834751: { uid: undefined, pid: 2834683, read: 0, points: -2, kids: [ 2834767 ], opid: undefined }, 2834736: { uid: 46023, pid: 2834717, subject: "Re:深刻な問題＝深刻なバグ？", read: 0, points: 2, kids: [  ], opid: 2834717 }, 2834773: { uid: 1, pid: 0, read: 0, points: 5, kids: [ 2834802, 2834805 ], opid: 0 }, 2834870: { uid: undefined, pid: 2834803, read: 0, points: -2, kids: [ 2834903 ], opid: undefined }, 2834725: { uid: 1, pid: 0, read: 0, points: 1, kids: [ 2834832 ], opid: 0 }, 2834770: { uid: 47265, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 2834822: { uid: undefined, pid: 2834671, read: 0, points: -2, kids: [ 2834854 ], opid: undefined }, 2834869: { uid: 45505, pid: 2834672, subject: "Re:C言語なら", read: 0, points: 1, kids: [  ], opid: 2834672 }, 2834767: { uid: undefined, pid: 2834751, read: 0, points: -2, kids: [ 2834777 ], opid: undefined }, 2834841: { uid: 1042, pid: 2834805, subject: "Re:割り算させない", read: 0, points: 1, kids: [  ], opid: 2834805 }, 2834711: { uid: 1, pid: 2834671, subject: "Re:一部の世界では正しい", read: 0, points: 2, kids: [ 2834760, 2834859, 2834900 ], opid: 2834671 }, 2834677: { uid: 1, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 2834881: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 2834925 ], opid: undefined }, 2834836: { uid: 1042, pid: 2834802, subject: "Re:割り算させない", read: 0, points: 1, kids: [  ], opid: 2834802 }, 2834758: { uid: 39616, pid: 2834755, subject: "Re:深刻な問題＝深刻なバグ？", read: 0, points: 2, kids: [  ], opid: 2834755 }, 2834710: { uid: 34577, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 2834903: { uid: 10969, pid: 2834870, subject: "Re:仕様次第かな？", read: 0, points: 2, kids: [  ], opid: 2834870 }, 2834760: { uid: undefined, pid: 2834711, read: 0, points: -2, kids: [ 2834889 ], opid: undefined }, 2834672: { uid: 1, pid: 0, read: 0, points: 1, kids: [ 2834684, 2834869 ], opid: 0 }, 2834789: { uid: 1, pid: 2834780, subject: "Re:……いや、だから……", read: 0, points: 1, kids: [  ], opid: 2834780 }, 2834959: { uid: 1, pid: 2834671, subject: "Re:一部の世界では正しい", read: 0, points: 1, kids: [  ], opid: 2834671 }, 2835007: { uid: 11941, pid: 2834988, subject: "Re:一部の世界では正しい", read: 0, points: 2, kids: [  ], opid: 2834988 }, 2834703: { uid: 31598, pid: 2834670, subject: "Re:仕様次第かな？", read: 0, points: 2, kids: [ 2834803 ], opid: 2834670 }, 2834872: { uid: 1, pid: 2834832, subject: "Re:マルヒ", read: 0, points: 1, kids: [  ], opid: 2834832 }, 2834688: { uid: 47070, pid: 0, read: 0, points: 1, kids: [  ], opid: 0 }, 2834686: { uid: 21972, pid: 0, read: 0, points: 3, kids: [ 2834739, 2834846, 2834866 ], opid: 0 }, 2834777: { uid: 1, pid: 2834767, subject: "Re:エラーはエラーとして現出させよ", read: 0, points: 1, kids: [  ], opid: 2834767 } });
+
+D2.thresh_totals({6:{6:{1:50,3:0,2:0}},4:{6:{1:47,3:2,2:1},4:{1:47,3:3,2:0},5:{1:47,3:3,2:0}},1:{6:{1:0,3:2,2:48},4:{1:0,3:5,2:45},1:{1:0,3:50,2:0},3:{1:0,3:8,2:42},2:{1:0,3:31,2:19},5:{1:0,3:3,2:47}},3:{6:{1:45,3:2,2:3},4:{1:45,3:5,2:0},3:{1:45,3:5,2:0},5:{1:45,3:3,2:2}},0:{6:{1:0,3:2,2:48},4:{1:0,3:5,2:45},1:{1:0,3:50,2:0},3:{1:0,3:8,2:42},0:{1:0,3:50,2:0},2:{1:0,3:31,2:19},5:{1:0,3:3,2:47}},2:{6:{1:24,3:2,2:24},4:{1:24,3:5,2:21},3:{1:24,3:8,2:18},2:{1:24,3:26,2:0},5:{1:24,3:3,2:23}},5:{6:{1:48,3:2,2:0},5:{1:48,3:2,2:0}},"-1":{6:{1:0,3:2,2:48},4:{1:0,3:5,2:45},1:{1:0,3:50,2:0},3:{1:0,3:8,2:42},0:{1:0,3:50,2:0},2:{1:0,3:31,2:19},5:{1:0,3:3,2:47},"-1":{1:0,3:50,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([2834671,2834773,2834769,2834686,2834821,2834663,2834710,2834717,2834672,2834677,2834688,2834725,2834770,2834741,2834683,2834806,2834881]);
+D2.root_comments_hash({2834677:1,2834881:1,2834683:1,2834663:1,2834671:1,2834710:1,2834717:1,2834741:1,2834806:1,2834773:1,2834725:1,2834672:1,2834770:1,2834769:1,2834821:1,2834688:1,2834686:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(661070);
+
+D2.d2_seen('2834663,8,1,5,9,2,15,7,1,6,8,5,6,17,5,11,1,3,4,12,5,8,6,13,11,3,1,1,2,2,4,1,8,5,7,3,3,17,4,7,3,1,2,19,12,22,29,15,4,150');
+D2.more_comments_num(147);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_2834671"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834671"></div>
+<div class="comment-item" id="comment_2834671">
+<div class="commentTop comment-top newcomment" id="comment_top_2834671">
+<div class="title">
+<h4><a href="../../../../../comments.pl_8c8c9894.html" id="comment_link_2834671" name="comment_link_2834671" onclick="return D2.setFocusComment(2834671)">一部の世界では正しい</a>
+<span class="score" id="comment_score_2834671">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834671); return false">スコア:5</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834671">on 2015年06月21日 19時52分
+			 (<a href="../../../../../../srad.jp/comment/2834671.html">#2834671</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834671"><p>&gt; ゼロ除算発生時に「0」を返す</p><p>「9÷0＝」の答えは？　小学校算数で出題された問題めぐりネット上で議論<br/>2012年11月28日(水) 18時46分<br/><a href="http://www.rbbtoday.com/article/2012/11/28/98481.html" rel="nofollow" title="rbbtoday.com">http://www.rbbtoday.com/article/2012/11/28/98481.html</a> [rbbtoday.com]</p></div>
+</div>
+</div>
+<div id="replyto_2834671"></div>
+<ul class="comment-group" id="group_2834671">
+<li class="hide" id="hiddens_2834671"></li>
+</ul><ul id="commtree_2834671"><li class="comment full contain" id="tree_2834711"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834711"></div>
+<div class="comment-item" id="comment_2834711">
+<div class="commentTop comment-top newcomment" id="comment_top_2834711">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c0a45056.html" id="comment_link_2834711" name="comment_link_2834711" onclick="return D2.setFocusComment(2834711)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834711">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834711); return false">スコア:2</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834711">on 2015年06月21日 20時57分
+			 (<a href="../../../../../../srad.jp/comment/2834711.html">#2834711</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834711"><p>&gt; 一部の世界では正しい</p><p>正しいなんて書いてないです。<br/>「9÷0＝0」と教えている小学校もあると書いてあるだけです。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834711">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834711'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834711'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834711'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_26347668.html" onclick="return D2.selectParent(2834671)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834711"></div>
+<ul class="comment-group" id="group_2834711">
+<li class="hide" id="hiddens_2834711"></li>
+</ul><ul id="commtree_2834711"><li class="comment full contain" id="tree_2834900"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834900"></div>
+<div class="comment-item" id="comment_2834900">
+<div class="commentTop comment-top newcomment" id="comment_top_2834900">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d154ae8d.html" id="comment_link_2834900" name="comment_link_2834900" onclick="return D2.setFocusComment(2834900)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834900">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834900); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~BIWYFI/index.html">BIWYFI (11941)</a>
+<span class="otherdetails" id="comment_otherdetails_2834900">on 2015年06月22日 10時15分
+			 (<a href="../../../../../../srad.jp/comment/2834900.html">#2834900</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~BIWYFI/journal/index.html" title="2014年06月27日 18時07分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834900"><p>数学は公理で体系が決まるので、公理として「0で除算した結果は0」と決めれば正しくなる。<br/>その上で、「0で除算した場合は除算記号の除去を認めない」も公理として追加すれば、一応体系は成立するかと。</p></div>
+<div class="sig" id="comment_sig_2834900">-- <br/>-- Buy It When You Found It --</div>
+</div>
+<div class="commentSub" id="comment_sub_2834900">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834900'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834900'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834900'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_5dbf1688.html" onclick="return D2.selectParent(2834711)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834900"></div>
+<ul class="comment-group" id="group_2834900">
+<li class="hide" id="hiddens_2834900"></li>
+</ul><ul id="commtree_2834900"><li class="comment full contain" id="tree_2834988"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834988"></div>
+<div class="comment-item" id="comment_2834988">
+<div class="commentTop comment-top newcomment" id="comment_top_2834988">
+<div class="title">
+<h4><a href="../../../../../comments.pl_41765af3.html" id="comment_link_2834988" name="comment_link_2834988" onclick="return D2.setFocusComment(2834988)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834988">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834988); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~t-wata/index.html">t-wata (10969)</a>
+<span class="otherdetails" id="comment_otherdetails_2834988">on 2015年06月22日 13時02分
+			 (<a href="../../../../../../srad.jp/comment/2834988.html">#2834988</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~t-wata/journal/index.html" title="2003年12月11日  0時27分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834988"><p>0で割ると0だけど0/0は定義できない、他はそのままって公理系を定義しようとしているんでしょうけど、well-definedにはできないと思いますよ。a,bを不定定数として、<br/>ax = b<br/>x = b / a<br/>これはaが0の場合は最初の式が0=bになってしまい成り立たないけど<br/>下の式は x=0になって普通に解が得られてしまう。つまり下の式への変形はa=0を最初に除外しないといけない。しかもa=0だと解無しのまま。せっかく0の除算を定義したのに。<br/>解の公式もそうだし、他でも色々矛盾が出てきますよ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834988">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834988'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834988'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834988'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_884224cf.html" onclick="return D2.selectParent(2834900)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834988"></div>
+<ul class="comment-group" id="group_2834988">
+<li class="hide" id="hiddens_2834988"></li>
+</ul><ul id="commtree_2834988"><li class="comment full contain" id="tree_2835007"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2835007"></div>
+<div class="comment-item" id="comment_2835007">
+<div class="commentTop comment-top newcomment" id="comment_top_2835007">
+<div class="title">
+<h4><a href="../../../../../comments.pl_37dee8a5.html" id="comment_link_2835007" name="comment_link_2835007" onclick="return D2.setFocusComment(2835007)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2835007">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2835007); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~BIWYFI/index.html">BIWYFI (11941)</a>
+<span class="otherdetails" id="comment_otherdetails_2835007">on 2015年06月22日 13時34分
+			 (<a href="../../../../../../srad.jp/comment/2835007.html">#2835007</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~BIWYFI/journal/index.html" title="2014年06月27日 18時07分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2835007"><p>上の式を下の式に変形する際に、「除算記号の除去」が行われていますよね。<br/>a=0の場合、これが禁止されるので、上の式と下の式は等価ではないって事で、一応辻褄は合ってる様な気がします。<br/>尤も、既存の公式が崩壊するという点では同意します。</p><p>ま、「記号の除去の禁止」が凶悪な足枷となって、二重否定の除去を禁止する直感論理の様な弱い体系になるのは確実なんですが。</p></div>
+<div class="sig" id="comment_sig_2835007">-- <br/>-- Buy It When You Found It --</div>
+</div>
+<div class="commentSub" id="comment_sub_2835007">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2835007'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2835007'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2835007'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_b3a61230.html" onclick="return D2.selectParent(2834988)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2835007"></div>
+<ul class="comment-group" id="group_2835007">
+<li class="hide" id="hiddens_2835007"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2834859"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834859"></div>
+<div class="comment-item" id="comment_2834859">
+<div class="commentTop comment-top newcomment" id="comment_top_2834859">
+<div class="title">
+<h4><a href="../../../../../comments.pl_917f3c0c.html" id="comment_link_2834859" name="comment_link_2834859" onclick="return D2.setFocusComment(2834859)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834859">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834859); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~nemui4/index.html">nemui4 (20313)</a>
+<span class="otherdetails" id="comment_otherdetails_2834859">on 2015年06月22日  9時21分
+			 (<a href="../../../../../../srad.jp/comment/2834859.html">#2834859</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~nemui4/journal/index.html" title="2023年11月24日  6時05分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834859"><p>&gt;「9÷0＝0」と教えている小学校もあると書いてあるだけです。</p><p>・・・と教えている「小学校教員もいる」・・・</p><p>が正解なんでしょうね。</p><p>その教員が小学校～教員に至るまでの過程できちんとした算数・数学の教育を受けられなかったか誤った知識のままで、教え子達にもその誤った知識を拡散していってるんだろうなぁ。<br/>#なんとなく、悪貨は良貨を駆逐する</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834859">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834859'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834859'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834859'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_5dbf1688.html" onclick="return D2.selectParent(2834711)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834859"></div>
+<ul class="comment-group" id="group_2834859">
+<li class="hide" id="hiddens_2834859"></li>
+</ul></li><li class="comment hidden" id="tree_2834760"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834760"></div>
+<div class="comment-item" id="comment_2834760">
+</div>
+<div id="replyto_2834760"></div>
+<ul class="comment-group" id="group_2834760">
+<li class="hide" id="hiddens_2834760"></li>
+</ul><ul id="commtree_2834760"><li class="comment full contain" id="tree_2834889"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834889"></div>
+<div class="comment-item" id="comment_2834889">
+<div class="commentTop comment-top newcomment" id="comment_top_2834889">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0ad0fecb.html" id="comment_link_2834889" name="comment_link_2834889" onclick="return D2.setFocusComment(2834889)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834889">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834889); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~t-wata/index.html">t-wata (10969)</a>
+<span class="otherdetails" id="comment_otherdetails_2834889">on 2015年06月22日 10時06分
+			 (<a href="../../../../../../srad.jp/comment/2834889.html">#2834889</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~t-wata/journal/index.html" title="2003年12月11日  0時27分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834889"><p>0 ÷ 0 が0なのか1なのかで迷ったりと色々波紋を呼びそうですね。<br/>反比例とか原点を通る線をひいちゃったりするんだろうか？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834889">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834889'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834889'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834889'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_da4951a2.html" onclick="return D2.selectParent(2834760)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834889"></div>
+<ul class="comment-group" id="group_2834889">
+<li class="hide" id="hiddens_2834889"></li>
+</ul><ul id="commtree_2834889"><li class="comment full contain" id="tree_2834904"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834904"></div>
+<div class="comment-item" id="comment_2834904">
+<div class="commentTop comment-top newcomment" id="comment_top_2834904">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e1de9d77.html" id="comment_link_2834904" name="comment_link_2834904" onclick="return D2.setFocusComment(2834904)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834904">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834904); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~ymasa/index.html">ymasa (31598)</a>
+<span class="otherdetails" id="comment_otherdetails_2834904">on 2015年06月22日 10時22分
+			 (<a href="../../../../../../srad.jp/comment/2834904.html">#2834904</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~ymasa/journal/index.html" title="2018年04月08日 17時52分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834904"><p>下記にようにWikipediaには書いてある。けど、Javaで 0 / 0 をやると例外が発生します。</p><p>0の0乗<br/><a href="https://ja.wikipedia.org/wiki/0%E3%81%AE0%E4%B9%97" title="wikipedia.org">https://ja.wikipedia.org/wiki/0%E3%81%AE0%E4%B9%97</a> [wikipedia.org] </p><p><div class="quote"><p>いくつかのプログラミング言語は 00 を定義しており、その多くは 1 としている。1 と定義しているものは、Java、Python、Ruby、Perl、Haskell、Common Lisp、ML、Scheme、R、MATLAB、APL、J、Microsoft Windows の電卓、Google の電卓機能[4]などである。</p></div></p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834904">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834904'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834904'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834904'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_7c744575.html" onclick="return D2.selectParent(2834889)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834904"></div>
+<ul class="comment-group" id="group_2834904">
+<li class="hide" id="hiddens_2834904"></li>
+</ul><ul id="commtree_2834904"><li class="comment full contain" id="tree_2834906"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834906"></div>
+<div class="comment-item" id="comment_2834906">
+<div class="commentTop comment-top newcomment" id="comment_top_2834906">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1d1593ce.html" id="comment_link_2834906" name="comment_link_2834906" onclick="return D2.setFocusComment(2834906)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834906">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834906); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~ymasa/index.html">ymasa (31598)</a>
+<span class="otherdetails" id="comment_otherdetails_2834906">on 2015年06月22日 10時25分
+			 (<a href="../../../../../../srad.jp/comment/2834906.html">#2834906</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~ymasa/journal/index.html" title="2018年04月08日 17時52分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834906"><p>間違えた。こっちだ。</p><p>ゼロ除算<br/><a href="https://ja.wikipedia.org/wiki/%E3%82%BC%E3%83%AD%E9%99%A4%E7%AE%97" title="wikipedia.org">https://ja.wikipedia.org/wiki/%E3%82%BC%E3%83%AD%E9%99%A4%E7%AE%97</a> [wikipedia.org] </p><p><div class="quote"><p>現在のほとんどのコンピュータでサポートされているIEEE 754 浮動小数点に関する標準規格では、全ての浮動小数点演算を定義している。ゼロ除算も例外ではなく、どういう値になるかが定義されている。IEEE 754の定義によれば、a/0 で a が正の数であれば、除算の結果は正の無限大となり、a が負の数であれば負の無限大となる。</p></div></p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834906">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834906'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834906'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834906'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_f939f7c7.html" onclick="return D2.selectParent(2834904)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834906"></div>
+<ul class="comment-group" id="group_2834906">
+<li class="hide" id="hiddens_2834906"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_2835157"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2835157"></div>
+<div class="comment-item" id="comment_2835157">
+<div class="commentTop comment-top newcomment" id="comment_top_2835157">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d78798b5.html" id="comment_link_2835157" name="comment_link_2835157" onclick="return D2.setFocusComment(2835157)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2835157">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2835157); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~GreyWolf/index.html">GreyWolf (32369)</a>
+<span class="otherdetails" id="comment_otherdetails_2835157">on 2015年06月22日 17時18分
+			 (<a href="../../../../../../srad.jp/comment/2835157.html">#2835157</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2835157">0÷0＝全ての数(実数に限らず、複素数も含む）が妥当だと思います。<br/><br/>A÷B＝C　⇔　A＝B×C<br/>が定義ですから<br/><br/>0÷0＝C　は　0＝0×C　　と置き換えられ<br/>このCに、無理数どころか複素数を代入しても成り立つので</div>
+</div>
+<div class="commentSub" id="comment_sub_2835157">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2835157'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2835157'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2835157'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_7c744575.html" onclick="return D2.selectParent(2834889)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2835157"></div>
+<ul class="comment-group" id="group_2835157">
+<li class="hide" id="hiddens_2835157"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2834730"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834730"></div>
+<div class="comment-item" id="comment_2834730">
+<div class="commentTop comment-top newcomment" id="comment_top_2834730">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e9ef3585.html" id="comment_link_2834730" name="comment_link_2834730" onclick="return D2.setFocusComment(2834730)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834730">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834730); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~minemo/index.html">minemo (41273)</a>
+<span class="otherdetails" id="comment_otherdetails_2834730">on 2015年06月21日 21時59分
+			 (<a href="../../../../../../srad.jp/comment/2834730.html">#2834730</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~minemo/journal/index.html" title="2015年03月20日  3時56分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834730">今時の小学校ではそんな無謀な事を教えてるんですね。<br/>うちらのころは、のらりくらりと興味を持たないように教えてたかなぁ。<br/>中学校になって止めろと教わったっけか。</div>
+</div>
+<div class="commentSub" id="comment_sub_2834730">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834730'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834730'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834730'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_26347668.html" onclick="return D2.selectParent(2834671)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834730"></div>
+<ul class="comment-group" id="group_2834730">
+<li class="hide" id="hiddens_2834730"></li>
+</ul><ul id="commtree_2834730"><li class="comment full contain" id="tree_2834839"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834839"></div>
+<div class="comment-item" id="comment_2834839">
+<div class="commentTop comment-top newcomment" id="comment_top_2834839">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d97cd6e8.html" id="comment_link_2834839" name="comment_link_2834839" onclick="return D2.setFocusComment(2834839)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834839">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834839); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834839">on 2015年06月22日  8時16分
+			 (<a href="../../../../../../srad.jp/comment/2834839.html">#2834839</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834839"><p>&gt; うちらのころは、のらりくらりと興味を持たないように教えてたかなぁ。</p><p>30年前小学校で<br/>「10個のりんごを10人で分けたら、1人1個ですね」<br/>けど<br/>「10個のりんごを0人で分けれないし、1人の個数の答え出ないですね」<br/>って教えてました。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834839">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834839'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834839'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834839'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_7f0fd857.html" onclick="return D2.selectParent(2834730)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834839"></div>
+<ul class="comment-group" id="group_2834839">
+<li class="hide" id="hiddens_2834839"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_2834893"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834893"></div>
+<div class="comment-item" id="comment_2834893">
+<div class="commentTop comment-top newcomment" id="comment_top_2834893">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0ef7cf87.html" id="comment_link_2834893" name="comment_link_2834893" onclick="return D2.setFocusComment(2834893)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834893">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834893); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834893">on 2015年06月22日 10時07分
+			 (<a href="../../../../../../srad.jp/comment/2834893.html">#2834893</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834893"><p>Android4.4.2の電卓でゼロ除算は「∞」になりますね<br/>他のバージョンやiOSはわかりませんが</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834893">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834893'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834893'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834893'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_26347668.html" onclick="return D2.selectParent(2834671)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834893"></div>
+<ul class="comment-group" id="group_2834893">
+<li class="hide" id="hiddens_2834893"></li>
+</ul></li><li class="comment full contain" id="tree_2834959"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834959"></div>
+<div class="comment-item" id="comment_2834959">
+<div class="commentTop comment-top newcomment" id="comment_top_2834959">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d655fe4c.html" id="comment_link_2834959" name="comment_link_2834959" onclick="return D2.setFocusComment(2834959)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834959">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834959); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834959">on 2015年06月22日 12時13分
+			 (<a href="../../../../../../srad.jp/comment/2834959.html">#2834959</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834959"><p>子供が9÷0を0と習ってきました。<br/>去年の話です。<br/>子供には、即座に間違いを指摘しましたが、</p><p>上の子2人に確認したところ、違う先生から0と教わってきていました・・・レベルが低すぎる</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834959">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834959'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834959'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834959'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_26347668.html" onclick="return D2.selectParent(2834671)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834959"></div>
+<ul class="comment-group" id="group_2834959">
+<li class="hide" id="hiddens_2834959"></li>
+</ul></li><li class="comment hidden" id="tree_2834822"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834822"></div>
+<div class="comment-item" id="comment_2834822">
+</div>
+<div id="replyto_2834822"></div>
+<ul class="comment-group" id="group_2834822">
+<li class="hide" id="hiddens_2834822"></li>
+</ul><ul id="commtree_2834822"><li class="comment full contain" id="tree_2834854"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834854"></div>
+<div class="comment-item" id="comment_2834854">
+<div class="commentTop comment-top newcomment" id="comment_top_2834854">
+<div class="title">
+<h4><a href="../../../../../comments.pl_dac4c6ea.html" id="comment_link_2834854" name="comment_link_2834854" onclick="return D2.setFocusComment(2834854)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834854">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834854); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834854">on 2015年06月22日  9時17分
+			 (<a href="../../../../../../srad.jp/comment/2834854.html">#2834854</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834854"><p>正しくは1ですか？0÷0の答え。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834854">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834854'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834854'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834854'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_c66f17af.html" onclick="return D2.selectParent(2834822)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834854"></div>
+<ul class="comment-group" id="group_2834854">
+<li class="hide" id="hiddens_2834854"></li>
+</ul><ul id="commtree_2834854"><li class="comment full contain" id="tree_2834937"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834937"></div>
+<div class="comment-item" id="comment_2834937">
+<div class="commentTop comment-top newcomment" id="comment_top_2834937">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c9add02e.html" id="comment_link_2834937" name="comment_link_2834937" onclick="return D2.setFocusComment(2834937)">Re:一部の世界では正しい</a>
+<span class="score" id="comment_score_2834937">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834937); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~t-wata/index.html">t-wata (10969)</a>
+<span class="otherdetails" id="comment_otherdetails_2834937">on 2015年06月22日 11時31分
+			 (<a href="../../../../../../srad.jp/comment/2834937.html">#2834937</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~t-wata/journal/index.html" title="2003年12月11日  0時27分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834937"><p>正しくは「定義できない」<br/>プログラミング言語ならNaNか例外を返すべきかな。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834937">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:一部の世界では正しい')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834937'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834937'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834937'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_7ad7860f.html" onclick="return D2.selectParent(2834854)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834937"></div>
+<ul class="comment-group" id="group_2834937">
+<li class="hide" id="hiddens_2834937"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2834773"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834773"></div>
+<div class="comment-item" id="comment_2834773">
+<div class="commentTop comment-top newcomment" id="comment_top_2834773">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7de64562.html" id="comment_link_2834773" name="comment_link_2834773" onclick="return D2.setFocusComment(2834773)">割り算させない</a>
+<span class="score" id="comment_score_2834773">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834773); return false">スコア:5</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834773">on 2015年06月21日 23時40分
+			 (<a href="../../../../../../srad.jp/comment/2834773.html">#2834773</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834773"><p>リアルタイム信号処理のプログラム書きますが、<br/>立ち上がってすぐは入力データが用意されていないでクリアしたバッファの初期値で演算<br/>(たとえばパイプラインADCとか使っていて入力に遅延がある)<br/>なんてことは普通にあり得るので、アルゴリズム中に割り算があるとき<br/>(正規化とかAGCとか)では  0割が発生しないように 除数がゼロかどうか<br/>あらかじめチェックします。そして、結果を後段アルゴリズムの制約上問題ない値とします。<br/>例外なんて起こさない方がいいし、誰か書いていましたがそんな機構は無い場合もあるしで<br/>予測される例外は基本的に排除(生起しないように手を打つ)すべきです。<br/>データが用意されるまで待てばいいんだけどね。<br/>演算側の水際でも処置しておかないと安心できない<br/>つーか、後段の用途によって0割の結果値を吟味するのって普通だと思いますが<br/>(0で駄目なら非0の微小値とかそもそものアルゴリズムをスキップするとか)<br/>そういうこと考えないでプログラム書いてるんですかね。</p></div>
+</div>
+</div>
+<div id="replyto_2834773"></div>
+<ul class="comment-group" id="group_2834773">
+<li class="hide" id="hiddens_2834773"></li>
+</ul><ul id="commtree_2834773"><li class="comment full contain" id="tree_2834802"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834802"></div>
+<div class="comment-item" id="comment_2834802">
+<div class="commentTop comment-top newcomment" id="comment_top_2834802">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b7bff463.html" id="comment_link_2834802" name="comment_link_2834802" onclick="return D2.setFocusComment(2834802)">Re:割り算させない</a>
+<span class="score" id="comment_score_2834802">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834802); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834802">on 2015年06月22日  1時05分
+			 (<a href="../../../../../../srad.jp/comment/2834802.html">#2834802</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834802"><p>業務計算のプログラムとか除算の嵐です。<br/>しかも本来そこに、データエラーでない限り、０はありえないという場合も多い。<br/>ありえないので処理しない、テストもしないというわけ。</p><p>で、データエラーというのは頻繁に起こるわけです（爆笑）<br/>笑ってる場合ではないですが。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834802">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:割り算させない')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834802'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834802'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834802'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_8ceff0c9.html" onclick="return D2.selectParent(2834773)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834802"></div>
+<ul class="comment-group" id="group_2834802">
+<li class="hide" id="hiddens_2834802"></li>
+</ul><ul id="commtree_2834802"><li class="comment full contain" id="tree_2834836"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834836"></div>
+<div class="comment-item" id="comment_2834836">
+<div class="commentTop comment-top newcomment" id="comment_top_2834836">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d4ab3f35.html" id="comment_link_2834836" name="comment_link_2834836" onclick="return D2.setFocusComment(2834836)">Re:割り算させない</a>
+<span class="score" id="comment_score_2834836">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834836); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Artane./index.html">Artane. (1042)</a>
+<span class="otherdetails" id="comment_otherdetails_2834836">on 2015年06月22日  8時11分
+			 (<a href="../../../../../../srad.jp/comment/2834836.html">#2834836</a>)
+			<small>
+<a class="user_homepage_display" href="https://github.com/Artanejp" title="https://github.com/Artanejp">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~Artane./journal/index.html" title="2019年04月10日 16時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834836"><p>&gt;しかも本来そこに、データエラーでない限り、０はありえないという場合も多い。<br/>&gt;ありえないので処理しない、テストもしないというわけ。</p><p>みずほ銀行の問題が未だに収拾ついていないらしいのって、こういう文化圏の人が仕切ってるからじゃないかという気がしてならないのですが(^_^;<br/>まぁ、そういう文化圏の会社の仕事やったことあったから書いてるのですが(；´Д｀)</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834836">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:割り算させない')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834836'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834836'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834836'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_780fb71c.html" onclick="return D2.selectParent(2834802)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834836"></div>
+<ul class="comment-group" id="group_2834836">
+<li class="hide" id="hiddens_2834836"></li>
+</ul></li></ul></li><li class="comment hidden" id="tree_2834805"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834805"></div>
+<div class="comment-item" id="comment_2834805">
+</div>
+<div id="replyto_2834805"></div>
+<ul class="comment-group" id="group_2834805">
+<li class="hide" id="hiddens_2834805"></li>
+</ul><ul id="commtree_2834805"><li class="comment full contain" id="tree_2834841"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834841"></div>
+<div class="comment-item" id="comment_2834841">
+<div class="commentTop comment-top newcomment" id="comment_top_2834841">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ff7f478c.html" id="comment_link_2834841" name="comment_link_2834841" onclick="return D2.setFocusComment(2834841)">Re:割り算させない</a>
+<span class="score" id="comment_score_2834841">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834841); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Artane./index.html">Artane. (1042)</a>
+<span class="otherdetails" id="comment_otherdetails_2834841">on 2015年06月22日  8時16分
+			 (<a href="../../../../../../srad.jp/comment/2834841.html">#2834841</a>)
+			<small>
+<a class="user_homepage_display" href="https://github.com/Artanejp" title="https://github.com/Artanejp">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~Artane./journal/index.html" title="2019年04月10日 16時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834841"><p>&gt;必要なのは分かってるが、堅牢にしようとすればチェック処理の方が多くなるのはもやっとしません？</p><p>堅牢なことは至上命題で大前提だと思いますよ。高速化とかエレガントなアルゴリズムとかは、その後についてくると思ってます。<br/>だから、殆どもやっとはしないです、個人的には。<br/>まぁ、この手のチェックや回避策の処理自体をミドルウェアや言語系でやってくれると助かるんですけどね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834841">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:割り算させない')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834841'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834841'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834841'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_fd2f27ef.html" onclick="return D2.selectParent(2834805)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834841"></div>
+<ul class="comment-group" id="group_2834841">
+<li class="hide" id="hiddens_2834841"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2834769"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834769"></div>
+<div class="comment-item" id="comment_2834769">
+<div class="commentTop comment-top newcomment" id="comment_top_2834769">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d62243b8.html" id="comment_link_2834769" name="comment_link_2834769" onclick="return D2.setFocusComment(2834769)">なんで誰も気づかない</a>
+<span class="score" id="comment_score_2834769">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834769); return false">スコア:4</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~jpgr/index.html">jpgr (27776)</a>
+<span class="otherdetails" id="comment_otherdetails_2834769">on 2015年06月21日 23時19分
+			 (<a href="../../../../../../srad.jp/comment/2834769.html">#2834769</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834769"><p> <a href="https://ja.wikipedia.org/wiki/%E3%83%81%E3%83%A3%E3%83%83%E3%82%AF%E3%83%BB%E3%83%8E%E3%83%AA%E3%82%B9%E3%83%BB%E3%83%95%E3%82%A1%E3%82%AF%E3%83%88#.E7.8F.BE.E8.B1.A1.E3.81.AE.E5.A7.8B.E3.81.BE.E3.82.8A" title="wikipedia.org">チャック・ノリス</a> [wikipedia.org]に答を聞けばいいだろうに。</p></div>
+</div>
+</div>
+<div id="replyto_2834769"></div>
+<ul class="comment-group" id="group_2834769">
+<li class="hide" id="hiddens_2834769"></li>
+</ul></li><li class="comment full contain" id="tree_2834686"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834686"></div>
+<div class="comment-item" id="comment_2834686">
+<div class="commentTop comment-top newcomment" id="comment_top_2834686">
+<div class="title">
+<h4><a href="../../../../../comments.pl_68f32075.html" id="comment_link_2834686" name="comment_link_2834686" onclick="return D2.setFocusComment(2834686)">……いや、だから……</a>
+<span class="score" id="comment_score_2834686">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834686); return false">スコア:3</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Takahiro_Chou/index.html">Takahiro_Chou (21972)</a>
+<span class="otherdetails" id="comment_otherdetails_2834686">on 2015年06月21日 20時10分
+			 (<a href="../../../../../../srad.jp/comment/2834686.html">#2834686</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~Takahiro_Chou/journal/index.html" title="2023年09月20日  8時52分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834686"><p>
+その人が作ろうとしてるプログラムにおいて、0除算が発生した時に、どう云う動作をするのが「正しい」の??<br/>
+話は、それからだ。
+</p></div>
+</div>
+</div>
+<div id="replyto_2834686"></div>
+<ul class="comment-group" id="group_2834686">
+<li class="hide" id="hiddens_2834686"></li>
+</ul><ul id="commtree_2834686"><li class="comment full contain" id="tree_2834846"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834846"></div>
+<div class="comment-item" id="comment_2834846">
+<div class="commentTop comment-top newcomment" id="comment_top_2834846">
+<div class="title">
+<h4><a href="../../../../../comments.pl_78c828fe.html" id="comment_link_2834846" name="comment_link_2834846" onclick="return D2.setFocusComment(2834846)">Re:……いや、だから……</a>
+<span class="score" id="comment_score_2834846">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834846); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~minet/index.html">minet (45149)</a>
+<span class="otherdetails" id="comment_otherdetails_2834846">on 2015年06月22日  8時34分
+			 (<a href="../../../../../../srad.jp/comment/2834846.html">#2834846</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~minet/journal/index.html" title="2023年09月22日 23時53分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834846"><p>まさにこれ。<br/>ゼロで除算した結果をどう扱いたいかなんて、完全にドメイン依存だと思うんだがなー。</p><p>チェックコードに忙殺されて主題に集中できない言語・環境に疲れ果てている、という状況には同情する。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834846">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:……いや、だから……')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834846'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834846'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834846'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_245cac4a.html" onclick="return D2.selectParent(2834686)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834846"></div>
+<ul class="comment-group" id="group_2834846">
+<li class="hide" id="hiddens_2834846"></li>
+</ul></li><li class="comment full contain" id="tree_2834866"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834866"></div>
+<div class="comment-item" id="comment_2834866">
+<div class="commentTop comment-top newcomment" id="comment_top_2834866">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4f3f1991.html" id="comment_link_2834866" name="comment_link_2834866" onclick="return D2.setFocusComment(2834866)">Re:……いや、だから……</a>
+<span class="score" id="comment_score_2834866">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834866); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834866">on 2015年06月22日  9時33分
+			 (<a href="../../../../../../srad.jp/comment/2834866.html">#2834866</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834866"><p>どういう振る舞いが正しいにせよ、割り算するたびにチェックするのは疲れるから、ゼロ除算発生時の振る舞いをオーバーライドできるといいなあという話だと思います。</p><p>デフォルトの振る舞いはエラー終了でいいと思いますけど。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834866">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:……いや、だから……')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834866'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834866'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834866'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_245cac4a.html" onclick="return D2.selectParent(2834686)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834866"></div>
+<ul class="comment-group" id="group_2834866">
+<li class="hide" id="hiddens_2834866"></li>
+</ul></li><li class="comment hidden" id="tree_2834739"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834739"></div>
+<div class="comment-item" id="comment_2834739">
+</div>
+<div id="replyto_2834739"></div>
+<ul class="comment-group" id="group_2834739">
+<li class="hide" id="hiddens_2834739"></li>
+</ul><ul id="commtree_2834739"><li class="comment full contain" id="tree_2834835"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834835"></div>
+<div class="comment-item" id="comment_2834835">
+<div class="commentTop comment-top newcomment" id="comment_top_2834835">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e0540372.html" id="comment_link_2834835" name="comment_link_2834835" onclick="return D2.setFocusComment(2834835)">Re:……いや、だから……</a>
+<span class="score" id="comment_score_2834835">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834835); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Artane./index.html">Artane. (1042)</a>
+<span class="otherdetails" id="comment_otherdetails_2834835">on 2015年06月22日  8時04分
+			 (<a href="../../../../../../srad.jp/comment/2834835.html">#2834835</a>)
+			<small>
+<a class="user_homepage_display" href="https://github.com/Artanejp" title="https://github.com/Artanejp">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~Artane./journal/index.html" title="2019年04月10日 16時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834835"><p>計算結果を何に使うかで変わってきますよ。<br/>３Ｄ空間の座標系計算のような場合は、０が引数に入ってきた場合を始めにトラップして、想定している範囲の最大の数値を返したりとかやりますよ。<br/>組み込み系の場合には、自分で仕様書く場合は０が突っ込まれないように回避策を考えたりもしますし、仕様書が上から降ってくる場合には「０で割り算する可能性があるんだけど、その場合どうします？(´・ω・｀)」とコードを書いてる時でもお伺いを立てたりもしましたよ。</p><p>要は、データ構造を作る段階で、可能ならば、割り算の分母に０が突っ込まれた場合の数値とかトラップ処理とかを入れ込んで考える必要があると言う事で。</p><p>エラーでプログラムが異常系に行くとか止まっちゃうとかAssertで強制終了しちゃうというのは、最悪のシナリオだという感覚がどうしてもありますけどね。分母０の割り算でそうなってしまうのは、ヌルポインタでそうなるのと同じ位「ダサい」と言う感覚が。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834835">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:……いや、だから……')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834835'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834835'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834835'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_aed46050.html" onclick="return D2.selectParent(2834739)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834835"></div>
+<ul class="comment-group" id="group_2834835">
+<li class="hide" id="hiddens_2834835"></li>
+</ul></li><li class="comment hidden" id="tree_2834780"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834780"></div>
+<div class="comment-item" id="comment_2834780">
+</div>
+<div id="replyto_2834780"></div>
+<ul class="comment-group" id="group_2834780">
+<li class="hide" id="hiddens_2834780"></li>
+</ul><ul id="commtree_2834780"><li class="comment full contain" id="tree_2834789"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834789"></div>
+<div class="comment-item" id="comment_2834789">
+<div class="commentTop comment-top newcomment" id="comment_top_2834789">
+<div class="title">
+<h4><a href="../../../../../comments.pl_98fdf957.html" id="comment_link_2834789" name="comment_link_2834789" onclick="return D2.setFocusComment(2834789)">Re:……いや、だから……</a>
+<span class="score" id="comment_score_2834789">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834789); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834789">on 2015年06月22日  0時22分
+			 (<a href="../../../../../../srad.jp/comment/2834789.html">#2834789</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834789"><p>やっぱり、「ABEND」 じゃないとわかり辛いですよね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834789">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:……いや、だから……')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834789'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834789'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834789'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_9eb775bc.html" onclick="return D2.selectParent(2834780)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834789"></div>
+<ul class="comment-group" id="group_2834789">
+<li class="hide" id="hiddens_2834789"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2834821"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834821"></div>
+<div class="comment-item" id="comment_2834821">
+<div class="commentTop comment-top newcomment" id="comment_top_2834821">
+<div class="title">
+<h4><a href="../../../../../comments.pl_88cbfc1d.html" id="comment_link_2834821" name="comment_link_2834821" onclick="return D2.setFocusComment(2834821)">画像処理</a>
+<span class="score" id="comment_score_2834821">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834821); return false">スコア:3</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~das/index.html">das (2409)</a>
+<span class="otherdetails" id="comment_otherdetails_2834821">on 2015年06月22日  4時18分
+			 (<a href="../../../../../../srad.jp/comment/2834821.html">#2834821</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834821">画像処理では最大値にしてた。<br/>0だと目に見えておかしくなると思う。<br/>そういうのがGIMPでもあったので一律0は広めてほしくない。</div>
+</div>
+</div>
+<div id="replyto_2834821"></div>
+<ul class="comment-group" id="group_2834821">
+<li class="hide" id="hiddens_2834821"></li>
+</ul></li><li class="comment full contain" id="tree_2834663"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834663"></div>
+<div class="comment-item" id="comment_2834663">
+<div class="commentTop comment-top newcomment" id="comment_top_2834663">
+<div class="title">
+<h4><a href="../../../../../comments.pl_397e8f80.html" id="comment_link_2834663" name="comment_link_2834663" onclick="return D2.setFocusComment(2834663)">仕様次第かな？</a>
+<span class="score" id="comment_score_2834663">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834663); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~ymasa/index.html">ymasa (31598)</a>
+<span class="otherdetails" id="comment_otherdetails_2834663">on 2015年06月21日 19時22分
+			 (<a href="../../../../../../srad.jp/comment/2834663.html">#2834663</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~ymasa/journal/index.html" title="2018年04月08日 17時52分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834663"><p>&gt; ゼロ除算発生時に「0」を返す</p><p>よりもバリデーションでゼロ除算を発生させない方向には向かえないんですかね？</p></div>
+</div>
+</div>
+<div id="replyto_2834663"></div>
+<ul class="comment-group" id="group_2834663">
+<li class="hide" id="hiddens_2834663"></li>
+</ul><ul id="commtree_2834663"><li class="comment hidden" id="tree_2834670"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834670"></div>
+<div class="comment-item" id="comment_2834670">
+</div>
+<div id="replyto_2834670"></div>
+<ul class="comment-group" id="group_2834670">
+<li class="hide" id="hiddens_2834670"></li>
+</ul><ul id="commtree_2834670"><li class="comment full contain" id="tree_2834703"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834703"></div>
+<div class="comment-item" id="comment_2834703">
+<div class="commentTop comment-top newcomment" id="comment_top_2834703">
+<div class="title">
+<h4><a href="../../../../../comments.pl_bbeac390.html" id="comment_link_2834703" name="comment_link_2834703" onclick="return D2.setFocusComment(2834703)">Re:仕様次第かな？</a>
+<span class="score" id="comment_score_2834703">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834703); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~ymasa/index.html">ymasa (31598)</a>
+<span class="otherdetails" id="comment_otherdetails_2834703">on 2015年06月21日 20時46分
+			 (<a href="../../../../../../srad.jp/comment/2834703.html">#2834703</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~ymasa/journal/index.html" title="2018年04月08日 17時52分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834703"><p>&gt; &gt;ゼロ除算のチェックに疲れ果てた<br/>&gt; からでは?</p><p>どんなシステムかはわかりませんが、<br/>入力値のバリデーションがチェックに疲れるほどあるシステムに問題がありますね。</p><p>もうつくっちゃったから仕方がないのですかね？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834703">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:仕様次第かな？')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834703'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834703'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834703'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_83bc2926.html" onclick="return D2.selectParent(2834670)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834703"></div>
+<ul class="comment-group" id="group_2834703">
+<li class="hide" id="hiddens_2834703"></li>
+</ul><ul id="commtree_2834703"><li class="comment hidden" id="tree_2834803"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834803"></div>
+<div class="comment-item" id="comment_2834803">
+</div>
+<div id="replyto_2834803"></div>
+<ul class="comment-group" id="group_2834803">
+<li class="hide" id="hiddens_2834803"></li>
+</ul><ul id="commtree_2834803"><li class="comment hidden" id="tree_2834870"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834870"></div>
+<div class="comment-item" id="comment_2834870">
+</div>
+<div id="replyto_2834870"></div>
+<ul class="comment-group" id="group_2834870">
+<li class="hide" id="hiddens_2834870"></li>
+</ul><ul id="commtree_2834870"><li class="comment full contain" id="tree_2834903"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834903"></div>
+<div class="comment-item" id="comment_2834903">
+<div class="commentTop comment-top newcomment" id="comment_top_2834903">
+<div class="title">
+<h4><a href="../../../../../comments.pl_cbed3367.html" id="comment_link_2834903" name="comment_link_2834903" onclick="return D2.setFocusComment(2834903)">Re:仕様次第かな？</a>
+<span class="score" id="comment_score_2834903">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834903); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~t-wata/index.html">t-wata (10969)</a>
+<span class="otherdetails" id="comment_otherdetails_2834903">on 2015年06月22日 10時19分
+			 (<a href="../../../../../../srad.jp/comment/2834903.html">#2834903</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~t-wata/journal/index.html" title="2003年12月11日  0時27分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834903"><p>いやいや、いくらでもあるでしょう。<br/>プログラム中割り算なんていくらでも使うし、その割る数が入力値じゃないケースの方が圧倒的に多いし、それが理論上0になる可能性がある場合なんていくらでもあるでしょう。<br/>例えば実行件数を時間の差分で割る場合とか、時間の差分はOSの時刻を変更されたら0になることだってあり得ますよね？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834903">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:仕様次第かな？')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834903'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834903'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834903'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_f28428de.html" onclick="return D2.selectParent(2834870)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834903"></div>
+<ul class="comment-group" id="group_2834903">
+<li class="hide" id="hiddens_2834903"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2834710"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834710"></div>
+<div class="comment-item" id="comment_2834710">
+<div class="commentTop comment-top newcomment" id="comment_top_2834710">
+<div class="title">
+<h4><a href="../../../../../comments.pl_72afdc7e.html" id="comment_link_2834710" name="comment_link_2834710" onclick="return D2.setFocusComment(2834710)">それでいいなら世の中にバグなど存在しないことになる</a>
+<span class="score" id="comment_score_2834710">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834710); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~duenmynoth/index.html">duenmynoth (34577)</a>
+<span class="otherdetails" id="comment_otherdetails_2834710">on 2015年06月21日 20時56分
+			 (<a href="../../../../../../srad.jp/comment/2834710.html">#2834710</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~duenmynoth/journal/index.html" title="2012年03月24日  7時56分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834710">仕様通りに動いてないから遭遇する状況だと思うが、<br/>それを「よくわからないから」という理由で「無かった」ことにするのが正しいか、<br/>と言ってるの？正気ですか？<br/><br/>＃真面目に言ってるとしたら、馬鹿の戯言</div>
+</div>
+</div>
+<div id="replyto_2834710"></div>
+<ul class="comment-group" id="group_2834710">
+<li class="hide" id="hiddens_2834710"></li>
+</ul></li><li class="comment full contain" id="tree_2834717"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834717"></div>
+<div class="comment-item" id="comment_2834717">
+<div class="commentTop comment-top newcomment" id="comment_top_2834717">
+<div class="title">
+<h4><a href="../../../../../comments.pl_dab71a84.html" id="comment_link_2834717" name="comment_link_2834717" onclick="return D2.setFocusComment(2834717)">深刻な問題＝深刻なバグ？</a>
+<span class="score" id="comment_score_2834717">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834717); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~sakamishunji/index.html">sakamishunji (36555)</a>
+<span class="otherdetails" id="comment_otherdetails_2834717">on 2015年06月21日 21時15分
+			 (<a href="../../../../../../srad.jp/comment/2834717.html">#2834717</a>)
+			<small>
+<a class="user_homepage_display" href="http://soho-makioka.net/" title="http://soho-makioka.net/">ホームページ</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834717">ベテランプログラマー氏の言いたかったことは「プログラムの仕様からして値がゼロの場合はありえない。なのに毎回チェックしろと上司がうるさくて・・・」ということなのでは？</div>
+</div>
+</div>
+<div id="replyto_2834717"></div>
+<ul class="comment-group" id="group_2834717">
+<li class="hide" id="hiddens_2834717"></li>
+</ul><ul id="commtree_2834717"><li class="comment full contain" id="tree_2834736"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834736"></div>
+<div class="comment-item" id="comment_2834736">
+<div class="commentTop comment-top newcomment" id="comment_top_2834736">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6f7710fc.html" id="comment_link_2834736" name="comment_link_2834736" onclick="return D2.setFocusComment(2834736)">Re:深刻な問題＝深刻なバグ？</a>
+<span class="score" id="comment_score_2834736">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834736); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~lcc/index.html">lcc (46023)</a>
+<span class="otherdetails" id="comment_otherdetails_2834736">on 2015年06月21日 22時10分
+			 (<a href="../../../../../../srad.jp/comment/2834736.html">#2834736</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~lcc/journal/index.html" title="2023年09月06日  7時54分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834736"><p>&gt; 仕様からして値がゼロの場合はありえない<br/>そんな理屈通りにいったら、そもそもバグなど出ないわけで。</p><p>仕様上0が入らないのならASSERT入れるんじゃないの？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834736">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:深刻な問題＝深刻なバグ？')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834736'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834736'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834736'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_0c1a644b.html" onclick="return D2.selectParent(2834717)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834736"></div>
+<ul class="comment-group" id="group_2834736">
+<li class="hide" id="hiddens_2834736"></li>
+</ul></li><li class="comment hidden" id="tree_2834755"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834755"></div>
+<div class="comment-item" id="comment_2834755">
+</div>
+<div id="replyto_2834755"></div>
+<ul class="comment-group" id="group_2834755">
+<li class="hide" id="hiddens_2834755"></li>
+</ul><ul id="commtree_2834755"><li class="comment full contain" id="tree_2834758"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834758"></div>
+<div class="comment-item" id="comment_2834758">
+<div class="commentTop comment-top newcomment" id="comment_top_2834758">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a1c2c13c.html" id="comment_link_2834758" name="comment_link_2834758" onclick="return D2.setFocusComment(2834758)">Re:深刻な問題＝深刻なバグ？</a>
+<span class="score" id="comment_score_2834758">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834758); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~wolf03/index.html">wolf03 (39616)</a>
+<span class="otherdetails" id="comment_otherdetails_2834758">on 2015年06月21日 22時54分
+			 (<a href="../../../../../../srad.jp/comment/2834758.html">#2834758</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~wolf03/journal/index.html" title="2023年09月03日 23時49分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834758">非同期マルチタスクで、このタイミングでこのイベントは設計上有り得ないと言っていた設計側。<br/>試験に入ってすぐに発生して試験中断に・・・・・。<br/><br/>何てことを繰り返してくる。<br/><br/>＃API仕様にある定数が一切入っていないヘッダ出してきたりも・・・</div>
+</div>
+<div class="commentSub" id="comment_sub_2834758">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:深刻な問題＝深刻なバグ？')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834758'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834758'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834758'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_163be913.html" onclick="return D2.selectParent(2834755)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834758"></div>
+<ul class="comment-group" id="group_2834758">
+<li class="hide" id="hiddens_2834758"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2834672"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834672"></div>
+<div class="comment-item" id="comment_2834672">
+<div class="commentTop comment-top newcomment" id="comment_top_2834672">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2b0e0e95.html" id="comment_link_2834672" name="comment_link_2834672" onclick="return D2.setFocusComment(2834672)">C言語なら</a>
+<span class="score" id="comment_score_2834672">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834672); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834672">on 2015年06月21日 19時52分
+			 (<a href="../../../../../../srad.jp/comment/2834672.html">#2834672</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834672"><p>ゼロ除算の結果は未定義だから、例外投げて死のうが何らかのデフォルト値を返そうがコンピューターが爆発しようが任意コードが実行されようが鼻から悪魔が出ようが仕様上は何の問題もない。チェックが不要になるわけではないが。むしろ例外が投げられると期待してチェックをサボってはいけない(実際にx86に慣れたプログラマーがARMデバイスでよく踏む罠)。</p></div>
+</div>
+</div>
+<div id="replyto_2834672"></div>
+<ul class="comment-group" id="group_2834672">
+<li class="hide" id="hiddens_2834672"></li>
+</ul><ul id="commtree_2834672"><li class="comment full contain" id="tree_2834869"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834869"></div>
+<div class="comment-item" id="comment_2834869">
+<div class="commentTop comment-top newcomment" id="comment_top_2834869">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f470ce34.html" id="comment_link_2834869" name="comment_link_2834869" onclick="return D2.setFocusComment(2834869)">Re:C言語なら</a>
+<span class="score" id="comment_score_2834869">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834869); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Anonymous%20Crow/index.html">Anonymous Crow (45505)</a>
+<span class="otherdetails" id="comment_otherdetails_2834869">on 2015年06月22日  9時36分
+			 (<a href="../../../../../../srad.jp/comment/2834869.html">#2834869</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834869">MIPS も０除算例外出さないです<br/>なので、アセンブラレベルで０除算か検査して例外出すように変換しています<br/><br/>逆に、符号付整数加算はオーバフロー例外投げることがありますので、<br/>通常は符号なし整数加算に変換されます<br/><br/>アセンブラでコーディングすることを「ほぼ」前提としないMIPSならではの仕様はこのほかにもあります</div>
+</div>
+<div class="commentSub" id="comment_sub_2834869">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:C言語なら')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834869'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834869'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834869'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_f80f961b.html" onclick="return D2.selectParent(2834672)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834869"></div>
+<ul class="comment-group" id="group_2834869">
+<li class="hide" id="hiddens_2834869"></li>
+</ul></li><li class="comment hidden" id="tree_2834684"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834684"></div>
+<div class="comment-item" id="comment_2834684">
+</div>
+<div id="replyto_2834684"></div>
+<ul class="comment-group" id="group_2834684">
+<li class="hide" id="hiddens_2834684"></li>
+</ul><ul id="commtree_2834684"><li class="comment hidden" id="tree_2834733"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834733"></div>
+<div class="comment-item" id="comment_2834733">
+</div>
+<div id="replyto_2834733"></div>
+<ul class="comment-group" id="group_2834733">
+<li class="hide" id="hiddens_2834733"></li>
+</ul><ul id="commtree_2834733"><li class="comment full contain" id="tree_2834837"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834837"></div>
+<div class="comment-item" id="comment_2834837">
+<div class="commentTop comment-top newcomment" id="comment_top_2834837">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c1a7b0b6.html" id="comment_link_2834837" name="comment_link_2834837" onclick="return D2.setFocusComment(2834837)">Re:C言語なら</a>
+<span class="score" id="comment_score_2834837">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834837); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~quililila/index.html">quililila (23086)</a>
+<span class="otherdetails" id="comment_otherdetails_2834837">on 2015年06月22日  8時12分
+			 (<a href="../../../../../../srad.jp/comment/2834837.html">#2834837</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~quililila/journal/index.html" title="2015年12月29日 19時01分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834837"><p>まあ0番地はブート用のROMだったりRAMだったりすることも多いので、0番地アクセスを禁止されると困るわけですが。</p><p>ちなみに、わたしが普段使っているコンパイラはゼロ除算は被除数がそのまま返ります。<br/>つまり1で割ったのと同じ結果ですね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834837">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:C言語なら')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834837'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834837'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834837'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_c03a3d27.html" onclick="return D2.selectParent(2834733)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834837"></div>
+<ul class="comment-group" id="group_2834837">
+<li class="hide" id="hiddens_2834837"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2834677"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834677"></div>
+<div class="comment-item" id="comment_2834677">
+<div class="commentTop comment-top newcomment" id="comment_top_2834677">
+<div class="title">
+<h4><a href="../../../../../comments.pl_67abcdd2.html" id="comment_link_2834677" name="comment_link_2834677" onclick="return D2.setFocusComment(2834677)">InifinityとかNaNとか</a>
+<span class="score" id="comment_score_2834677">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834677); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834677">on 2015年06月21日 20時00分
+			 (<a href="../../../../../../srad.jp/comment/2834677.html">#2834677</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834677"><p>浮動小数点数演算ではそうなってるよね<br/>こないだ余所の会社が作ったツールを改造してたときに露骨にゼロ除算例外が出ることを期待してたコードになっててバグの原因の一つになってた</p></div>
+</div>
+</div>
+<div id="replyto_2834677"></div>
+<ul class="comment-group" id="group_2834677">
+<li class="hide" id="hiddens_2834677"></li>
+</ul></li><li class="comment full contain" id="tree_2834688"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834688"></div>
+<div class="comment-item" id="comment_2834688">
+<div class="commentTop comment-top newcomment" id="comment_top_2834688">
+<div class="title">
+<h4><a href="../../../../../comments.pl_16d0325b.html" id="comment_link_2834688" name="comment_link_2834688" onclick="return D2.setFocusComment(2834688)">実数体でなくてよいのなら</a>
+<span class="score" id="comment_score_2834688">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834688); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~loose%20duce/index.html">loose duce (47070)</a>
+<span class="otherdetails" id="comment_otherdetails_2834688">on 2015年06月21日 20時14分
+			 (<a href="../../../../../../srad.jp/comment/2834688.html">#2834688</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~loose%20duce/journal/index.html" title="2018年07月16日 18時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834688"><p>実数体ではすべての元が除算の答えとなりえるから、<br/>デフォルトで実数体の何かの元をゼロ除算の結果として返すと<br/>その値は元としての意味とゼロ除算としての意味を二つ重ねて持つ。<br/>その二つを使い分ける必要があるときに分けられれば問題ないが、<br/>結局その手間は、ゼロ除算時のエラーチェックと大差ないと思う。</p></div>
+</div>
+</div>
+<div id="replyto_2834688"></div>
+<ul class="comment-group" id="group_2834688">
+<li class="hide" id="hiddens_2834688"></li>
+</ul></li><li class="comment full contain" id="tree_2834725"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834725"></div>
+<div class="comment-item" id="comment_2834725">
+<div class="commentTop comment-top newcomment" id="comment_top_2834725">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e11bfbf6.html" id="comment_link_2834725" name="comment_link_2834725" onclick="return D2.setFocusComment(2834725)">マルヒ</a>
+<span class="score" id="comment_score_2834725">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834725); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834725">on 2015年06月21日 21時44分
+			 (<a href="../../../../../../srad.jp/comment/2834725.html">#2834725</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834725"><p>せっかくだから ㊙ を……</p><p>// やったら呆れられた</p></div>
+</div>
+</div>
+<div id="replyto_2834725"></div>
+<ul class="comment-group" id="group_2834725">
+<li class="hide" id="hiddens_2834725"></li>
+</ul><ul id="commtree_2834725"><li class="comment full contain" id="tree_2834832"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834832"></div>
+<div class="comment-item" id="comment_2834832">
+<div class="commentTop comment-top newcomment" id="comment_top_2834832">
+<div class="title">
+<h4><a href="../../../../../comments.pl_2a9e2492.html" id="comment_link_2834832" name="comment_link_2834832" onclick="return D2.setFocusComment(2834832)">Re:マルヒ</a>
+<span class="score" id="comment_score_2834832">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834832); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~minet/index.html">minet (45149)</a>
+<span class="otherdetails" id="comment_otherdetails_2834832">on 2015年06月22日  7時53分
+			 (<a href="../../../../../../srad.jp/comment/2834832.html">#2834832</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~minet/journal/index.html" title="2023年09月22日 23時53分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834832"><p>n/0を処理するとマル秘が返るんですか？<br/>それは興味深い処理系ですね。</p><p>事務用システムの開発で簡易コンパイラやインタプリタを作って、ゼロ除算したらハイフンとか"入力なし"とか文字列を返す処理系ってのは作ったことがありますが、そういう系でしょうか。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834832">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:マルヒ')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834832'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834832'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834832'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_ff79949e.html" onclick="return D2.selectParent(2834725)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834832"></div>
+<ul class="comment-group" id="group_2834832">
+<li class="hide" id="hiddens_2834832"></li>
+</ul><ul id="commtree_2834832"><li class="comment full contain" id="tree_2834872"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834872"></div>
+<div class="comment-item" id="comment_2834872">
+<div class="commentTop comment-top newcomment" id="comment_top_2834872">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9239c118.html" id="comment_link_2834872" name="comment_link_2834872" onclick="return D2.setFocusComment(2834872)">Re:マルヒ</a>
+<span class="score" id="comment_score_2834872">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834872); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834872">on 2015年06月22日  9時41分
+			 (<a href="../../../../../../srad.jp/comment/2834872.html">#2834872</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834872"><p>ええ、文字列を返す処理を挟んだだけです。<br/>ちょっとだけ頑張ったのはエラーも含め、㊙_イ、㊙_ロ、㊙_ハとナンバリングし直し文字列を返した理由と「もしかして？」をポップアップするようにした点ですね。難しいことはしていないのですが、あれこれ手間暇かけました。今でも某社某部で動いています。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834872">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:マルヒ')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834872'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834872'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834872'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_a62d682e.html" onclick="return D2.selectParent(2834832)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834872"></div>
+<ul class="comment-group" id="group_2834872">
+<li class="hide" id="hiddens_2834872"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2834770"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834770"></div>
+<div class="comment-item" id="comment_2834770">
+<div class="commentTop comment-top newcomment" id="comment_top_2834770">
+<div class="title">
+<h4><a href="../../../../../comments.pl_cddcbc9d.html" id="comment_link_2834770" name="comment_link_2834770" onclick="return D2.setFocusComment(2834770)">除算時に制限をかけてみる…とか</a>
+<span class="score" id="comment_score_2834770">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834770); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Fagnux/index.html">Fagnux (47265)</a>
+<span class="otherdetails" id="comment_otherdetails_2834770">on 2015年06月21日 23時29分
+			 (<a href="../../../../../../srad.jp/comment/2834770.html">#2834770</a>)
+			<small>
+<a class="user_homepage_display" href="http://twpf.jp/Fagnux" title="http://twpf.jp/Fagnux">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~Fagnux/journal/index.html" title="2016年03月28日 21時33分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834770">÷や/のボタンを押すと、1～9の数字を入れない限り、0を入力できないようにするという感じで。</div>
+<div class="sig" id="comment_sig_2834770">-- <br/>　/\　/\　/\<br/>
+（・大・　　)3<br/>
+___/\___________________<br/>
+Jody Wisternoffこそ至高。<br/>
+- Tetsuya Hiragino</div>
+</div>
+</div>
+<div id="replyto_2834770"></div>
+<ul class="comment-group" id="group_2834770">
+<li class="hide" id="hiddens_2834770"></li>
+</ul></li><li class="comment hidden" id="tree_2834741"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834741"></div>
+<div class="comment-item" id="comment_2834741">
+</div>
+<div id="replyto_2834741"></div>
+<ul class="comment-group" id="group_2834741">
+<li class="hide" id="hiddens_2834741"></li>
+</ul><ul id="commtree_2834741"><li class="comment hidden" id="tree_2834747"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834747"></div>
+<div class="comment-item" id="comment_2834747">
+</div>
+<div id="replyto_2834747"></div>
+<ul class="comment-group" id="group_2834747">
+<li class="hide" id="hiddens_2834747"></li>
+</ul><ul id="commtree_2834747"><li class="comment full contain" id="tree_2834753"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834753"></div>
+<div class="comment-item" id="comment_2834753">
+<div class="commentTop comment-top newcomment" id="comment_top_2834753">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f671cbea.html" id="comment_link_2834753" name="comment_link_2834753" onclick="return D2.setFocusComment(2834753)">Re:提案</a>
+<span class="score" id="comment_score_2834753">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834753); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~miyuri/index.html">miyuri (33181)</a>
+<span class="otherdetails" id="comment_otherdetails_2834753">on 2015年06月21日 22時42分
+			 (<a href="../../../../../../srad.jp/comment/2834753.html">#2834753</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~miyuri/journal/index.html" title="2023年11月18日 22時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834753"><p>とりあえず、0<sup>-1</sup>してみる。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834753">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:提案')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834753'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834753'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834753'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_c115ccf9.html" onclick="return D2.selectParent(2834747)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834753"></div>
+<ul class="comment-group" id="group_2834753">
+<li class="hide" id="hiddens_2834753"></li>
+</ul></li></ul></li></ul></li><li class="comment hidden" id="tree_2834683"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834683"></div>
+<div class="comment-item" id="comment_2834683">
+</div>
+<div id="replyto_2834683"></div>
+<ul class="comment-group" id="group_2834683">
+<li class="hide" id="hiddens_2834683"></li>
+</ul><ul id="commtree_2834683"><li class="comment full contain" id="tree_2834794"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834794"></div>
+<div class="comment-item" id="comment_2834794">
+<div class="commentTop comment-top newcomment" id="comment_top_2834794">
+<div class="title">
+<h4><a href="../../../../../comments.pl_28574408.html" id="comment_link_2834794" name="comment_link_2834794" onclick="return D2.setFocusComment(2834794)">Re:エラーはエラーとして現出させよ</a>
+<span class="score" id="comment_score_2834794">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834794); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834794">on 2015年06月22日  0時35分
+			 (<a href="../../../../../../srad.jp/comment/2834794.html">#2834794</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834794"><p>ただ、ゼロ除算のエラーとしてのクリティカルさは実務への影響に対して「異常に高い」とは思う。</p><p>これが、金融系とか数字そのものがアウトプットの用途だと困っちゃう話なんだが・・・</p><p>例えばページブレーク処理とか画面座標計算とかだと、エラーだろうが0デフォだろうが別にいいっちゃいいんだよね。<br/>そこに至ること自体が異常で、別に対処する必要もないんだけど、ゼロ除で止まられるのもうっとおしい。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834794">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:エラーはエラーとして現出させよ')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834794'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834794'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834794'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_dc1619f7.html" onclick="return D2.selectParent(2834683)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834794"></div>
+<ul class="comment-group" id="group_2834794">
+<li class="hide" id="hiddens_2834794"></li>
+</ul><ul id="commtree_2834794"><li class="comment hidden" id="tree_2834809"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834809"></div>
+<div class="comment-item" id="comment_2834809">
+</div>
+<div id="replyto_2834809"></div>
+<ul class="comment-group" id="group_2834809">
+<li class="hide" id="hiddens_2834809"></li>
+</ul><ul id="commtree_2834809"><li class="comment full contain" id="tree_2835003"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2835003"></div>
+<div class="comment-item" id="comment_2835003">
+<div class="commentTop comment-top newcomment" id="comment_top_2835003">
+<div class="title">
+<h4><a href="../../../../../comments.pl_87ad826d.html" id="comment_link_2835003" name="comment_link_2835003" onclick="return D2.setFocusComment(2835003)">Re:エラーはエラーとして現出させよ</a>
+<span class="score" id="comment_score_2835003">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2835003); return false">スコア:2</a>, おもしろおかしい)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2835003">on 2015年06月22日 13時26分
+			 (<a href="../../../../../../srad.jp/comment/2835003.html">#2835003</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2835003"><p>On Error Resume Next 最強伝説</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2835003">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:エラーはエラーとして現出させよ')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2835003'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2835003'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2835003'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_76cb7103.html" onclick="return D2.selectParent(2834809)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2835003"></div>
+<ul class="comment-group" id="group_2835003">
+<li class="hide" id="hiddens_2835003"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_2834845"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834845"></div>
+<div class="comment-item" id="comment_2834845">
+<div class="commentTop comment-top newcomment" id="comment_top_2834845">
+<div class="title">
+<h4><a href="../../../../../comments.pl_57d38a23.html" id="comment_link_2834845" name="comment_link_2834845" onclick="return D2.setFocusComment(2834845)">Re:エラーはエラーとして現出させよ</a>
+<span class="score" id="comment_score_2834845">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834845); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834845">on 2015年06月22日  8時32分
+			 (<a href="../../../../../../srad.jp/comment/2834845.html">#2834845</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834845"><p>以前に別のストーリーでも書いたけど、テレビでタレントが「iPhoneの計算機で、ゼロで割るとエラーって表示される！」と、まるで計算結果を表示しないのが不思議で大発見のように発言しちゃって、出演者たちが感心してるような情景が視聴できる日本を見ると、やはり「エラー。ゼロで除算はできませんよ。算数を勉強し直せ」って表示すべきだと思いました。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834845">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:エラーはエラーとして現出させよ')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834845'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834845'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834845'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_dc1619f7.html" onclick="return D2.selectParent(2834683)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834845"></div>
+<ul class="comment-group" id="group_2834845">
+<li class="hide" id="hiddens_2834845"></li>
+</ul></li><li class="comment hidden" id="tree_2834751"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834751"></div>
+<div class="comment-item" id="comment_2834751">
+</div>
+<div id="replyto_2834751"></div>
+<ul class="comment-group" id="group_2834751">
+<li class="hide" id="hiddens_2834751"></li>
+</ul><ul id="commtree_2834751"><li class="comment hidden" id="tree_2834767"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834767"></div>
+<div class="comment-item" id="comment_2834767">
+</div>
+<div id="replyto_2834767"></div>
+<ul class="comment-group" id="group_2834767">
+<li class="hide" id="hiddens_2834767"></li>
+</ul><ul id="commtree_2834767"><li class="comment full contain" id="tree_2834777"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834777"></div>
+<div class="comment-item" id="comment_2834777">
+<div class="commentTop comment-top newcomment" id="comment_top_2834777">
+<div class="title">
+<h4><a href="../../../../../comments.pl_90f91ba8.html" id="comment_link_2834777" name="comment_link_2834777" onclick="return D2.setFocusComment(2834777)">Re:エラーはエラーとして現出させよ</a>
+<span class="score" id="comment_score_2834777">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834777); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834777">on 2015年06月21日 23時55分
+			 (<a href="../../../../../../srad.jp/comment/2834777.html">#2834777</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834777"><p>ていうか、独立したはずなのに未だに一方的に親子関係を保ってますねスラド。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834777">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:エラーはエラーとして現出させよ')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834777'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834777'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834777'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_f72b5b63.html" onclick="return D2.selectParent(2834767)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834777"></div>
+<ul class="comment-group" id="group_2834777">
+<li class="hide" id="hiddens_2834777"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment hidden" id="tree_2834806"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834806"></div>
+<div class="comment-item" id="comment_2834806">
+</div>
+<div id="replyto_2834806"></div>
+<ul class="comment-group" id="group_2834806">
+<li class="hide" id="hiddens_2834806"></li>
+</ul><ul id="commtree_2834806"><li class="comment full contain" id="tree_2834808"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834808"></div>
+<div class="comment-item" id="comment_2834808">
+<div class="commentTop comment-top newcomment" id="comment_top_2834808">
+<div class="title">
+<h4><a href="../../../../../comments.pl_60a0e2b0.html" id="comment_link_2834808" name="comment_link_2834808" onclick="return D2.setFocusComment(2834808)">Re:除算ってそんなに出てきますかねぇ</a>
+<span class="score" id="comment_score_2834808">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834808); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~USH/index.html">USH (8040)</a>
+<span class="otherdetails" id="comment_otherdetails_2834808">on 2015年06月22日  2時13分
+			 (<a href="../../../../../../srad.jp/comment/2834808.html">#2834808</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~USH/journal/index.html" title="2008年10月14日 13時57分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834808"><p>バリバリの数値計算（数値シミュレーション）とかでなくても、平均とか分散求めるはなしはよくある。<br/>で、起こりがちなのが、平均を求める計算で、データが１つもない時。このとき、0/0 をやってしまいがち。<br/>また、データがひとつしか無いのに偏差値（=(データ値-平均)/標準偏差)*10+50)を求めようとして、同じく 0/0 をやってしまうとか。</p><p>また、このデータがないときの平均値というのに何がふさわしいかというと、それはそれでケースバイケース。まぁ、数学的に不定値だし。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834808">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:除算ってそんなに出てきますかねぇ')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834808'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834808'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834808'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_bf4fa117.html" onclick="return D2.selectParent(2834806)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834808"></div>
+<ul class="comment-group" id="group_2834808">
+<li class="hide" id="hiddens_2834808"></li>
+</ul></li></ul></li><li class="comment hidden" id="tree_2834881"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834881"></div>
+<div class="comment-item" id="comment_2834881">
+</div>
+<div id="replyto_2834881"></div>
+<ul class="comment-group" id="group_2834881">
+<li class="hide" id="hiddens_2834881"></li>
+</ul><ul id="commtree_2834881"><li class="comment full contain" id="tree_2834925"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_2834925"></div>
+<div class="comment-item" id="comment_2834925">
+<div class="commentTop comment-top newcomment" id="comment_top_2834925">
+<div class="title">
+<h4><a href="../../../../../comments.pl_62a56653.html" id="comment_link_2834925" name="comment_link_2834925" onclick="return D2.setFocusComment(2834925)">Re:出なかった</a>
+<span class="score" id="comment_score_2834925">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 2834925); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_2834925">on 2015年06月22日 11時05分
+			 (<a href="../../../../../../srad.jp/comment/2834925.html">#2834925</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_2834925"><p>それ、多分 / 演算子を使ってるからですよ。/ 演算子は浮動小数点数除算で、浮動小数点数演算はIEEE 754に従いますから。<br/>VBでの整数除算は \ 演算子を使い、こちらではDevideByZeroExceptionが発生します。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_2834925">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:出なかった')+'&amp;url='+encodeURIComponent('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834925'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834925'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://science.srad.jp/comments.pl?sid=661070&amp;cid=2834925'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_69e09150.html" onclick="return D2.selectParent(2834881)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_2834925"></div>
+<ul class="comment-group" id="group_2834925">
+<li class="hide" id="hiddens_2834925"></li>
+</ul></li></ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 0;
+		D2.currents()['full']     = 50;
+		D2.currents()['oneline']  = 0;
+		// D2.currents_total(50);
+
+		D2.abbrev_comments({});
+		D2.noshow_comments([2834760,2834822,2834805,2834739,2834780,2834670,2834803,2834870,2834755,2834684,2834733,2834741,2834747,2834683,2834809,2834751,2834767,2834806,2834881]);
+		D2.pieces_comments([]);
+		D2.init_hiddens([]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">50</span>/<span class="totalcommentcnt">199</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>192.168.0.1は、私が使っている IPアドレスですので勝手に使わないでください  --- ある通りすがり<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../../srad.jp/about.html">About</a></li>
+<li><a href="../../../../../../srad.jp/faq/index.html">FAQ</a></li>
+<li><a href="../../../../../../srad.jp/story/index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../../srad.jp/hof.html">殿堂入り</a></li>
+<li><a href="../../../../../../srad.jp/authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../../srad.jp/topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../../srad.jp/index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

@@ -1,0 +1,2382 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/16/05/15/041251.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>7-Zipで任意コード実行が可能となる2件の脆弱性 | スラド セキュリティ</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="7-Zipで任意コード実行が可能となる2件の脆弱性 | スラド セキュリティ" property="og:title">
+<meta content="https://srad.jp/static/topics/bug_64.png" property="og:image"/>
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '729528811491106666',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content="オープンソースの高圧縮ファイルアーカイバ―「7-Zip」で、任意コード実行が可能となる2件の脆弱性が発見された(Cisco Talos Blogの記事、The Registerの記事)。 TALOS-2016-0094 (CVE-2016-2335)はUDFファイルの処理における領域外メモリ参照の脆弱性だ。UDFボリュームでは複数のパーティションマップを保持できるが、..." name="description"/>
+<meta content="オープンソースの高圧縮ファイルアーカイバ―「7-Zip」で、任意コード実行が可能となる2件の脆弱性が発見された(Cisco Talos Blogの記事、The Registerの記事)。 TALOS-2016-0094 (CVE-2016-2335)はUDFファイルの処理における領域外メモリ参照の脆弱性だ。UDFボリュームでは複数のパーティションマップを保持できるが、..." property="og:description"/>
+<meta content="7-Zipで任意コード実行が可能となる2件の脆弱性 | スラド セキュリティ" itemprop="name"/>
+<meta content="オープンソースの高圧縮ファイルアーカイバ―「7-Zip」で、任意コード実行が可能となる2件の脆弱性が発見された(Cisco Talos Blogの記事、The Registerの記事)。 TALOS-2016-0094 (CVE-2016-2335)はUDFファイルの処理における領域外メモリ参照の脆弱性だ。UDFボリュームでは複数のパーティションマップを保持できるが、..." itemprop="description"/>
+<link href="../../../../../../srad.jp/index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../../srad.jp/search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../../srad.jp/security.rss" rel="alternate" title="スラド security RSS" type="application/rss+xml"/>
+<link href="../../../../../../srad.jp/static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../../srad.jp/static/topics/bug_64.png" rel="image_src"/>
+<link href="../../../../../../srad.jp/static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../../srad.jp/static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../../srad.jp/static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/16/05/15/041251/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'security';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//security.srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/16/05/15/041251.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../../srad.jp/recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../../srad.jp/popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../../srad.jp/comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../../srad.jp/journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../../srad.jp/polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：セキュリティ</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="active" id="fhsection-security">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-11">セキュリティ</a><span></span>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="active" id="fhsection-security">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-11">セキュリティ</a><span></span>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="12779808" data-fhtype="story" id="firehose-12779808">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">12779808</span>
+<span class="type">story</span>
+</span>
+<header>
+<span class="topic" id="topic-12779808">
+<a href="../../../../../../srad.jp/stories/bug.html" onclick="return addfhfilter('bug');">
+<img alt="バグ" height="64" src="../../../../../../srad.jp/static/topics/bug_64.png" title="バグ" width="64"/>
+</a>
+</span>
+<h2 class="story">
+<span id="title-12779808"> <a href="index.html">7-Zipで任意コード実行が可能となる2件の脆弱性</a></span>
+<span class="comments commentcnt-12779808">39</span>
+</h2>
+<div class="details" id="details-12779808">ストーリー by headless
+	<time datetime="2016-05-15T13:23+09:00" id="fhtime-12779808">2016年05月15日 13時23分</time><br/>発見 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "7-Zipで任意コード実行が可能となる2件の脆弱性",
+  "datePublished": "2016-05-15T13:23+09:00",
+  "articleBody": "オープンソースの高圧縮ファイルアーカイバ―「7-Zip」で、任意コード実行が可能となる2件の脆弱性が発見された(Cisco Talos Blogの記事、The Registerの記事)。 TALOS-2016-0094 (CVE-2016-2335)はUDFファイルの処理における領域外メモリ参照の脆弱性だ。UDFボリュームでは複数のパーティションマップを保持できるが、7-Zipでは利用可能なパーティションマップオブジェクトの数よりもLong Allocation Descripterから取得した「PartitionRef」フィールドの値が大きいかどうかを確認しない。そのため、Long Allocation Descripterを細工することで領域外メモリ参照を引き起こし、任意のコード実行が可能になるという。 TALOS-2016-0093 (CVE-2016-2334)はHFS+ファイルシステムにzlib圧縮で格納されたファイルの処理におけるヒープオーバーフローの脆弱性だ。HFS+ファイルシステムでzlibを用いて圧縮したファイルを格納するとき、圧縮後のサイズが3,800バイトを超える場合は複数のブロックに分割される。しかし、7-Zipで伸長を行う際、読み込んだブロックを格納する静的サイズのバッファーよりもブロックのサイズが大きいかどうかを確認しない。そのため、バッファーよりも大きくなるように細工したブロックを用いることで、バッファーオーバーフローに続いてヒープ破損を引き起こし、任意のコード実行が可能になるとのこと。 これらの脆弱性は最新版の7-Zip 16.00で修正されており、ユーザーは早期の更新が推奨される。ただし、7-Zipはさまざまな製品で利用されているため、Cisco Talosでは脆弱性を含むライブラリを使用していることにベンダーが気付きにくいといった問題も指摘している。",
+  "image": "https://srad.jp/static/topics/bug_64.png"
+}
+</script>
+<div class="body" id="fhbody-12779808">
+<div class="contents_text p" id="text-12779808">
+        オープンソースの高圧縮ファイルアーカイバ―「<a href="http://www.7-zip.org/">7-Zip</a>」で、任意コード実行が可能となる2件の脆弱性が発見された(<a href="http://blog.talosintel.com/2016/05/multiple-7-zip-vulnerabilities.html">Cisco Talos Blogの記事</a>、
+<a href="http://www.theregister.co.uk/2016/05/12/popular_zip_tool_7zip_pwned_pain_flows_to_top_security_software_tools/">The Registerの記事</a>)。
+<br/> <br/>
+<a href="http://www.talosintel.com/reports/TALOS-2016-0094/">TALOS-2016-0094</a> (<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2016-2335">CVE-2016-2335</a>)はUDFファイルの処理における領域外メモリ参照の脆弱性だ。UDFボリュームでは複数のパーティションマップを保持できるが、7-Zipでは利用可能なパーティションマップオブジェクトの数よりもLong Allocation Descripterから取得した「PartitionRef」フィールドの値が大きいかどうかを確認しない。そのため、Long Allocation Descripterを細工することで領域外メモリ参照を引き起こし、任意のコード実行が可能になるという。
+<br/> <br/>
+<a href="http://www.talosintel.com/reports/TALOS-2016-0093/">TALOS-2016-0093</a> (<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2016-2334">CVE-2016-2334</a>)はHFS+ファイルシステムにzlib圧縮で格納されたファイルの処理におけるヒープオーバーフローの脆弱性だ。HFS+ファイルシステムでzlibを用いて圧縮したファイルを格納するとき、圧縮後のサイズが3,800バイトを超える場合は複数のブロックに分割される。しかし、7-Zipで伸長を行う際、読み込んだブロックを格納する静的サイズのバッファーよりもブロックのサイズが大きいかどうかを確認しない。そのため、バッファーよりも大きくなるように細工したブロックを用いることで、バッファーオーバーフローに続いてヒープ破損を引き起こし、任意のコード実行が可能になるとのこと。
+<br/> <br/>
+
+これらの脆弱性は最新版の7-Zip 16.00で修正されており、ユーザーは早期の更新が推奨される。ただし、7-Zipは<a href="https://www.google.co.jp/?gfe_rd=cr#q=%22http:%2F%2Fwww.7-zip.org%2Flicense.txt%22">さまざまな製品で利用されている</a>ため、Cisco Talosでは脆弱性を含むライブラリを使用していることにベンダーが気付きにくいといった問題も指摘している。
+        </div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //security.srad.jp/story/16/05/15/041251/ -->
+<!-- http://security.srad.jp/story/16/05/15/041251/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://security.srad.jp/story/16/05/15/041251/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://security.srad.jp/story/16/05/15/041251/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/security.srad.jp/story/16/05/15/041251/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../../srad.jp/about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">39</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-12779808"><a class="topic tag" href="../../../../../../srad.jp/tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3.html" rel="statictag" target="_blank">セキュリティ</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2.html" rel="statictag" target="_blank">ソフトウェア</a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/bug.html" rel="statictag" target="_blank">bug</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../../../../../../yro.srad.jp/story/16/05/14/1927248/index.html" id="hrefns">スター・トレックのファンムービーによる著作権侵害の裁判、被告側の棄却申立を連邦地裁が却下</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../../../../../linux.srad.jp/story/15/01/05/0419239/index.html">2014年の教訓：サードパーティのライブラリには脆弱性がある</a></h3><h3><a href="../../../../14/07/01/0546244/index.html">FFmpegのLZO実装コードに脆弱性、20年前から存在</a></h3><h3><a href="../../../../13/01/30/0949211/index.html">libupnpに脆弱性、これを利用しているUPnP対応機器は注意を</a></h3><h3><a href="../../../../10/06/07/0335205/index.html">UNLHA32.DLLの開発停止、作者がLHA書庫の使用中止を呼びかける</a></h3><h3><a href="../../../../10/02/05/0743222/index.html">GNU gzipに脆弱性、1.4リリース</a></h3><h3><a href="../../../../08/03/19/0225204/index.html">圧縮・展開ルーチンに脆弱性、bzip2など相次ぎリリース</a></h3><h3><a href="../../../../../../srad.jp/story/07/09/09/2132235/index.html">7-ZIP32.DLLにバッファオーバーフローの脆弱性</a></h3><h3><a href="../../../../../../srad.jp/story/05/07/08/1330235/index.html">zlibにバッファオーバーフロー脆弱性</a></h3><h3><a href="../../../../18/06/11/061242/index.html">さまざまなソフトウェアでのアーカイブファイル展開処理に脆弱性、任意コードの実行を許す可能性</a></h3><h3><a href="../../../../19/03/20/0453235/index.html">WinRARの脆弱性を狙ったマルウェアが急増</a></h3><h3><a href="../../../../../../linux.srad.jp/story/21/03/16/1622251/index.html">7-Zip 20.01 alpha、Linuxに対応</a></h3><h3><a href="../../../../../../it.srad.jp/story/22/04/03/170212/index.html">zlib に 17 年前から存在し、4 年前から放置されていた脆弱性が修正される</a></h3><h3><a href="../../../../17/02/25/190239/index.html">Cloudflareのバグで別のユーザーのCookieやパスワードが送信される</a></h3><h3><a href="../../../../22/04/18/1651202/index.html">解凍・圧縮ソフト「7-Zip」に未修正の脆弱性</a></h3><h3><a href="../../../../19/07/16/1351248/index.html">10MBのファイルが281TBに膨らむ新型「非再帰的ZIP爆弾」</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="7-Zipで任意コード実行が可能となる2件の脆弱性のストーリーへ戻る">7-Zipで任意コード実行が可能となる2件の脆弱性</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//security.srad.jp/story/16/05/15/041251/';
+var parent_item_title = '7-Zipで任意コード実行が可能となる2件の脆弱性';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「7-Zipで任意コード実行が可能となる2件の脆弱性」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//security.srad.jp/search.pl?op=comments&amp;sid=685209" class="btn"><span class="totalcommentcnt">39</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//security.srad.jp/comments.pl?sid=685209"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_685b17aa.html"><span>検索</span><span class="totalcommentcnt">39</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../../srad.jp/static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 3013070: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 3013230 ], opid: 0 }, 3012916: { uid: 38668, pid: 3012801, read: 0, points: 2, kids: [ 3012976, 3013310 ], opid: 3012801 }, 3013162: { uid: 1, pid: 3013131, subject: "Re:完全にオフトピ", read: 0, points: 0, kids: [  ], opid: 3013131 }, 3013510: { uid: 1, pid: 3013131, subject: "Re:完全にオフトピ", read: 0, points: 0, kids: [  ], opid: 3013227 }, 3012854: { uid: 1, pid: 3012790, subject: "Re:mitigation techniquesは無意味なの？", read: 0, points: -1, kids: [  ], opid: 3012790 }, 3013310: { uid: 1, pid: 3012916, subject: "Re:リカバリレコードは時代遅れ", read: 0, points: 0, kids: [ 3014743 ], opid: 3012916 }, 3012784: { uid: 47182, pid: 0, read: 0, points: 2, kids: [  ], opid: 0 }, 3014561: { uid: 1, pid: 3012998, subject: "Re:完全にオフトピ", read: 0, points: 0, kids: [  ], opid: 3012998 }, 3012790: { uid: 1, pid: 3012787, subject: "Re:mitigation techniquesは無意味なの？", read: 0, points: 0, kids: [ 3012854 ], opid: 3012787 }, 3012771: { uid: 47533, pid: 0, read: 0, points: 1, kids: [ 3012780, 3012788 ], opid: 0 }, 3013174: { uid: 1, pid: 3013131, subject: "Re:完全にオフトピ", read: 0, points: 1, kids: [  ], opid: 3013131 }, 3013102: { uid: 1, pid: 3012998, subject: "Re:完全にオフトピ", read: 0, points: 0, kids: [ 3013131 ], opid: 3012998 }, 3012823: { uid: 1, pid: 3012810, subject: "Re:mitigation techniquesは無意味なの？", read: 0, points: 0, kids: [ 3012850 ], opid: 3012810 }, 3012998: { uid: 1, pid: 3012789, read: 0, points: 0, kids: [ 3013001, 3013102, 3014561 ], opid: 3012789 }, 3013080: { uid: 1, pid: 3013008, subject: "Re:外部のライブラリを使わないなんてありえない", read: 0, points: 0, kids: [  ], opid: 3013008 }, 3013001: { uid: 47533, pid: 3012998, subject: "Re:完全にオフトピ", read: 0, points: 1, kids: [ 3013009 ], opid: 3012998 }, 3013194: { uid: 1, pid: 3013104, subject: "Re:7upなつかしいなぁ", read: 0, points: 0, kids: [  ], opid: 3013104 }, 3012795: { uid: 1, pid: 3012787, subject: "Re:mitigation techniquesは無意味なの？", read: 0, points: 0, kids: [  ], opid: 3012787 }, 3012866: { uid: 1, pid: 3012859, subject: "Re:UDF も HFS+ も使ってなければ大丈夫？", read: 0, points: 0, kids: [ 3012923 ], opid: 3012859 }, 3012927: { uid: 11941, pid: 3012859, subject: "Re:UDF も HFS+ も使ってなければ大丈夫？", read: 0, points: 3, kids: [  ], opid: 3012859 }, 3012810: { uid: 1, pid: 3012787, subject: "Re:mitigation techniquesは無意味なの？", read: 0, points: 0, kids: [ 3012823 ], opid: 3012787 }, 3012788: { uid: 1, pid: 3012771, subject: "Re:7-Zipはさまざまな製品で利用されている", read: 0, points: 0, kids: [  ], opid: 3012771 }, 3013232: { uid: 1, pid: 3013131, subject: "Re:完全にオフトピ", read: 0, points: 0, kids: [  ], opid: 3013174 }, 3012787: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 3012790, 3012795, 3012810, 3012941 ], opid: 0 }, 3013131: { uid: 8479, pid: 3013102, subject: "Re:完全にオフトピ", read: 0, points: 2, kids: [ 3013162, 3013174, 3013227, 3013232, 3013510 ], opid: 3013102 }, 3013008: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 3013080 ], opid: 0 }, 3012923: { uid: 1, pid: 3012866, subject: "Re:UDF も HFS+ も使ってなければ大丈夫？", read: 0, points: 0, kids: [  ], opid: 3012866 }, 3013104: { uid: 1, pid: 3012801, subject: "Re:7upなつかしいなぁ", read: 0, points: 0, kids: [ 3013194 ], opid: 3012801 }, 3012976: { uid: 1, pid: 3012916, subject: "Re:リカバリレコードは時代遅れ", read: 0, points: 0, kids: [  ], opid: 3012916 }, 3013230: { uid: 1, pid: 3013070, subject: "Re:不思議", read: 0, points: 0, kids: [  ], opid: 3013070 }, 3013009: { uid: 1, pid: 3013001, subject: "Re:完全にオフトピ", read: 0, points: 0, kids: [  ], opid: 3013001 }, 3012780: { uid: 1, pid: 3012771, read: 0, points: 0, kids: [ 3012789 ], opid: 3012771 }, 3014743: { uid: 1, pid: 3013310, subject: "Re:リカバリレコードは時代遅れ", read: 0, points: 0, kids: [  ], opid: 3013310 }, 3012941: { uid: 1, pid: 3012787, subject: "Re:mitigation techniquesは無意味なの？", read: 0, points: 0, kids: [  ], opid: 3012787 }, 3012850: { uid: 1, pid: 3012823, subject: "Re:mitigation techniquesは無意味なの？", read: 0, points: 0, kids: [  ], opid: 3012823 }, 3012789: { uid: 47533, pid: 3012780, subject: "Re:7upなつかしいなぁ", read: 0, points: 1, kids: [ 3012801, 3012998 ], opid: 3012780 }, 3012859: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 3012866, 3012927 ], opid: 0 }, 3013227: { uid: 1, pid: 3013131, subject: "Re:完全にオフトピ", read: 0, points: 0, kids: [  ], opid: 3013174 }, 3012801: { uid: 1, pid: 3012789, subject: "Re:7upなつかしいなぁ", read: 0, points: 0, kids: [ 3012916, 3013104 ], opid: 3012789 } });
+
+D2.thresh_totals({6:{6:{1:39,3:0,2:0}},4:{6:{1:39,3:0,2:0},4:{1:39,3:0,2:0},5:{1:39,3:0,2:0}},1:{6:{1:31,3:0,2:8},4:{1:31,3:0,2:8},1:{1:31,3:8,2:0},3:{1:31,3:2,2:6},2:{1:31,3:5,2:3},5:{1:31,3:0,2:8}},3:{6:{1:38,3:0,2:1},4:{1:38,3:0,2:1},3:{1:38,3:1,2:0},5:{1:38,3:0,2:1}},0:{6:{1:1,3:0,2:38},4:{1:1,3:0,2:38},1:{1:1,3:12,2:26},3:{1:1,3:2,2:36},0:{1:1,3:38,2:0},2:{1:1,3:5,2:33},5:{1:1,3:0,2:38}},2:{6:{1:35,3:0,2:4},4:{1:35,3:0,2:4},3:{1:35,3:2,2:2},2:{1:35,3:4,2:0},5:{1:35,3:0,2:4}},5:{6:{1:39,3:0,2:0},5:{1:39,3:0,2:0}},"-1":{6:{1:0,3:0,2:39},4:{1:0,3:0,2:39},1:{1:0,3:12,2:27},3:{1:0,3:2,2:37},0:{1:0,3:38,2:1},2:{1:0,3:5,2:34},5:{1:0,3:0,2:39},"-1":{1:0,3:39,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([3012784,3012771,3012787,3012859,3013008,3013070]);
+D2.root_comments_hash({3013070:1,3012771:1,3012787:1,3012859:1,3013008:1,3012784:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(685209);
+
+D2.d2_seen('3012771,9,4,3,1,1,1,5,6,9,13,27,4,5,7,50,7,4,14,35,22,3,7,1,61,10,22,2,27,31,12,20,33,3,2,78,200,1051,182');
+D2.more_comments_num(0);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_3012784"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012784"></div>
+<div class="comment-item" id="comment_3012784">
+<div class="commentTop comment-top newcomment" id="comment_top_3012784">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c18552f8.html" id="comment_link_3012784" name="comment_link_3012784" onclick="return D2.setFocusComment(3012784)">7-Zipを使ってるソフト</a>
+<span class="score" id="comment_score_3012784">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012784); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~StandardIO/index.html">StandardIO (47182)</a>
+<span class="otherdetails" id="comment_otherdetails_3012784">on 2016年05月15日 13時31分
+			 (<a href="../../../../../../srad.jp/comment/3012784.html">#3012784</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~StandardIO/journal/index.html" title="2016年08月08日 18時22分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012784"><p>Xamarin.Androidが使ってたし、ラズパイとかLinux系のtar.*形式を扱うような作業だと使用推奨されることが多いような。</p></div>
+</div>
+</div>
+<div id="replyto_3012784"></div>
+<ul class="comment-group" id="group_3012784">
+<li class="hide" id="hiddens_3012784"></li>
+</ul></li><li class="comment full contain" id="tree_3012771"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012771"></div>
+<div class="comment-item" id="comment_3012771">
+<div class="commentTop comment-top newcomment" id="comment_top_3012771">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3fe36fe0.html" id="comment_link_3012771" name="comment_link_3012771" onclick="return D2.setFocusComment(3012771)">7-Zipはさまざまな製品で利用されている</a>
+<span class="score" id="comment_score_3012771">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012771); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~caret/index.html">caret (47533)</a>
+<span class="otherdetails" id="comment_otherdetails_3012771">on 2016年05月15日 13時06分
+			 (<a href="../../../../../../srad.jp/comment/3012771.html">#3012771</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~caret/journal/index.html" title="2023年01月25日 15時41分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012771">7-Zip 自体は使わなくとも、Igor Pavlov の名前はインストーラでよく見かけますね。</div>
+</div>
+</div>
+<div id="replyto_3012771"></div>
+<ul class="comment-group" id="group_3012771">
+<li class="hide" id="hiddens_3012771"></li>
+</ul><ul id="commtree_3012771"><li class="comment oneline" id="tree_3012780"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012780"></div>
+<div class="comment-item" id="comment_3012780">
+<div class="commentTop comment-top newcomment" id="comment_top_3012780">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b1a0fcba.html" id="comment_link_3012780" name="comment_link_3012780" onclick="return D2.setFocusComment(3012780)">Re:7upなつかしいなぁ</a>
+<span class="score" id="comment_score_3012780">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012780); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012780"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012780"><p>たまに自販機で　マウンテンデューを見るとさらに胸熱</p><p>ちなみに7-ZIPは、その方面ではよく使われてますが<br/>やっぱりWinRARがいいなぁ</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012780"></div>
+</div>
+<div id="replyto_3012780"></div>
+<ul class="comment-group" id="group_3012780">
+<li class="hide" id="hiddens_3012780"></li>
+</ul><ul id="commtree_3012780"><li class="comment full contain" id="tree_3012789"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012789"></div>
+<div class="comment-item" id="comment_3012789">
+<div class="commentTop comment-top newcomment" id="comment_top_3012789">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4c549496.html" id="comment_link_3012789" name="comment_link_3012789" onclick="return D2.setFocusComment(3012789)">Re:7upなつかしいなぁ</a>
+<span class="score" id="comment_score_3012789">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012789); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~caret/index.html">caret (47533)</a>
+<span class="otherdetails" id="comment_otherdetails_3012789">on 2016年05月15日 13時44分
+			 (<a href="../../../../../../srad.jp/comment/3012789.html">#3012789</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~caret/journal/index.html" title="2023年01月25日 15時41分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012789">わたしも、使うのは WinRAR だけど、7-Zip と 7z ってそもそもプロプライエタリな WinRAR と RAR に対抗するフリー (OSS) な実装、っていうのが出発点だったような。<br/>
+無料という意味でのフリーに置き換えれば、EmEditor と Mery も同じような関係かも（そういや最近 EmEditor Free が復活しましたね）。</div>
+</div>
+<div class="commentSub" id="comment_sub_3012789">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:7upなつかしいなぁ')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3012789'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3012789'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3012789'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_7c34f18d.html" onclick="return D2.selectParent(3012780)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3012789"></div>
+<ul class="comment-group" id="group_3012789">
+<li class="hide" id="hiddens_3012789"></li>
+</ul><ul id="commtree_3012789"><li class="comment oneline" id="tree_3012801"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012801"></div>
+<div class="comment-item" id="comment_3012801">
+<div class="commentTop comment-top newcomment" id="comment_top_3012801">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3cf3e56b.html" id="comment_link_3012801" name="comment_link_3012801" onclick="return D2.setFocusComment(3012801)">Re:</a>
+<span class="score" id="comment_score_3012801">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012801); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012801"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012801"><p>そういう経緯で開発された割にいつまでたってもアーカイブの修復機能はつかないんだな。<br/>どちらかというと圧縮後のファイルサイズを小さくする方向にリソースを振っている。<br/>そして圧縮率は素晴らしく高い。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012801"></div>
+</div>
+<div id="replyto_3012801"></div>
+<ul class="comment-group" id="group_3012801">
+<li class="hide" id="hiddens_3012801"></li>
+</ul><ul id="commtree_3012801"><li class="comment full contain" id="tree_3012916"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012916"></div>
+<div class="comment-item" id="comment_3012916">
+<div class="commentTop comment-top newcomment" id="comment_top_3012916">
+<div class="title">
+<h4><a href="../../../../../comments.pl_10b0e1c3.html" id="comment_link_3012916" name="comment_link_3012916" onclick="return D2.setFocusComment(3012916)">リカバリレコードは時代遅れ</a>
+<span class="score" id="comment_score_3012916">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012916); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Printable%20is%20bad./index.html">Printable is bad. (38668)</a>
+<span class="otherdetails" id="comment_otherdetails_3012916">on 2016年05月15日 19時49分
+			 (<a href="../../../../../../srad.jp/comment/3012916.html">#3012916</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012916"><blockquote><div><p>そういう経緯で開発された割にいつまでたってもアーカイブの修復機能はつかないんだな。</p></div>
+</blockquote><p>フロッピーディスクのような磁気メディアにおいては、ごく一部のビットが反転して読み取られるといった問題が生じることが多く、RARのリカバリレコードなどのアーカイブの修復機能が非常に有用でした。</p><p>しかし、HDD や SSD の場合、データが破損するときには比較的大きなブロックで壊れるため、リカバリレコードでは修復はできないケースが大半だと思います。ネットワーク転送時にも通常チェックサムの確認等が自動で行われるため、破損したデータが手元に来るケースは稀でしょう。</p><p># WinRAR を愛用していますが、磁気メディア以外でリカバリレコードが役に立ったことは一度もないので、最近では無効にしてます。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012916">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('リカバリレコードは時代遅れ')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3012916'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3012916'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3012916'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_350183b6.html" onclick="return D2.selectParent(3012801)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3012916"></div>
+<ul class="comment-group" id="group_3012916">
+<li class="hide" id="hiddens_3012916"></li>
+</ul><ul id="commtree_3012916"><li class="comment oneline" id="tree_3012976"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012976"></div>
+<div class="comment-item" id="comment_3012976">
+<div class="commentTop comment-top newcomment" id="comment_top_3012976">
+<div class="title">
+<h4><a href="../../../../../comments.pl_880b3a47.html" id="comment_link_3012976" name="comment_link_3012976" onclick="return D2.setFocusComment(3012976)">Re:</a>
+<span class="score" id="comment_score_3012976">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012976); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012976"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012976"><p>私は逆ですね・・・<br/>一度リカバリレコードに助けられたので。<br/>自分の性格からして付けておいても駄目なら諦めもつくだろうけど、付けずに破損したら後悔すると思う。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012976"></div>
+</div>
+<div id="replyto_3012976"></div>
+<ul class="comment-group" id="group_3012976">
+<li class="hide" id="hiddens_3012976"></li>
+</ul></li><li class="comment oneline" id="tree_3013310"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013310"></div>
+<div class="comment-item" id="comment_3013310">
+<div class="commentTop comment-top newcomment" id="comment_top_3013310">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a3aa6057.html" id="comment_link_3013310" name="comment_link_3013310" onclick="return D2.setFocusComment(3013310)">Re:</a>
+<span class="score" id="comment_score_3013310">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013310); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013310"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013310">P2Pで巨大なファイルをやりとりするとき、元配布者がいなくなって99.9%受信済みなのに解凍できないゴミが手元に残るケースの保険としてRARのリカバリ機能は有効です。<br/>
+安全な経路で安全な相手から安全なファイルを受け取るときには全く不要な機能でしょうがね</div>
+</div>
+<div class="commentSub" id="comment_sub_3013310"></div>
+</div>
+<div id="replyto_3013310"></div>
+<ul class="comment-group" id="group_3013310">
+<li class="hide" id="hiddens_3013310"></li>
+</ul><ul id="commtree_3013310"><li class="comment oneline" id="tree_3014743"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3014743"></div>
+<div class="comment-item" id="comment_3014743">
+<div class="commentTop comment-top newcomment" id="comment_top_3014743">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a198837a.html" id="comment_link_3014743" name="comment_link_3014743" onclick="return D2.setFocusComment(3014743)">Re:</a>
+<span class="score" id="comment_score_3014743">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3014743); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3014743"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3014743"><p>RRなければ100%落とせたんじゃ</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3014743"></div>
+</div>
+<div id="replyto_3014743"></div>
+<ul class="comment-group" id="group_3014743">
+<li class="hide" id="hiddens_3014743"></li>
+</ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3013104"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013104"></div>
+<div class="comment-item" id="comment_3013104">
+<div class="commentTop comment-top newcomment" id="comment_top_3013104">
+<div class="title">
+<h4><a href="../../../../../comments.pl_93a1f178.html" id="comment_link_3013104" name="comment_link_3013104" onclick="return D2.setFocusComment(3013104)">Re:</a>
+<span class="score" id="comment_score_3013104">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013104); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013104"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013104"><p>なんでリカバリコード付かないんだろうなー<br/>winrarがなんか特許でも持ってるのかね<br/>需要はあると思うんだけど</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013104"></div>
+</div>
+<div id="replyto_3013104"></div>
+<ul class="comment-group" id="group_3013104">
+<li class="hide" id="hiddens_3013104"></li>
+</ul><ul id="commtree_3013104"><li class="comment oneline" id="tree_3013194"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013194"></div>
+<div class="comment-item" id="comment_3013194">
+<div class="commentTop comment-top newcomment" id="comment_top_3013194">
+<div class="title">
+<h4><a href="../../../../../comments.pl_364bd1ea.html" id="comment_link_3013194" name="comment_link_3013194" onclick="return D2.setFocusComment(3013194)">Re:</a>
+<span class="score" id="comment_score_3013194">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013194); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013194"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013194"><p>むしろ需要がないのではないでしょうか</p><p>昔はディスクは狭いわネットワークも遅いわでしたが<br/>いまはディスクの容量単価は安いしネットワークもそれなりにスピード出るしで<br/>RRつかうよりは同じコピーを複数保管しておいたほうがメリットがあるのではないかと思っています</p><p>もちろんディスク狭い and/or ネットワークが細い環境には意味のある機能だと思いますが<br/>そういう需要がそんなに残っていないのでは？？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013194"></div>
+</div>
+<div id="replyto_3013194"></div>
+<ul class="comment-group" id="group_3013194">
+<li class="hide" id="hiddens_3013194"></li>
+</ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3012998"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012998"></div>
+<div class="comment-item" id="comment_3012998">
+<div class="commentTop comment-top newcomment" id="comment_top_3012998">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a352db9a.html" id="comment_link_3012998" name="comment_link_3012998" onclick="return D2.setFocusComment(3012998)">完全にオフトピ</a>
+<span class="score" id="comment_score_3012998">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012998); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012998"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012998"><p>私は 7z と WinRAR を使い分けてます。</p><p>7zでzip:<br/>　社外向け。未だファイルはメールでしか送らないので、意外と圧縮率よくて便利</p><p>7zで7z:<br/>　社内向け。ファイルは全部サーバに置く運用だが、容量ない＆遅いため圧縮必須。<br/>　ファイルが多いとソリッドが効くのでやっぱzipより圧縮率いい。多くの場合rarより圧縮率高し。<br/>　cpu全部使う設定だとマウスカーソルが飛び飛びになるレベルで占有するので、1つは空けた方が良い</p><p>WinRAR:<br/>　プライベートor完全自分用ファイルの圧縮に使用。<br/>　圧縮に使うリソースと圧縮率のバラ<span class="substr"> </span></p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012998"></div>
+</div>
+<div id="replyto_3012998"></div>
+<ul class="comment-group" id="group_3012998">
+<li class="hide" id="hiddens_3012998"></li>
+</ul><ul id="commtree_3012998"><li class="comment full contain" id="tree_3013001"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013001"></div>
+<div class="comment-item" id="comment_3013001">
+<div class="commentTop comment-top newcomment" id="comment_top_3013001">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4c507923.html" id="comment_link_3013001" name="comment_link_3013001" onclick="return D2.setFocusComment(3013001)">Re:完全にオフトピ</a>
+<span class="score" id="comment_score_3013001">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013001); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~caret/index.html">caret (47533)</a>
+<span class="otherdetails" id="comment_otherdetails_3013001">on 2016年05月15日 23時13分
+			 (<a href="../../../../../../srad.jp/comment/3013001.html">#3013001</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~caret/journal/index.html" title="2023年01月25日 15時41分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013001">WinRAR の前の日本代理店は、あまりにも仕事を怠けていたために win.rar GmbH から代理店契約を解除されました。<a href="https://www.winrarjapan.com/" rel="nofollow" title="winrarjapan.com">今は Steam 界隈で有名な株式会社デジカがやってる</a> [winrarjapan.com]ので、デジカがちゃんと仕事するかどうか次第かなぁ。<br/>
+<br/>
+# キャビネット ファイル (CAB) って昔からある割には汎用的なアーカイブ形式としては全然流行らないよね…</div>
+</div>
+<div class="commentSub" id="comment_sub_3013001">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:完全にオフトピ')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3013001'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3013001'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3013001'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_d6090c7f.html" onclick="return D2.selectParent(3012998)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3013001"></div>
+<ul class="comment-group" id="group_3013001">
+<li class="hide" id="hiddens_3013001"></li>
+</ul><ul id="commtree_3013001"><li class="comment oneline" id="tree_3013009"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013009"></div>
+<div class="comment-item" id="comment_3013009">
+<div class="commentTop comment-top newcomment" id="comment_top_3013009">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0628da58.html" id="comment_link_3013009" name="comment_link_3013009" onclick="return D2.setFocusComment(3013009)">Re:</a>
+<span class="score" id="comment_score_3013009">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013009); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013009"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013009"><p><div class="quote"><p>WinRAR の前の日本代理店は、あまりにも仕事を怠けていたために win.rar GmbH から代理店契約を解除されました。</p></div><p>初めて知りました。確かに仕事しなさ過ぎでしたね。これで状況が改善されるといいのですが。<br/>私は使ってませんでしたが、2ch ではユーザが日本語化dllを作っていて逞しいなと思ってました。</p><p><div class="quote"><p># キャビネット ファイル (CAB) って昔からある割には汎用的なアーカイブ形式としては全然流行らないよね…</p></div><p>圧縮重すぎ、伸張まで重い（気がする）、フォルダの扱いが厄介、と汎用どころかかなり場合を選ぶ形式のような。<br/>フォルダに関しては黒翼猫さんが毎度注意してるので、何らか扱いに問題があるんだと思ってます。</p></p></p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013009"></div>
+</div>
+<div id="replyto_3013009"></div>
+<ul class="comment-group" id="group_3013009">
+<li class="hide" id="hiddens_3013009"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_3013102"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013102"></div>
+<div class="comment-item" id="comment_3013102">
+<div class="commentTop comment-top newcomment" id="comment_top_3013102">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1412cd44.html" id="comment_link_3013102" name="comment_link_3013102" onclick="return D2.setFocusComment(3013102)">Re:</a>
+<span class="score" id="comment_score_3013102">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013102); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013102"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013102"><p>漏れは</p><p>・7zはメジャーになってきていて大抵のアーカイバで展開できる<br/>・暗号の実装が非常にまじめで清く正しい（反面重たいが仕方が無い）<br/>・ZIPは互換性高いけど文字コードとか地味に面倒。堅い暗号をつけるとエクスプローラで展開出来なかったり</p><p>と言うことで社外でも7zをデフォにしてるなあ。<br/>次はやはりZIPだけど。</p><p>ここいらの特性はWinRARも備えてるんだけど、ワレザーのイメージがあるせいか、メールシステムでスキャンする以前に止められて相手に届かないことがかなり多くて、ビジネスでは使えない印象。どうしてこうなったのやら。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013102"></div>
+</div>
+<div id="replyto_3013102"></div>
+<ul class="comment-group" id="group_3013102">
+<li class="hide" id="hiddens_3013102"></li>
+</ul><ul id="commtree_3013102"><li class="comment full contain" id="tree_3013131"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013131"></div>
+<div class="comment-item" id="comment_3013131">
+<div class="commentTop comment-top newcomment" id="comment_top_3013131">
+<div class="title">
+<h4><a href="../../../../../comments.pl_cfa19f81.html" id="comment_link_3013131" name="comment_link_3013131" onclick="return D2.setFocusComment(3013131)">Re:完全にオフトピ</a>
+<span class="score" id="comment_score_3013131">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013131); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~chronatog/index.html">chronatog (8479)</a>
+<span class="otherdetails" id="comment_otherdetails_3013131">on 2016年05月16日 10時14分
+			 (<a href="../../../../../../srad.jp/comment/3013131.html">#3013131</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~chronatog/journal/index.html" title="2007年01月12日 14時41分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013131"><p>&gt; どうしてこうなったのやら。</p><p>2016年にもなって、一人称に「漏れは」などと使ってる人間に<br/>愛用されてるからではないのか。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013131">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:完全にオフトピ')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3013131'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3013131'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3013131'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_95a34400.html" onclick="return D2.selectParent(3013102)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3013131"></div>
+<ul class="comment-group" id="group_3013131">
+<li class="hide" id="hiddens_3013131"></li>
+</ul><ul id="commtree_3013131"><li class="comment full contain" id="tree_3013174"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013174"></div>
+<div class="comment-item" id="comment_3013174">
+<div class="commentTop comment-top newcomment" id="comment_top_3013174">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d77e3570.html" id="comment_link_3013174" name="comment_link_3013174" onclick="return D2.setFocusComment(3013174)">Re:完全にオフトピ</a>
+<span class="score" id="comment_score_3013174">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013174); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013174">on 2016年05月16日 12時08分
+			 (<a href="../../../../../../srad.jp/comment/3013174.html">#3013174</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013174"><p>これだよこれ<br/>こういう揚げ足取りをしあう、本質ではないところでうんこ投げ合う<br/>こういう殺伐としてるんだかしてないんだか、なれ合いにもにた、Facebookなんかくそ食らえ、コテハンと名無しがお互いにののしり合う、そんな漏れたちが青春時代だった頃にはやったんだよなWinRAR</p><p>だがシステム屋に聞くと、アーカイバの修復機能を利用してウイルススキャナをくぐり抜ける場合があるために原則禁止にしているんだと。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013174">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:完全にオフトピ')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3013174'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3013174'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3013174'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_4bb237d5.html" onclick="return D2.selectParent(3013131)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3013174"></div>
+<ul class="comment-group" id="group_3013174">
+<li class="hide" id="hiddens_3013174"></li>
+</ul></li><li class="comment oneline" id="tree_3013162"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013162"></div>
+<div class="comment-item" id="comment_3013162">
+<div class="commentTop comment-top newcomment" id="comment_top_3013162">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d7d3d2cb.html" id="comment_link_3013162" name="comment_link_3013162" onclick="return D2.setFocusComment(3013162)">Re:</a>
+<span class="score" id="comment_score_3013162">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013162); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013162"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013162"><p>愛用ってどこに書いてあんの？</p><p>アレか、特定のキーワードに反応すると発狂する人工無能botか？<br/>AIの時代に逆に新鮮だな</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013162"></div>
+</div>
+<div id="replyto_3013162"></div>
+<ul class="comment-group" id="group_3013162">
+<li class="hide" id="hiddens_3013162"></li>
+</ul></li><li class="comment oneline" id="tree_3013227"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013227"></div>
+<div class="comment-item" id="comment_3013227">
+<div class="commentTop comment-top newcomment" id="comment_top_3013227">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f597c0fa.html" id="comment_link_3013227" name="comment_link_3013227" onclick="return D2.setFocusComment(3013227)">Re:</a>
+<span class="score" id="comment_score_3013227">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013227); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013227"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013227"><p>＞アーカイバの修復機能を利用してウイルススキャナをくぐり抜ける<br/>42へぇ～</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013227"></div>
+</div>
+<div id="replyto_3013227"></div>
+<ul class="comment-group" id="group_3013227">
+<li class="hide" id="hiddens_3013227"></li>
+</ul></li><li class="comment oneline" id="tree_3013232"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013232"></div>
+<div class="comment-item" id="comment_3013232">
+<div class="commentTop comment-top newcomment" id="comment_top_3013232">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b0c2875a.html" id="comment_link_3013232" name="comment_link_3013232" onclick="return D2.setFocusComment(3013232)">Re:</a>
+<span class="score" id="comment_score_3013232">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013232); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013232"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013232"><p>ほほー</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013232"></div>
+</div>
+<div id="replyto_3013232"></div>
+<ul class="comment-group" id="group_3013232">
+<li class="hide" id="hiddens_3013232"></li>
+</ul></li><li class="comment oneline" id="tree_3013510"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013510"></div>
+<div class="comment-item" id="comment_3013510">
+<div class="commentTop comment-top newcomment" id="comment_top_3013510">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a18141ca.html" id="comment_link_3013510" name="comment_link_3013510" onclick="return D2.setFocusComment(3013510)">Re:</a>
+<span class="score" id="comment_score_3013510">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013510); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013510"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013510"><p>もしかして、<a href="../../../../../comments.pl_3cf3e56b.html" title="security.srad.jp">#3012801</a> [security.srad.jp]が嘆いている修復機能を付けない理由には、そういうのもあるんでしょうか？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013510"></div>
+</div>
+<div id="replyto_3013510"></div>
+<ul class="comment-group" id="group_3013510">
+<li class="hide" id="hiddens_3013510"></li>
+</ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3014561"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3014561"></div>
+<div class="comment-item" id="comment_3014561">
+<div class="commentTop comment-top newcomment" id="comment_top_3014561">
+<div class="title">
+<h4><a href="../../../../../comments.pl_6380d6a9.html" id="comment_link_3014561" name="comment_link_3014561" onclick="return D2.setFocusComment(3014561)">Re:</a>
+<span class="score" id="comment_score_3014561">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3014561); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3014561"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3014561"><p>7Zipも自己解凍書庫を直接解凍できませんっけ？（実行じゃなくて展開だけするってことよね？）</p><p>右クリックから解凍選べばいけたような。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3014561"></div>
+</div>
+<div id="replyto_3014561"></div>
+<ul class="comment-group" id="group_3014561">
+<li class="hide" id="hiddens_3014561"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3012788"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012788"></div>
+<div class="comment-item" id="comment_3012788">
+<div class="commentTop comment-top newcomment" id="comment_top_3012788">
+<div class="title">
+<h4><a href="../../../../../comments.pl_eab41ace.html" id="comment_link_3012788" name="comment_link_3012788" onclick="return D2.setFocusComment(3012788)">Re:</a>
+<span class="score" id="comment_score_3012788">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012788); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012788"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012788"><p>インストーラーは固定されたファイルしか展開しないのでとくに問題にならないでしょう。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012788"></div>
+</div>
+<div id="replyto_3012788"></div>
+<ul class="comment-group" id="group_3012788">
+<li class="hide" id="hiddens_3012788"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_3012787"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012787"></div>
+<div class="comment-item" id="comment_3012787">
+<div class="commentTop comment-top newcomment" id="comment_top_3012787">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9e69a414.html" id="comment_link_3012787" name="comment_link_3012787" onclick="return D2.setFocusComment(3012787)">mitigation techniquesは無意味なの？</a>
+<span class="score" id="comment_score_3012787">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012787); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012787">on 2016年05月15日 13時41分
+			 (<a href="../../../../../../srad.jp/comment/3012787.html">#3012787</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012787"><p>Registerに"A fully patched Windows 10 box lacking the 7-Zip fixes would not help you."とあるけど、<br/>DEPとかASLRとか色々やってるはずのOSでも任意コード実行できるの？ なんで？</p></div>
+</div>
+</div>
+<div id="replyto_3012787"></div>
+<ul class="comment-group" id="group_3012787">
+<li class="hide" id="hiddens_3012787"></li>
+</ul><ul id="commtree_3012787"><li class="comment oneline" id="tree_3012790"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012790"></div>
+<div class="comment-item" id="comment_3012790">
+<div class="commentTop comment-top newcomment" id="comment_top_3012790">
+<div class="title">
+<h4><a href="../../../../../comments.pl_61595bbc.html" id="comment_link_3012790" name="comment_link_3012790" onclick="return D2.setFocusComment(3012790)">Re:</a>
+<span class="score" id="comment_score_3012790">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012790); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012790"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012790"><p>EMETを入れていれば防げたのかどうか気になりますね。マイクロソフトは<a href="../../../02/10/068229/index.html" title="security.srad.jp">Windows 10ではEMETは不要だ</a> [security.srad.jp]と主張していましたが。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012790"></div>
+</div>
+<div id="replyto_3012790"></div>
+<ul class="comment-group" id="group_3012790">
+<li class="hide" id="hiddens_3012790"></li>
+</ul><ul id="commtree_3012790"><li class="comment hidden" id="tree_3012854"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012854"></div>
+<div class="comment-item" id="comment_3012854">
+</div>
+<div id="replyto_3012854"></div>
+<ul class="comment-group" id="group_3012854">
+<li class="hide" id="hiddens_3012854"></li>
+</ul></li><li id="hidestring_3012790"><noscript><b class="more"><a href="../../../../../comments.pl_950fc919.html">1個のコメント</a> が現在のしきい値以下です。</b></noscript></li></ul></li><li class="comment oneline" id="tree_3012795"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012795"></div>
+<div class="comment-item" id="comment_3012795">
+<div class="commentTop comment-top newcomment" id="comment_top_3012795">
+<div class="title">
+<h4><a href="../../../../../comments.pl_70b0aa9a.html" id="comment_link_3012795" name="comment_link_3012795" onclick="return D2.setFocusComment(3012795)">Re:</a>
+<span class="score" id="comment_score_3012795">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012795); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012795"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012795"><p>抗生物質で細菌を殺しまくれば必然的に生き残るのは耐性菌だけです。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012795"></div>
+</div>
+<div id="replyto_3012795"></div>
+<ul class="comment-group" id="group_3012795">
+<li class="hide" id="hiddens_3012795"></li>
+</ul></li><li class="comment oneline" id="tree_3012810"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012810"></div>
+<div class="comment-item" id="comment_3012810">
+<div class="commentTop comment-top newcomment" id="comment_top_3012810">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d2cb1128.html" id="comment_link_3012810" name="comment_link_3012810" onclick="return D2.setFocusComment(3012810)">Re:</a>
+<span class="score" id="comment_score_3012810">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012810); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012810"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012810"><p>/NXCOMPATが付いてなけりゃ/DYNAMICBASEも付いてないので既定の設定のWindowsだとどっちも有効にならない</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012810"></div>
+</div>
+<div id="replyto_3012810"></div>
+<ul class="comment-group" id="group_3012810">
+<li class="hide" id="hiddens_3012810"></li>
+</ul><ul id="commtree_3012810"><li class="comment oneline" id="tree_3012823"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012823"></div>
+<div class="comment-item" id="comment_3012823">
+<div class="commentTop comment-top newcomment" id="comment_top_3012823">
+<div class="title">
+<h4><a href="../../../../../comments.pl_0cd82175.html" id="comment_link_3012823" name="comment_link_3012823" onclick="return D2.setFocusComment(3012823)">Re:</a>
+<span class="score" id="comment_score_3012823">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012823); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012823"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012823"><p>なにそれひどい。(/NXCOMPATは64bit版なら関係ないけど)</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012823"></div>
+</div>
+<div id="replyto_3012823"></div>
+<ul class="comment-group" id="group_3012823">
+<li class="hide" id="hiddens_3012823"></li>
+</ul><ul id="commtree_3012823"><li class="comment oneline" id="tree_3012850"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012850"></div>
+<div class="comment-item" id="comment_3012850">
+<div class="commentTop comment-top newcomment" id="comment_top_3012850">
+<div class="title">
+<h4><a href="../../../../../comments.pl_377157bd.html" id="comment_link_3012850" name="comment_link_3012850" onclick="return D2.setFocusComment(3012850)">Re:</a>
+<span class="score" id="comment_score_3012850">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012850); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012850"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012850"><p>Theo de Raadt 曰く "Optional Security is Irrelevant" と。<br/><a href="https://twitter.com/freebsdhelp/status/663978471505330177" rel="nofollow" title="twitter.com">https://twitter.com/freebsdhelp/status/663978471505330177</a> [twitter.com]<br/># で、<a href="http://cvsweb.openbsd.org/cgi-bin/cvsweb/ports/archivers/p7zip/patches/patch-CPP_7zip_Bundles_SFXCon_SfxCon_cpp" rel="nofollow" title="openbsd.org">pledge あり p7zip</a> [openbsd.org] は安全だったのかな?</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012850"></div>
+</div>
+<div id="replyto_3012850"></div>
+<ul class="comment-group" id="group_3012850">
+<li class="hide" id="hiddens_3012850"></li>
+</ul></li></ul></li></ul></li><li class="comment oneline" id="tree_3012941"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012941"></div>
+<div class="comment-item" id="comment_3012941">
+<div class="commentTop comment-top newcomment" id="comment_top_3012941">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ac3f7231.html" id="comment_link_3012941" name="comment_link_3012941" onclick="return D2.setFocusComment(3012941)">Re:</a>
+<span class="score" id="comment_score_3012941">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012941); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012941"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012941"><p>ASLRって、同じメモリ空間内に呼びたい関数のラッパーがあると簡単に回避できそうだけど、そうでもないんかな。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012941"></div>
+</div>
+<div id="replyto_3012941"></div>
+<ul class="comment-group" id="group_3012941">
+<li class="hide" id="hiddens_3012941"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_3012859"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012859"></div>
+<div class="comment-item" id="comment_3012859">
+<div class="commentTop comment-top newcomment" id="comment_top_3012859">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b052d9d4.html" id="comment_link_3012859" name="comment_link_3012859" onclick="return D2.setFocusComment(3012859)">UDF も HFS+ も使ってなければ大丈夫？</a>
+<span class="score" id="comment_score_3012859">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012859); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012859">on 2016年05月15日 17時42分
+			 (<a href="../../../../../../srad.jp/comment/3012859.html">#3012859</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012859"><p>それともそれらを使うための仕掛けが悪さをするので使ってなくてもアウト？</p></div>
+</div>
+</div>
+<div id="replyto_3012859"></div>
+<ul class="comment-group" id="group_3012859">
+<li class="hide" id="hiddens_3012859"></li>
+</ul><ul id="commtree_3012859"><li class="comment full contain" id="tree_3012927"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012927"></div>
+<div class="comment-item" id="comment_3012927">
+<div class="commentTop comment-top newcomment" id="comment_top_3012927">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a56866e7.html" id="comment_link_3012927" name="comment_link_3012927" onclick="return D2.setFocusComment(3012927)">Re:UDF も HFS+ も使ってなければ大丈夫？</a>
+<span class="score" id="comment_score_3012927">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012927); return false">スコア:3</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~BIWYFI/index.html">BIWYFI (11941)</a>
+<span class="otherdetails" id="comment_otherdetails_3012927">on 2016年05月15日 20時04分
+			 (<a href="../../../../../../srad.jp/comment/3012927.html">#3012927</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~BIWYFI/journal/index.html" title="2014年06月27日 18時07分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012927"><p>7-Zipは、内部UDFなISOイメージ（呼び名がおかしい気がするが7-Zip自体こう言う）からファイルを取り出す機能が有る。<br/>ファイル内容でコンテナを識別するんで、拡張子がZIPでも（警告出たけど）きちんと扱えちゃう。つまり、偽装ファイルを扱うとアウト。<br/>仕様上格納は不可だけど、展開だけする分には偽装に気付かないだろう。多機能アーカイバの罠だよね。</p></div>
+<div class="sig" id="comment_sig_3012927">-- <br/>-- Buy It When You Found It --</div>
+</div>
+<div class="commentSub" id="comment_sub_3012927">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:UDF も HFS+ も使ってなければ大丈夫？')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3012927'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3012927'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=685209&amp;cid=3012927'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_f5a44149.html" onclick="return D2.selectParent(3012859)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_3012927"></div>
+<ul class="comment-group" id="group_3012927">
+<li class="hide" id="hiddens_3012927"></li>
+</ul></li><li class="comment oneline" id="tree_3012866"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012866"></div>
+<div class="comment-item" id="comment_3012866">
+<div class="commentTop comment-top newcomment" id="comment_top_3012866">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4bc950e6.html" id="comment_link_3012866" name="comment_link_3012866" onclick="return D2.setFocusComment(3012866)">Re:</a>
+<span class="score" id="comment_score_3012866">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012866); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012866"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012866"><p>多分、UDFが格納されたイメージファイルを展開する話かと。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012866"></div>
+</div>
+<div id="replyto_3012866"></div>
+<ul class="comment-group" id="group_3012866">
+<li class="hide" id="hiddens_3012866"></li>
+</ul><ul id="commtree_3012866"><li class="comment oneline" id="tree_3012923"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3012923"></div>
+<div class="comment-item" id="comment_3012923">
+<div class="commentTop comment-top newcomment" id="comment_top_3012923">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f742c6d5.html" id="comment_link_3012923" name="comment_link_3012923" onclick="return D2.setFocusComment(3012923)">Re:</a>
+<span class="score" id="comment_score_3012923">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3012923); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3012923"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3012923"><p>7z/xzにしか対応していないLZMA SDKには影響ないはずだが一緒にバージョンアップされているな。バージョン番号が揃っていないとわかりにくいからか?</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3012923"></div>
+</div>
+<div id="replyto_3012923"></div>
+<ul class="comment-group" id="group_3012923">
+<li class="hide" id="hiddens_3012923"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_3013008"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013008"></div>
+<div class="comment-item" id="comment_3013008">
+<div class="commentTop comment-top newcomment" id="comment_top_3013008">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9277d786.html" id="comment_link_3013008" name="comment_link_3013008" onclick="return D2.setFocusComment(3013008)">外部のライブラリを使わないなんてありえない</a>
+<span class="score" id="comment_score_3013008">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013008); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013008">on 2016年05月15日 23時37分
+			 (<a href="../../../../../../srad.jp/comment/3013008.html">#3013008</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013008"><p>無茶言わないでほしい。<br/>普通、外部のライブラリを使わず全て自社で開発するなんてありえないでしょう。</p></div>
+</div>
+</div>
+<div id="replyto_3013008"></div>
+<ul class="comment-group" id="group_3013008">
+<li class="hide" id="hiddens_3013008"></li>
+</ul><ul id="commtree_3013008"><li class="comment oneline" id="tree_3013080"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013080"></div>
+<div class="comment-item" id="comment_3013080">
+<div class="commentTop comment-top newcomment" id="comment_top_3013080">
+<div class="title">
+<h4><a href="../../../../../comments.pl_764f3b53.html" id="comment_link_3013080" name="comment_link_3013080" onclick="return D2.setFocusComment(3013080)">Re:</a>
+<span class="score" id="comment_score_3013080">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013080); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013080"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013080"><p>これどこのツリーにぶら下げようとした話題？<br/>本文には外部ライブラリを使うなとは書いてないようだけど</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013080"></div>
+</div>
+<div id="replyto_3013080"></div>
+<ul class="comment-group" id="group_3013080">
+<li class="hide" id="hiddens_3013080"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_3013070"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013070"></div>
+<div class="comment-item" id="comment_3013070">
+<div class="commentTop comment-top newcomment" id="comment_top_3013070">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7c4a324b.html" id="comment_link_3013070" name="comment_link_3013070" onclick="return D2.setFocusComment(3013070)">不思議</a>
+<span class="score" id="comment_score_3013070">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013070); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013070">on 2016年05月16日  7時05分
+			 (<a href="../../../../../../srad.jp/comment/3013070.html">#3013070</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013070"><p>なんで大人しくアップデートするという選択肢がないのか？<br/>セキュリティリスクが最新版にあるならまだしも最新版で解決してるのに。<br/>何かと理由をつけてアップデートしないというのが流行ってるのかと疑問に思う時がある。</p></div>
+</div>
+</div>
+<div id="replyto_3013070"></div>
+<ul class="comment-group" id="group_3013070">
+<li class="hide" id="hiddens_3013070"></li>
+</ul><ul id="commtree_3013070"><li class="comment oneline" id="tree_3013230"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_3013230"></div>
+<div class="comment-item" id="comment_3013230">
+<div class="commentTop comment-top newcomment" id="comment_top_3013230">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c89a620a.html" id="comment_link_3013230" name="comment_link_3013230" onclick="return D2.setFocusComment(3013230)">Re:</a>
+<span class="score" id="comment_score_3013230">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 3013230); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_3013230"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_3013230"><p>アップデートが必要な奴らにアップデートが必要という情報が行き渡らない問題</p></div>
+</div>
+<div class="commentSub" id="comment_sub_3013230"></div>
+</div>
+<div id="replyto_3013230"></div>
+<ul class="comment-group" id="group_3013230">
+<li class="hide" id="hiddens_3013230"></li>
+</ul></li></ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 1;
+		D2.currents()['full']     = 12;
+		D2.currents()['oneline']  = 26;
+		// D2.currents_total(39);
+
+		D2.abbrev_comments({3012998:305});
+		D2.noshow_comments([3012854]);
+		D2.pieces_comments([3012780,3012801,3012976,3013310,3014743,3013104,3013194,3012998,3013009,3013102,3013162,3013227,3013232,3013510,3014561,3012788,3012790,3012795,3012810,3012823,3012850,3012941,3012866,3012923,3013080,3013230]);
+		D2.init_hiddens([3012790]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">39</span>/<span class="totalcommentcnt">39</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>人生unstable -- あるハッカー<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../../srad.jp/about.html">About</a></li>
+<li><a href="../../../../../../srad.jp/faq/index.html">FAQ</a></li>
+<li><a href="../../../../../../srad.jp/story/index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../../srad.jp/hof.html">殿堂入り</a></li>
+<li><a href="../../../../../../srad.jp/authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../../srad.jp/topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../../srad.jp/index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>

@@ -1,0 +1,3091 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<link href="../../../../../../m.srad.jp/story/10/08/27/0822219.html" media="only screen and (max-width: 640px)" rel="alternate"/>
+<link href="index.html" rel="canonical">
+<title>WindowsにおけるDLLハイジャック脆弱性、多くのメジャーなソフトウェアにも | スラド セキュリティ</title>
+<meta content="1259000255,100001650003925,739629250,1275798062,100001440290532" property="fb:admins"/>
+<meta content="164298693588834" property="fb:page_id"/>
+<meta content="https://www.facebook.com/srad.jp" property="article:publisher">
+<meta content="article" property="og:type">
+<meta content="WindowsにおけるDLLハイジャック脆弱性、多くのメジャーなソフトウェアにも | スラド セキュリティ" property="og:title">
+<meta content="https://srad.jp/static/topics/security_64.png" property="og:image"/>
+<meta content="summary" property="twitter:card"/>
+<meta content="srad.jp" property="twitter:domain"/>
+<meta content="@sradjp" property="twitter:site"/>
+<script id="before-content" type="text/javascript">
+var pageload = {
+	pagemark: '4404738786640936',
+	before_content: (new Date).getTime()
+};
+function pageload_done( $, console, maybe ){
+	pageload.after_readycode	= (new Date).getTime();
+	pageload.content_ready_time	= pageload.content_ready - pageload.before_content;
+	pageload.script_ready_time	= pageload.after_readycode - pageload.content_ready;
+	pageload.ready_time		= pageload.after_readycode - pageload.before_content;
+	// Only report 1% of cases.
+	maybe || (Math.random()>0.01) || $.ajax({ data: {
+		op: 'page_profile',
+		pagemark: pageload.pagemark,
+		dom: pageload.content_ready_time,
+		js: pageload.script_ready_time
+	} });
+}
+</script>
+<meta content="あるAnonymous Coward 曰く、世間を騒がせつつあるDLLハイジャックの脆弱性であるが、セキュリティ診断ツールMetasploitの開発版においてこの問題をチェックする機能「webdav_dll_hijacker」が追加され、簡単にこの脆弱性を発見できるようになった（Metasploitのブログ記事、本家記事）。問題となっている脆弱性は、アプ..." name="description"/>
+<meta content="あるAnonymous Coward 曰く、世間を騒がせつつあるDLLハイジャックの脆弱性であるが、セキュリティ診断ツールMetasploitの開発版においてこの問題をチェックする機能「webdav_dll_hijacker」が追加され、簡単にこの脆弱性を発見できるようになった（Metasploitのブログ記事、本家記事）。問題となっている脆弱性は、アプ..." property="og:description"/>
+<meta content="WindowsにおけるDLLハイジャック脆弱性、多くのメジャーなソフトウェアにも | スラド セキュリティ" itemprop="name"/>
+<meta content="あるAnonymous Coward 曰く、世間を騒がせつつあるDLLハイジャックの脆弱性であるが、セキュリティ診断ツールMetasploitの開発版においてこの問題をチェックする機能「webdav_dll_hijacker」が追加され、簡単にこの脆弱性を発見できるようになった（Metasploitのブログ記事、本家記事）。問題となっている脆弱性は、アプ..." itemprop="description"/>
+<link href="../../../../../../srad.jp/index.html" rel="home" title="スラド -- アレゲなニュースと雑談サイト"/>
+<link href="../../../../../../srad.jp/search.pl.html" rel="search" title="スラド 検索"/>
+<link href="../../../../../../srad.jp/security.rss" rel="alternate" title="スラド security RSS" type="application/rss+xml"/>
+<link href="../../../../../../srad.jp/static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="../../../../../../srad.jp/static/topics/security_64.png" rel="image_src"/>
+<link href="../../../../../../srad.jp/static/font-awesome.min_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<link href="../../../../../../srad.jp/static/classic_42bd7c3e.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie7-classic.css?2016-09-14"><![endif]-->
+<!--[if IE 8]><link rel="stylesheet" type="text/css" media="screen, projection" href="https://srad.jp/static/ie8-classic.css?2016-09-14"><![endif]-->
+<!--[if lt IE 9]><script>/*@cc_on'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary subline time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script><![endif]-->
+<script src="../../../../../../srad.jp/static/all-minified_42bd7c3e.js" type="text/javascript"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MXZKL84');</script>
+<!-- /story/10/08/27/0822219/ -->
+<!-- firehose _  -->
+<script>
+var user_type='Anon';
+var currentPage='article2';
+</script>
+<script>
+var rurl = location.href;
+l=document.getElementsByTagName('head')[0].getElementsByTagName('link');
+for(i=0;i<l.length;i++){if(l[i].getAttribute('rel')=='canonical')rurl=l[i].getAttribute('href')}
+rurl=rurl.replace(/https?:\/\/[^\/]*srad\.jp\//, '/');
+rurl=rurl.replace(/\?.*$/, '');
+rurl=rurl.replace(/^\/~/, '/u/');
+var rsection = 'security';
+var rlogin = 'false';
+var rpage = 'article';
+var rdisgadx = 'false';
+</script>
+<style>
+#gpt-sd_index_rec{min-height:250px;margin-bottom:16px;}
+.ads-leaderbord{width:728px;}
+.askslashdot_sponsored .footnote {
+font-size:90%;
+color:##399;
+}
+
+.article.askslashdot_sponsored .sponsoredmessage {
+margin: 0 -10px 4px 20px !important;
+font-size: 14px;
+}
+
+#wapr201203 p {
+ margin: 0;
+}
+
+#wapr201203 div.question {
+  padding-top: 2px;
+  clear: left;
+  margin-bottom: 30px;
+}
+#wapr201203 div.question img {
+  float: right;
+}
+#wapr201203 div.question div.popup {
+  margin-right:40px;
+  padding-right: 32px;
+}
+#wapr201203 div.popup {
+  padding-top: 0px;
+}
+#wapr201203 div.popup  p {
+  border: 2px solid #C3C3C3;
+  padding: 10px;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  margin: 0 0 1.5em 0;
+}
+
+#wapr201203 div.answer {
+  padding-top: 0px;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  clear: right;
+}
+#wapr201203 div.answer img {float: left;}
+
+#wapr201203 div.answer div.popup {
+  padding-left: 32px;
+  margin-left: 106px;
+}
+#firehose article.askslashdot_sponsored header h2.onamae_vps{
+min-height: 2.2em;
+background: #d91200 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#d91200), to(#a00)) !important;
+background-image: -moz-linear-gradient(100% 100% 90deg,#a00, ##d91200 100%) !important;
+background-image: -o-linear-gradient(top, #d91200, #a00 100%) !important;
+}
+
+#ads-article-right{
+width:300px;
+height:250px;
+margin: 0;
+overflow:hidden;
+}
+
+#ads-article-left {
+margin: 0 16px 0 4px;
+width:300px;
+min-height:250px;
+}
+
+#gpt-sd_other_rec {
+min-height:250px;
+margin: 0 0 16px;
+}
+
+
+/* quick fix until next update */
+
+.ui-icon.rss > a:before { content: "\f143"; }
+
+#site_menu { text-align: center; }
+#site_menu ul {
+  margin: 0;
+  padding: 0;
+}
+/* header-menu */
+header.h .header-menu {
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.hof #firehose {margin-right:0;}
+
+.sprite-syndication{
+background-color:transparent;
+background-image:url(https://srad.jp/static/sprite-syndication.png);
+background-repeat:no-repeat;
+background-attachment:scroll;
+display:inline-block;
+vertical-align:top;
+cursor: pointer;
+}
+
+.sp-rss_14{background-position:-36px -90px;height:14px;width:14px;}
+.sp-twitter_blue_14{background-position:-36px -106px;height:14px;width:14px;}
+.sp-twitter_white_14{background-position:-36px -122px;height:14px;width:14px;}
+.sp-facebook_14{background-position:-36px -138px;height:14px;width:14px;}
+.sp-gplus_14{background-position:-36px -154px;height:14px;width:14px;}
+.sp-rss_16{background-position:-34px 0;height:16px;width:16px;}
+.sp-twitter_blue_16{background-position:-34px -18px;height:16px;width:16px;}
+.sp-twitter_white_16{background-position:-34px -36px;height:16px;width:16px;}
+.sp-facebook_16{background-position:-34px -54px;height:16px;width:16px;}
+.sp-gplus_16{background-position:-34px -72px;height:16px;width:16px;}
+.sp-rss_32{background-position:0 0;height:32px;width:32px;}
+.sp-twitter_blue_32{background-position:0 -34px;height:32px;width:32px;}
+.sp-twitter_white_32{background-position:0 -68px;height:32px;width:32px;}
+.sp-facebook_32{background-position:0 -102px;height:32px;width:32px;}
+.sp-gplus_32{background-position:0 -136px;height:32px;width:32px;}
+.sp-rss_48{background-position:0 -170px;height:48px;width:48px;}
+.sp-twitter_blue_48{background-position:0 -220px;height:48px;width:48px;}
+.sp-twitter_white_48{background-position:0 -270px;height:48px;width:48px;}
+.sp-facebook_48{background-position:0 -320px;height:48px;width:48px;}
+.sp-gplus_48{background-position:0 -370px;height:48px;width:48px;}
+.sp-hatebu_48{background-position:0 -420px;height:48px;width:48px;}
+.sp-hatebu_32{background-position:0 -470px;height:32px;width:32px;}
+.sp-hatebu_16{background-position:-34px -470px;height:16px;width:16px;}
+.sp-hatebu_14{background-position:-36px -488px;height:14px;width:14px;}
+
+/* for webkit (search bar) */
+input#searchquery { -webkit-appearance: none; }
+
+/* for tag editor */
+.edit-tag {
+  color: #997a49;
+  cursor: pointer;
+  font-size: 85%;
+}
+.ui-icon.edit-tag:before { content: "\f02c"; }
+.article-tags { border-top: 1px solid #e0d2bd; }
+article .article-tags .tag-bar { border: none; display: inline; }
+
+span[id^="tagbar-"] a:first-child {
+    display: inline-block;
+}
+span[id^="tagbar-"] a[href="http://srad.jp/tag/"]:before {
+    content: "";
+}
+
+.tag-bar {
+    display: inline-block;
+}
+
+.stealth, 
+.stealth a,
+.stealth a:hover {
+  color: #FBF9F7; 
+}
+
+.firehose-list-more-wrap {}
+.firehose-list-more {
+    box-shadow: 0 0 1px #e0d2bd;
+    border: 1px solid #e0d2bd;
+    background: #fdfcfb;
+    text-align: center;
+    padding: 6px 6px;
+    margin: 4px;
+}
+.firehose-list-more a {
+    display: block;
+    background: #e5dac9;
+    line-height: 110%;
+    font-weight: bold;
+    padding: 6px;
+    color: #775e38;
+}
+
+.article dl {margin-bottom: 1em; }
+.article dt { font-weight: bold; }
+.article dd { padding-left: 2em; }
+.article .body h3, .article .body h4 { margin-bottom: 1em;}
+
+.srad-contentad-banner { margin: 10px 0 }
+
+</style>
+</meta></meta></meta></link></head>
+<body class="anon firehose">
+<div id="top_parent"></div>
+<div id="tophat">
+<div class="ads-leaderbord" id="gpt-sd_article_728"></div>
+</div>
+<header class="col_wrapper container clearfix h">
+<hgroup>
+<div id="logo">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<section class="header-menu">
+<form action="//security.srad.jp/index2.pl" id="search" method="get">
+<span class="search-wrap"><span class="icon"></span><input id="searchquery" name="fhfilter" type="search" value=""/></span>
+<span class="ui-icon search"></span>
+<input type="submit" value="検索"/>
+</form>
+<nav class="grid_13" role="top-navigation">
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html">アカウント作成</a>
+<a class="btn link" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false;">ログイン</a>
+<a class="btn link submit" href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ"><span>タレコむ</span></a>
+<a class="btn link mobilelink" href="../../../../../../m.srad.jp/story/10/08/27/0822219.html"><span>モバイルページ</span></a>
+</nav>
+</section>
+</hgroup>
+</header>
+<section>
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value=""/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div><!-- body begin --><!-- view 388 -->
+<div class="col_1 compact" id="site_menu">
+<nav class="left_menu" id="links" role="sections">
+<ul class="" id="fhtablist_new">
+<li class="recent">
+<a href="../../../../../../srad.jp/recent.html">最新</a>
+</li>
+<li class="popular">
+<a href="../../../../../../srad.jp/popular.html">人気</a>
+</li>
+<li class="comments">
+<a href="../../../../../../srad.jp/comments.html">コメント</a>
+</li>
+<li class="journals">
+<a href="../../../../../../srad.jp/journals.html">みんなの日記</a>
+</li>
+<li class="polls">
+<a href="../../../../../../srad.jp/polls.html">国民投票</a>
+</li>
+</ul>
+<nav class="dropdown-menu hide" id="section-menu" onclick="(function(){$('#firehose-sections-v2').toggle();})();" role="section-menu">
+<span>セクション：セキュリティ</span>
+<span class="dropdown-btn"></span>
+<ul class="dropdown-menu-items" id="firehose-sections-v2" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="active" id="fhsection-security">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-11">セキュリティ</a><span></span>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+<ul class="left_menu" id="firehose-sections" role="sections">
+<li class="" id="fhsection-askslashdot">
+<a class="data-title" href="../../../../../../askslashdot.srad.jp/index.html" id="fhsectiontitle-2">スラドに聞け!</a>
+</li>
+<li class="" id="fhsection-idle">
+<a class="data-title" href="../../../../../../idle.srad.jp/index.html" id="fhsectiontitle-17">Idle</a>
+</li>
+<li class="" id="fhsection-yro">
+<a class="data-title" href="../../../../../../yro.srad.jp/index.html" id="fhsectiontitle-15">YRO</a>
+</li>
+<li class="" id="fhsection-linux">
+<a class="data-title" href="../../../../../../linux.srad.jp/index.html" id="fhsectiontitle-7">Linux</a>
+</li>
+<li class="" id="fhsection-opensource">
+<a class="data-title" href="../../../../../../opensource.srad.jp/index.html" id="fhsectiontitle-16">Open Source</a>
+</li>
+<li class="" id="fhsection-hardware">
+<a class="data-title" href="../../../../../../hardware.srad.jp/index.html" id="fhsectiontitle-14">ハードウェア</a>
+</li>
+<li class="" id="fhsection-apple">
+<a class="data-title" href="../../../../../../apple.srad.jp/index.html" id="fhsectiontitle-8">アップル</a>
+</li>
+<li class="" id="fhsection-it">
+<a class="data-title" href="../../../../../../it.srad.jp/index.html" id="fhsectiontitle-13">IT</a>
+</li>
+<li class="" id="fhsection-mobile">
+<a class="data-title" href="../../../../../../mobile.srad.jp/index.html" id="fhsectiontitle-9">モバイル</a>
+</li>
+<li class="active" id="fhsection-security">
+<a class="data-title" href="../../../../../index.html" id="fhsectiontitle-11">セキュリティ</a><span></span>
+</li>
+<li class="" id="fhsection-science">
+<a class="data-title" href="../../../../../../science.srad.jp/index.html" id="fhsectiontitle-10">サイエンス</a>
+</li>
+<li class="" id="fhsection-slash">
+<a class="data-title" href="../../../../../../slash.srad.jp/index.html" id="fhsectiontitle-12">スラド</a>
+</li>
+<li class="" id="fhsection-microsoft">
+<a class="data-title" href="../../../../../../srad.jp/stories/microsoft.html" id="fhsectiontitle-microsoft">Microsoft</a>
+</li>
+<li class="" id="fhsection-google">
+<a class="data-title" href="../../../../../../srad.jp/stories/google.html" id="fhsectiontitle-google">Google</a>
+</li>
+<li class="" id="fhsection-cloud">
+<a class="data-title" href="../../../../../../srad.jp/stories/cloud.html" id="fhsectiontitle-cloud">クラウド</a>
+</li>
+<li class="" id="fhsection-space">
+<a class="data-title" href="../../../../../../srad.jp/stories/space.html" id="fhsectiontitle-space">宇宙</a>
+</li>
+</ul>
+</nav>
+</div>
+<div class="col_2">
+<section class="grid_24 a2" id="content">
+<section class="nothumbs" id="firehose">
+<div class="fhroot fleft grid_24" id="firehoselist">
+<article class="fhitem fhitem-story article usermode thumbs grid_24" data-fhid="250183" data-fhtype="story" id="firehose-250183">
+<span class="sd-info-block hide">
+<span class="sd-key-firehose-id">250183</span>
+<span class="type">story</span>
+</span>
+<header>
+<span class="topic" id="topic-250183">
+<a href="../../../../../../srad.jp/stories/security.html" onclick="return addfhfilter('security');">
+<img alt="セキュリティ" height="64" src="../../../../../../srad.jp/static/topics/security_64.png" title="セキュリティ" width="64"/>
+</a>
+</span>
+<h2 class="story">
+<span id="title-250183"> <a href="index.html">WindowsにおけるDLLハイジャック脆弱性、多くのメジャーなソフトウェアにも</a></span>
+<span class="comments commentcnt-250183">106</span>
+</h2>
+<div class="details" id="details-250183">ストーリー by <a href="http://hylom.net/">hylom</a>
+<time datetime="2010-08-27T18:00+09:00" id="fhtime-250183">2010年08月27日 18時00分</time><br/>いまそこにある危機 部門より
+	</div>
+</header>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "NewsArticle",
+  "headline": "WindowsにおけるDLLハイジャック脆弱性、多くのメジャーなソフトウェアにも",
+  "datePublished": "2010-08-27T18:00+09:00",
+  "articleBody": "あるAnonymous Coward 曰く、世間を騒がせつつあるDLLハイジャックの脆弱性であるが、セキュリティ診断ツールMetasploitの開発版においてこの問題をチェックする機能「webdav_dll_hijacker」が追加され、簡単にこの脆弱性を発見できるようになった（Metasploitのブログ記事、本家記事）。問題となっている脆弱性は、アプリケーションがリモートの共有ディレクトリ内にあるファイルを開く際にそのファイルと同じディレクトリにあるDLLをロードしてしまうというもの。webdav_dll_hijackerではLinux上でWebDavサーバーを実行させ、Windows側からそこにあるファイルを開くことで診断を行うという。もし脆弱性がある場合、ソフトウェアがサーバー側にあるDLLを読み出そうとするため、サーバー側にアクセスのログが残る。これをチェックすることで脆弱性を発見する、という原理だそうだ。実際、これによって脆弱性のあるソフトウェアが数多く発見されたという。脆弱性の見つかったソフトウェアはアドレス帳などのWindows付属ソフトウェアを始め、Adobe製品、Autodesk製品、Google Earth、Mozilla Thunderbird、Opera、Safariなど多種多様に渡る。また一覧に乗っていなくても、まだ webdav_dll_hijacker が試されていないだけだったり、特殊な条件下でのみDLLを脆弱性のある方法で読み込むという可能性もあるので、安心はできない。この脆弱性はUSBメモリなどのドライブや圧縮ファイルを解凍したもの、WebDavやSMBなどのリモートネットワーク共有経由でも影響を受ける。Windowsには動的ライブラリ（DLL）を相対指定で読み込もうとすると最初にカレントディレクトリから探すという仕様があり、脆弱性の原因はその仕様を考慮しないでソフトウェアが作られたことにある。Linuxなどでは動的ライブラリ（*.so）をカレントディレクトリから探すということはしないため、この問題は基本的に発生しない（リンカオプションのrpathや環境変数のLD_LIBRARY_PATHを故意に弄ったりしない限り）。アドレス帳の脆弱性を使ったデモ動画もあるので興味のある方はどうぞ。",
+  "image": "https://srad.jp/static/topics/security_64.png"
+}
+</script>
+<div class="body" id="fhbody-250183">
+<div class="contents_text p" id="text-250183">
+<p>あるAnonymous Coward 曰く、</p><blockquote><div><p>
+世間を騒がせつつあるDLLハイジャックの脆弱性であるが、セキュリティ診断ツール<a href="http://www.metasploit.com/">Metasploit</a>の開発版においてこの問題をチェックする機能「webdav_dll_hijacker」が追加され、簡単にこの脆弱性を発見できるようになった（<a href="http://blog.metasploit.com/2010/08/exploiting-dll-hijacking-flaws.html">Metasploitのブログ記事</a>、<a href="http://tech.slashdot.org/story/10/08/24/0520245/Windows-DLL-Vulnerability-Exploit-In-the-Wild">本家記事</a>）。
+</p><p>
+問題となっている脆弱性は、アプリケーションがリモートの共有ディレクトリ内にあるファイルを開く際にそのファイルと同じディレクトリにあるDLLをロードしてしまうというもの。webdav_dll_hijackerではLinux上でWebDavサーバーを実行させ、Windows側からそこにあるファイルを開くことで診断を行うという。もし脆弱性がある場合、ソフトウェアがサーバー側にあるDLLを読み出そうとするため、サーバー側にアクセスのログが残る。これをチェックすることで脆弱性を発見する、という原理だそうだ。
+</p><p>
+実際、これによって脆弱性のあるソフトウェアが数多く発見されたという。脆弱性の見つかったソフトウェアはアドレス帳などのWindows付属ソフトウェアを始め、Adobe製品、Autodesk製品、Google Earth、Mozilla Thunderbird、Opera、Safariなど<a href="http://www.exploit-db.com/search/?action=search&amp;filter_page=1&amp;filter_description=DLL%20Hijacking%20Exploit&amp;filter_author=&amp;filter_platform=0&amp;filter_type=0&amp;filter_port=0&amp;filter_osvdb=&amp;filter_cve=">多種多様</a>に渡る。また一覧に乗っていなくても、まだ webdav_dll_hijacker が試されていないだけだったり、特殊な条件下でのみDLLを脆弱性のある方法で読み込むという可能性もあるので、安心はできない。
+</p><p>
+この脆弱性はUSBメモリなどのドライブや圧縮ファイルを解凍したもの、WebDavやSMBなどのリモートネットワーク共有経由でも影響を受ける。
+</p><p>
+Windowsには動的ライブラリ（DLL）を相対指定で読み込もうとすると最初にカレントディレクトリから探すという仕様があり、脆弱性の原因はその仕様を考慮しないでソフトウェアが作られたことにある。Linuxなどでは動的ライブラリ（*.so）をカレントディレクトリから探すということはしないため、この問題は基本的に発生しない（リンカオプションのrpathや環境変数のLD_LIBRARY_PATHを故意に弄ったりしない限り）。
+</p><p>
+<a href="http://www.youtube.com/watch_popup?v=UdCxh1uNot0&amp;vq=hd1080">アドレス帳の脆弱性を使ったデモ動画</a>もあるので興味のある方はどうぞ。
+</p></div></blockquote>
+</div>
+</div>
+<aside class="view_mode">
+<div id="article-bottom">
+<!-- //security.srad.jp/story/10/08/27/0822219/ -->
+<!-- http://security.srad.jp/story/10/08/27/0822219/ -->
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(document.title)+'&amp;url='+encodeURIComponent('http://security.srad.jp/story/10/08/27/0822219/'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)" title="この記事をTwitterでつぶやく"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('http://security.srad.jp/story/10/08/27/0822219/'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)" title="この記事をFacebookでシェア"></span>
+<a class="hatena-bookmark-button" data-hatena-bookmark-layout="simple" href="../../../../../../b.hatena.ne.jp/entry/security.srad.jp/story/10/08/27/0822219/index.html" title="このエントリーをはてなブックマークに追加"><span class="sprite-syndication sp-hatebu_32"></span></a>
+<script type="text/javascript">
+        (function (w,d,s,n,f,js,p) {
+        p=/^http:/.test(d.location)?'http:':'https:';
+        n = d.getElementsByTagName(s)[0];
+        f = function (url,id) {if (!d.getElementById(id)) {
+        js = d.createElement(s);
+        js.src=url;
+        js.async=1;
+        n.parentNode.insertBefore(js,n);
+        }}
+        f('https://b.st-hatena.com/js/bookmark_button.js');
+        })(window,document,'script');
+        </script>
+<a class="sprite-syndication sp-rss_32" href="../../../../../../srad.jp/about.html" target="_blank" title="スラドのRSS一覧を確認"></a>
+</div>
+<div class="grid_12 cc">
+<a class="comments" href="index.html"><strong class="comments"><span class="totalcommentcnt">106</span></strong>コメント</a>
+</div>
+<div class="grid_12 tright tw">
+<span class="tright tags">
+<menu class="edit-bar" type="toolbar">
+<span class="tag-bar none" id="tagbar-250183"><a class="popular popular topic tag" href="../../../../../../srad.jp/tag/index.html" rel="statictag" target="_blank"></a>
+<a class="popular tag" href="../../../../../../srad.jp/tag/%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3.html" rel="statictag" target="_blank">セキュリティ</a>
+</span>
+</menu>
+</span>
+</div>
+<section class="grid_24" id="a2footer">
+<div class="left">
+<h3 id="a2rl">関連リンク</h3>
+</div>
+<div class="right">
+<h3 id="a2ns"><span class="click">前のストーリー<span class="opt">: </span></span><a class="opt" href="../082258/index.html" id="hrefns">ペンタゴン高官、米軍のコンピュータネットワークに対する攻撃とその被害を明らかに</a></h3>
+</div>
+<div class="fadeout"></div>
+</section>
+<div class="na2rel"><h3><a href="../../23/072200/index.html">40以上のWindowsアプリケーションに深刻な脆弱性がある？</a></h3><h3><a href="../../../../../../srad.jp/story/08/11/13/069228/index.html">AVGがWindows XPのシステムファイルをウィルスと誤認識する不具合</a></h3><h3><a href="../../../../22/09/10/0410249/index.html">HP Support Assistant に DLL ハイジャックの脆弱性</a></h3><h3><a href="../../../10/28/2224214/index.html">VS2010 でコンパイルされた全ての単体 MFC アプリケーションに脆弱性が存在</a></h3><h3><a href="../../../../22/06/01/1716230/index.html">Microsoft、サポート診断ツールのゼロデイ脆弱性を認める</a></h3><h3><a href="../../../../../../it.srad.jp/story/10/10/12/0955207/index.html">LhaplusとLhasa、DLLの読み込みに関する脆弱性</a></h3><h3><a href="../../../../../../it.srad.jp/story/23/11/05/1424245/index.html">WebDAVなどネットワーク関連3機能、Windowsクライアントの非推奨の機能に</a></h3><div class="fadeout"></div></div>
+</aside>
+</article>
+<div id="ads-article-left">
+<div id="gpt-sd_article_rec-left"></div>
+</div>
+</div>
+</section>
+<aside id="slashboxes">
+<div id="gpt-sd_article_rec"></div>
+<div class="srad-contentad-banner"></div>
+<div class="yui-b" id="slashboxesin">
+</div>
+</aside>
+<div id="article-bottom-link">
+</div>
+<script>
+		$("#a2footer").prependTo("#article-bottom-link");
+		$(".na2rel").appendTo("#article-bottom-link");
+		</script>
+<section class="a2commentwrap" id="comments">
+<div>
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox notice pcna">
+			
+
+		
+			
+				この議論は賞味期限が切れたので、アーカイブ化されています。
+			
+			新たにコメントを付けることはできません。
+		
+	
+</div>
+</div><a name="comments"></a>
+<section class="d2incommentspl">
+<div class="commentwrap" id="commentwrap">
+<div class="commentBox">
+<div class="title hide">
+<h4>
+<span class="escape-link"><a href="index.html" title="WindowsにおけるDLLハイジャック脆弱性、多くのメジャーなソフトウェアにものストーリーへ戻る">WindowsにおけるDLLハイジャック脆弱性、多くのメジャーなソフトウェアにも</a></span>
+<span class="commentBoxLinks"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_d"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a></span>
+</h4>
+</div>
+</div>
+<section class="grid_24" id="d2header"><div>
+<script type="text/javascript">
+var parent_item_url = '//security.srad.jp/story/10/08/27/0822219/';
+var parent_item_title = 'WindowsにおけるDLLハイジャック脆弱性、多くのメジャーなソフトウェアにも';
+function my_toggle_share_display(obj) {
+	if (obj.parentNode.lastElementChild.style.display == "block") {
+		obj.parentNode.lastElementChild.style.display = "none";
+	} else {
+		obj.parentNode.lastElementChild.style.display = "block";
+	}
+}
+</script>
+<nav class="grid_24">
+<div class="grid_14">
+<a class="btn" href="index.html" title="「WindowsにおけるDLLハイジャック脆弱性、多くのメジャーなソフトウェアにも」記事ページへ戻る">記事ページを表示</a>
+<button class="btn disabled" disabled="disabled">アーカイブ済み</button>
+<!--
+			<a href="//security.srad.jp/search.pl?op=comments&amp;sid=505937" class="btn"><span class="totalcommentcnt">106</span>コメントを検索</a>
+-->
+<a class="btn" href="index.html" id="d2loadall" onclick="D2.ajaxFetchComments(0,1,'','',-1); return false">すべてのコメント取得</a>
+</div>
+<div class="grid_10 d1or2">
+<div class="horizontal rooted grid_15" id="d2out">
+<div class="hide" id="d2act">
+<div class="loki" id="gods">
+<script type="text/javascript">
+										 $(function(){
+											 D2.slider = new D2.Slider(
+												 D2.user_threshold(),
+												 D2.user_highlightthresh(),
+												 'x'
+											 );
+										 });
+										 </script>
+<div class="grid_12" id="bones">
+<div class="ccw-count-container grid_24">
+<span class="ccw-count-text tcenter" id="ccw-full-count-text"><span></span><span id="ccw-full-phrase"> 全表示</span></span>
+<span class="ccw-count-text" id="ccw-abbr-count-text"><span></span><span id="ccw-abbr-phrase"> タイトルのみ</span></span>
+<span class="ccw-count-text tleft" id="ccw-hide-count-text"><span></span><span id="ccw-hide-phrase"> 非表示</span></span>
+</div>
+<div id="ccw">
+<div class="ccw-core" id="ccw-body">
+<div class="ccw-core" id="ccw-panel-container">
+<div class="ccw-panel" id="ccw-full-panel">
+															 /Sea<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-full-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-abbr-panel">
+<div class="ccw-panel-border"></div>
+<div class="ccw-core-pos ccw-count-pos" id="ccw-abbr-count-pos"></div>
+</div>
+<div class="ccw-panel" id="ccw-hide-panel">
+<div class="ccw-core-pos ccw-count-pos" id="ccw-hide-count-pos"></div>
+</div>
+</div>
+<div class="ccw-core" id="ccw-control">
+<div class="ccw-core" id="ccw-centering-rail">
+<div class="ccw-core-pos" id="ccw-hide-bar-pos">
+<div class="ccw-bar" id="ccw-hide-bar">
+<div class="ccw-bar-tab" id="ccw-hide-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-hide-bar-upzone" onclick="D2.slider.stepTHT(HIDE_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-hide-bar-downzone" onclick="D2.slider.stepTHT(HIDE_BAR, -1)"></div>
+</div>
+</div>
+<div class="ccw-core-pos" id="ccw-abbr-bar-pos">
+<div class="ccw-bar" id="ccw-abbr-bar">
+<div class="ccw-bar-tab" id="ccw-abbr-bar-tab"></div>
+<div class="ccwa"></div>
+<div class="ccwb"></div>
+<div class="ccw-upzone" id="ccw-abbr-bar-upzone" onclick="D2.slider.stepTHT(ABBR_BAR, +1)"></div>
+<div class="ccw-downzone" id="ccw-abbr-bar-downzone" onclick="D2.slider.stepTHT(ABBR_BAR, -1)"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ccw-score-label grid_24">
+<div class="grid_3"><span class="sc">スコア:</span></div>
+<div class="grid_3">5<span class="lg"></span></div>
+<div class="grid_3">4<span class="lg"></span></div>
+<div class="grid_3">3<span class="lg"></span></div>
+<div class="grid_3">2<span class="lg"></span></div>
+<div class="grid_3">1<span class="lg"></span></div>
+<div class="grid_3">0<span class="lg"></span></div>
+<div class="grid_3">-1<span class="lg"></span></div>
+</div>
+</div>
+</div>
+<div class="commentControlFooter"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a>
+<a class="login" href="../../../../../../srad.jp/my/login.html" onclick="show_login_box(); return false">ログイン</a><div class="hide" id="login_cover" onclick="hide_login_box()"></div>
+<div class="hide" id="login_box">
+<div id="login_box_content">
+<div class="hide" id="embbeded_login_modal">
+<form action="https://srad.jp/my/login" class="embedded" method="post" onsubmit="if (global_returnto) { this.returnto.value = global_returnto }">
+<fieldset style="-webkit-border-radius:10px 10px 0 0;border-radius:10px 10px 0 0;-moz-border-radius:10px 10px 0 0">
+<input name="returnto" type="hidden" value="//security.srad.jp/comments.pl?sid=505937"/>
+<input name="op" type="hidden" value="userlogin"/>
+<p style="margin-top:25px;">
+<label class="fleft" for="unickname">アカウント名:</label>
+<input name="unickname" type="text" value=""/>
+</p>
+<p>
+<label class="fleft" for="upasswd">パスワード:</label>
+<input name="upasswd" placeholder="6-20文字の長さで" type="password"/>
+</p>
+<label class="checkbox"><input name="login_temp" type="checkbox" value="yes"/> 共同PC</label>
+<br/>
+<hr/>
+<input class="fno btn" name="userlogin" type="submit" value="ログイン"/> <a class="btn link" href="../../../../../../srad.jp/my/mailpassword.html" onclick="getModalPrefs('sendPasswdModal', 'Retrieve Password', 1); return false;">パスワードを忘れた？</a>
+<a class="btn link" href="../../../../../../srad.jp/my/newuser.html" onclick="getModalPrefs('newUserModal', 'Create Account', 1); return false;">アカウント作成</a>
+</fieldset></form>
+<div class="actions">
+<a class="ico close" href="" onclick="hide_login_slider();"><span>Close</span></a>
+</div>
+</div>
+<div class="actions">
+<a class="ico close" href="index.html" onclick="hide_login_box(); return false"><span>閉じる</span></a>
+</div>
+</div>
+</div>
+<script type="text/javascript">logged_in = 0</script></div>
+<div class="hide" id="commentControlBoxStatus"></div>
+</div>
+</div>
+</div>
+<a class="ui-icon search_comments" href="../../../../../search.pl_9294be88.html"><span>検索</span><span class="totalcommentcnt">106</span><span>コメント</span></a>
+<a class="pref ui-icon-w" href="../../../../../users.pl.html" onclick="show_login_box(); $('#modal_box').addClass('login'); return false;"><span>Log In/Create an Account</span></a>
+<!-- threshold G2 -->
+<div id="d2_threshold_g2" style="display: none;">
+<div class="d2tg2-count-wrap">
+<span id="d2tg2-count-full-wrap">
+<span class="label">全 表示：</span>
+<span class="ico minus" id="d2tg2-count-full-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-full">0</span>
+<span class="ico plus" id="d2tg2-count-full-plus"><span>+</span></span>
+</span>
+<span id="d2tg2-count-text-wrap">
+<span class="label">タイトルのみ：</span>
+<span class="ico minus" id="d2tg2-count-text-minus"><span>-</span></span>
+<span class="counter" id="d2tg2-count-text">0</span>
+<span class="ico plus" id="d2tg2-count-text-plus"><span>+</span></span>
+<span></span>
+</span>
+<span id="d2tg2-count-hide-wrap">
+<span class="label">非表示：</span>
+<span class="counter" id="d2tg2-count-hide">0</span>
+<span></span>
+</span>
+<span id="d2tg2-threshold-wrap">
+<span class="label">（しきい値：</span>
+<span id="d2tg-thresold">
+<span id="d2tg2-threshold-full">0</span>
+<span class="label">/</span>
+<span id="d2tg2-threshold-text">0</span>
+<span class="label">）</span>
+</span>
+</span>
+</div>
+</div>
+<script type="text/javascript">
+  $(function () {
+    D2.slider.updateCounts = function (thresholds, counts) {
+      if (thresholds === undefined) {
+        // threshold unchanged
+        thresholds = D2.slider.thresholds();
+        counts = D2.getSliderTotals(thresholds);
+      } else {
+        // threshold changed
+        var oldThresholds = D2.slider.thresholds();
+        counts = counts || D2.getSliderTotals(thresholds);
+        if (thresholds[0] < thresholds[1]) {
+          thresholds[0] = thresholds[1];
+        }
+        D2.slider.setTHT(thresholds[1], thresholds[0]);
+        D2.changeTHT(thresholds[1] - oldThresholds[1],
+                     thresholds[0] - oldThresholds[0]);
+      }
+
+      $('#d2tg2-threshold-full').text(thresholds[0]);
+      $('#d2tg2-threshold-text').text(thresholds[1]);
+      $('#d2tg2-count-full').text(counts[0]);
+      $('#d2tg2-count-text').text(counts[1]);
+      $('#d2tg2-count-hide').text(counts[2]);
+
+    };
+
+    D2.slider.decrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] > -1) {
+        thresholds[0]--;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[1] = thresholds[0];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementFullThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[0] < 6) {
+        thresholds[0]++;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.decrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] > -1) {
+        thresholds[1]--;
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.incrementTextThreshold = function () {
+      var thresholds = D2.slider.thresholds();
+      if (thresholds[1] < 6) {
+        thresholds[1]++;
+      }
+      if (thresholds[0] < thresholds[1]) {
+        thresholds[0] = thresholds[1];
+      }
+      D2.slider.updateCounts(thresholds);
+    };
+
+    D2.slider.setFullThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ val, thresholds[1] ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    D2.slider.setTextThreshold = function (val) {
+      var thresholds = D2.slider.thresholds();
+      var newThresholds = [ thresholds[0], val ];
+      var commentCount = D2.getSliderTotals(newThresholds);
+      D2.slider.updateCounts(newThresholds, commentCount);
+    };
+
+    $('#d2tg2-count-full-plus').bind('click', function () { D2.slider.decrementFullThreshold(); });
+    $('#d2tg2-count-full-minus').bind('click', function () { D2.slider.incrementFullThreshold(); });
+    $('#d2tg2-count-text-plus').bind('click', function () { D2.slider.decrementTextThreshold(); });
+    $('#d2tg2-count-text-minus').bind('click', function () { D2.slider.incrementTextThreshold(); });
+
+    D2.slider.updateCounts();
+  });
+</script>
+<!-- end of threshold G2 -->
+</div>
+</nav>
+<aside class="grid_24">
+<div class="ads-text" id="gpt-sd_article_text"></div>
+<a name="topcomment"></a>
+</aside>
+</div></section><script src="../../../../../../srad.jp/static/comments-minified_42bd7c3e.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+D2.d2_keybindings_disable()[191] = 1;
+D2.boxStatus(1);
+D2.comments({ 1816919: { uid: undefined, pid: 1816845, read: 0, points: -2, kids: [  ], opid: undefined }, 1816931: { uid: 1, pid: 1816845, subject: "Re:そもそも", read: 0, points: 1, kids: [  ], opid: 1816919 }, 1816535: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 1816544, 1816561, 1816789 ], opid: 0 }, 1817797: { uid: undefined, pid: 1817465, read: 0, points: -2, kids: [ 1817823, 1817900 ], opid: undefined }, 1816530: { uid: 1, pid: 1816518, subject: "Re:2000年からわかっていた問題", read: 0, points: 0, kids: [  ], opid: 1816518 }, 1816831: { uid: undefined, pid: 1816822, read: 0, points: -2, kids: [ 1816845 ], opid: undefined }, 1816789: { uid: undefined, pid: 1816535, read: 0, points: -2, kids: [ 1816817, 1817095 ], opid: undefined }, 1816661: { uid: 1, pid: 1816649, read: 0, points: 1, kids: [  ], opid: 1816649 }, 1816565: { uid: 1, pid: 1816534, subject: "Re:つまりどういうことだってばよ！？", read: 0, points: 0, kids: [ 1816587 ], opid: 1816534 }, 1816623: { uid: 1, pid: 1816516, subject: "Re:WebDAV", read: 0, points: 0, kids: [ 1816631 ], opid: 1816516 }, 1816888: { uid: 1, pid: 1816845, subject: "Re:そもそも", read: 0, points: 1, kids: [  ], opid: 1816864 }, 1816829: { uid: undefined, pid: 1816814, read: 0, points: -2, kids: [ 1816847, 1816861 ], opid: undefined }, 1816590: { uid: 1, pid: 1816561, subject: "Re:そもそも", read: 0, points: 0, kids: [ 1816828 ], opid: 1816561 }, 1816822: { uid: undefined, pid: 1816817, read: 0, points: -2, kids: [ 1816831 ], opid: undefined }, 1817095: { uid: undefined, pid: 1816789, read: 0, points: -2, kids: [ 1817292 ], opid: undefined }, 1816701: { uid: undefined, pid: 0, read: 0, points: -2, kids: [ 1816782, 1816814 ], opid: undefined }, 1816814: { uid: 2142, pid: 1816701, subject: "Re:LINUXでも。", read: 0, points: 2, kids: [ 1816825, 1816829 ], opid: 1816701 }, 1816847: { uid: 20350, pid: 1816829, subject: "Re:LINUXでも。", read: 0, points: 1, kids: [  ], opid: 1816829 }, 1816624: { uid: 1, pid: 1816615, subject: "Re:つまりどういうことだってばよ！？", read: 0, points: 0, kids: [  ], opid: 1816615 }, 1816944: { uid: 5854, pid: 1816940, subject: "Re:2000年からわかっていた問題", read: 0, points: 1, kids: [  ], opid: 1816940 }, 1816531: { uid: 1, pid: 1816518, subject: "Re:2000年からわかっていた問題", read: 0, points: 2, kids: [ 1816559, 1816577 ], opid: 1816518 }, 1816648: { uid: 1, pid: 1816615, subject: "Re:つまりどういうことだってばよ！？", read: 0, points: 3, kids: [ 1816674 ], opid: 1816615 }, 1816790: { uid: 1, pid: 1816674, subject: "Re:つまりどういうことだってばよ！？", read: 0, points: 1, kids: [  ], opid: 1816674 }, 1816559: { uid: 1, pid: 1816531, subject: "Re:2000年からわかっていた問題", read: 0, points: 1, kids: [  ], opid: 1816531 }, 1816615: { uid: 14791, pid: 1816587, subject: "Re:つまりどういうことだってばよ！？", read: 0, points: 1, kids: [ 1816624, 1816626, 1816633, 1816634, 1816648, 1816649 ], opid: 1816587 }, 1816857: { uid: 2142, pid: 1816825, subject: "Re:LINUXでも。", read: 0, points: 1, kids: [  ], opid: 1816825 }, 1816864: { uid: undefined, pid: 1816845, read: 0, points: -2, kids: [  ], opid: undefined }, 1816828: { uid: 1, pid: 1816590, subject: "Re:そもそも", read: 0, points: 1, kids: [ 1816956 ], opid: 1816590 }, 1816577: { uid: 26566, pid: 1816531, read: 0, points: 2, kids: [  ], opid: 1816531 }, 1816607: { uid: 33181, pid: 0, read: 0, points: 1, kids: [ 1816619 ], opid: 0 }, 1816616: { uid: 24325, pid: 1816594, subject: "Re:DLL相対指定時にカレントを対象にする仕様自体はいいとして", read: 0, points: 1, kids: [  ], opid: 1816594 }, 1816523: { uid: 1, pid: 1816518, subject: "Re:2000年からわかっていた問題", read: 0, points: 0, kids: [ 1816533 ], opid: 1816518 }, 1816956: { uid: 1, pid: 1816828, subject: "Re:そもそも", read: 0, points: 1, kids: [  ], opid: 1816828 }, 1816674: { uid: 20350, pid: 1816648, subject: "Re:つまりどういうことだってばよ！？", read: 0, points: 1, kids: [ 1816790 ], opid: 1816648 }, 1817823: { uid: undefined, pid: 1817797, read: 0, points: -2, kids: [  ], opid: undefined }, 1816594: { uid: 24325, pid: 0, read: 0, points: 1, kids: [ 1816606, 1816616 ], opid: 0 }, 1816534: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 1816565 ], opid: 0 }, 1816634: { uid: 1, pid: 1816615, subject: "Re:つまりどういうことだってばよ！？", read: 0, points: 0, kids: [  ], opid: 1816615 }, 1816672: { uid: 5854, pid: 1816662, subject: "Re:2000年からわかっていた問題", read: 0, points: 1, kids: [  ], opid: 1816662 }, 1816602: { uid: 1, pid: 1816566, subject: "Re:怪しげなファイルを自由におけるWebDavからファイルを開くってシチュ", read: 0, points: 0, kids: [  ], opid: 1816566 }, 1816861: { uid: 2142, pid: 1816829, subject: "Re:LINUXでも。", read: 0, points: 1, kids: [  ], opid: 1816829 }, 1817019: { uid: 4435, pid: 1816619, subject: "Re:『Windowsアプリケーションにおける』だよね", read: 0, points: 2, kids: [  ], opid: 1816619 }, 1816584: { uid: 1, pid: 1816566, subject: "Re:怪しげなファイルを自由におけるWebDavからファイルを開くってシチュ", read: 0, points: 0, kids: [  ], opid: 1816566 }, 1817900: { uid: 19063, pid: 1817797, subject: "Re:そもそも", read: 0, points: 1, kids: [  ], opid: 1817823 }, 1816561: { uid: 1, pid: 1816535, subject: "Re:そもそも", read: 0, points: 0, kids: [ 1816590 ], opid: 1816535 }, 1816566: { uid: 1, pid: 0, read: 0, points: 0, kids: [ 1816584, 1816602 ], opid: 0 }, 1816662: { uid: 5854, pid: 1816518, subject: "Re:2000年からわかっていた問題", read: 0, points: 5, kids: [ 1816672, 1816707 ], opid: 1816518 }, 1816533: { uid: 1, pid: 1816523, subject: "Re:2000年からわかっていた問題", read: 0, points: 0, kids: [  ], opid: 1816523 }, 1816707: { uid: undefined, pid: 1816662, read: 0, points: -2, kids: [ 1816911 ], opid: undefined }, 1817465: { uid: undefined, pid: 1817292, read: 0, points: -2, kids: [ 1817797 ], opid: undefined }, 1816547: { uid: 1, pid: 1816544, subject: "Re:そもそも", read: 0, points: 0, kids: [  ], opid: 1816544 }, 1816544: { uid: 1, pid: 1816535, subject: "Re:そもそも", read: 0, points: 0, kids: [ 1816547 ], opid: 1816535 }, 1816606: { uid: 1, pid: 1816594, subject: "Re:DLL相対指定時にカレントを対象にする仕様自体はいいとして", read: 0, points: 0, kids: [  ], opid: 1816594 }, 1816845: { uid: undefined, pid: 1816831, read: 0, points: -2, kids: [ 1816864, 1816888, 1816919, 1816931 ], opid: undefined }, 1817292: { uid: undefined, pid: 1817095, read: 0, points: -2, kids: [ 1817465 ], opid: undefined }, 1816825: { uid: undefined, pid: 1816814, read: 0, points: -2, kids: [ 1816857 ], opid: undefined }, 1816587: { uid: 1, pid: 1816565, subject: "Re:つまりどういうことだってばよ！？", read: 0, points: 0, kids: [ 1816615 ], opid: 1816565 }, 1816518: { uid: 1, pid: 0, read: 0, points: 2, kids: [ 1816523, 1816530, 1816531, 1816662 ], opid: 0 }, 1816619: { uid: 1, pid: 1816607, subject: "Re:『Windowsアプリケーションにおける』だよね", read: 0, points: 0, kids: [ 1817019 ], opid: 1816607 }, 1816516: { uid: 1, pid: 0, read: 0, points: 1, kids: [ 1816623 ], opid: 0 }, 1816633: { uid: 1, pid: 1816615, subject: "Re:つまりどういうことだってばよ！？", read: 0, points: 0, kids: [  ], opid: 1816615 }, 1816940: { uid: undefined, pid: 1816911, read: 0, points: -2, kids: [ 1816944 ], opid: undefined }, 1816626: { uid: 1, pid: 1816615, subject: "Re:つまりどういうことだってばよ！？", read: 0, points: 0, kids: [  ], opid: 1816615 }, 1816817: { uid: undefined, pid: 1816789, read: 0, points: -2, kids: [ 1816822 ], opid: undefined }, 1816631: { uid: 1, pid: 1816623, subject: "Re:WebDAV", read: 0, points: 0, kids: [  ], opid: 1816623 }, 1816782: { uid: 35924, pid: 1816701, subject: "Re:LINUXでも。", read: 0, points: 2, kids: [  ], opid: 1816701 }, 1816649: { uid: undefined, pid: 1816615, read: 0, points: -2, kids: [ 1816661 ], opid: undefined }, 1816911: { uid: 5854, pid: 1816707, subject: "Re:2000年からわかっていた問題", read: 0, points: 1, kids: [ 1816940 ], opid: 1816707 } });
+
+D2.thresh_totals({6:{6:{1:50,3:0,2:0}},4:{6:{1:49,3:0,2:1},4:{1:49,3:1,2:0},5:{1:49,3:1,2:0}},1:{6:{1:22,3:0,2:28},4:{1:22,3:1,2:27},1:{1:22,3:28,2:0},3:{1:22,3:3,2:25},2:{1:22,3:11,2:17},5:{1:22,3:1,2:27}},3:{6:{1:48,3:0,2:2},4:{1:48,3:1,2:1},3:{1:48,3:2,2:0},5:{1:48,3:1,2:1}},0:{6:{1:0,3:0,2:50},4:{1:0,3:1,2:49},1:{1:0,3:31,2:19},3:{1:0,3:3,2:47},0:{1:0,3:50,2:0},2:{1:0,3:11,2:39},5:{1:0,3:1,2:49}},2:{6:{1:42,3:0,2:8},4:{1:42,3:1,2:7},3:{1:42,3:3,2:5},2:{1:42,3:8,2:0},5:{1:42,3:1,2:7}},5:{6:{1:49,3:0,2:1},5:{1:49,3:1,2:0}},"-1":{6:{1:0,3:0,2:50},4:{1:0,3:1,2:49},1:{1:0,3:31,2:19},3:{1:0,3:3,2:47},0:{1:0,3:50,2:0},2:{1:0,3:11,2:39},5:{1:0,3:1,2:49},"-1":{1:0,3:50,2:0}}});
+
+D2.root_comment(0);
+D2.root_comments([1816518,1816516,1816594,1816607,1816534,1816535,1816566,1816701]);
+D2.root_comments_hash({1816607:1,1816535:1,1816566:1,1816594:1,1816701:1,1816534:1,1816518:1,1816516:1});
+
+D2.d2_comment_order(0);
+D2.user_uid(1);
+D2.user_is_anon(1);
+D2.user_is_admin(0);
+D2.user_is_subscriber(0);
+D2.user_smallscreen(0);
+D2.user_threshold(0);
+D2.user_highlightthresh(1);
+D2.user_d2asp(0);
+
+D2.discussion_id(505937);
+
+D2.d2_seen('1816516,2,5,7,1,2,1,1,9,3,12,2,4,1,11,7,3,3,4,8,4,1,8,1,3,4,1,2,5,2,1,14,13,1,10,2,108,8,24,14,19,10,4,27,23,20,13,12,63,881');
+D2.more_comments_num(56);
+
+
+//-->
+</script>
+<ul class="d2" id="commentlisting">
+<li class="comment full contain" id="tree_1816518"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816518"></div>
+<div class="comment-item" id="comment_1816518">
+<div class="commentTop comment-top newcomment" id="comment_top_1816518">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d857e3c7.html" id="comment_link_1816518" name="comment_link_1816518" onclick="return D2.setFocusComment(1816518)">2000年からわかっていた問題</a>
+<span class="score" id="comment_score_1816518">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816518); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816518">on 2010年08月27日 18時15分
+			 (<a href="../../../../../../srad.jp/comment/1816518.html">#1816518</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816518"><p><div class="quote"><p>Windowsには動的ライブラリ（DLL）を相対指定で読み込もうとすると最初にカレントディレクトリから探すという仕様</p></div><p>2000年の時点でこんな記事が…「<a href="http://itpro.nikkeibp.co.jp/members/ITPro/SEC_CHECK/20000929/1/" rel="nofollow" title="nikkeibp.co.jp">WindowsのDLL呼び出し順序に由来するセキュリティ・ホール - DLLを呼び出す「順序」が元凶</a> [nikkeibp.co.jp]」</p><p>それにしても酷い仕様だ。</p></p></div>
+</div>
+</div>
+<div id="replyto_1816518"></div>
+<ul class="comment-group" id="group_1816518">
+<li class="hide" id="hiddens_1816518"></li>
+</ul><ul id="commtree_1816518"><li class="comment full contain" id="tree_1816662"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816662"></div>
+<div class="comment-item" id="comment_1816662">
+<div class="commentTop comment-top newcomment" id="comment_top_1816662">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b7243565.html" id="comment_link_1816662" name="comment_link_1816662" onclick="return D2.setFocusComment(1816662)">Re:2000年からわかっていた問題</a>
+<span class="score" id="comment_score_1816662">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816662); return false">スコア:5</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kei100/index.html">kei100 (5854)</a>
+<span class="otherdetails" id="comment_otherdetails_1816662">on 2010年08月28日  1時08分
+			 (<a href="../../../../../../srad.jp/comment/1816662.html">#1816662</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816662"><p>15年前のソフトも動かせるってのはそういう事です。<br/>まぁ、その記事はかなり古い(10年前ですよ!)ので今セキュリティ的にサポートされてるXP SP3以降であれば、問題はかなり低減されています。</p><p>この問題が発生するのは、自分がそのDLLを使う事が解っているのに、DLLを適切に入れてないケースです。<br/>ぶっちゃけ、自分が何を使ってるのか解ってない、構成管理が出来ていない、適切にセットアップ出来てないケースです。<br/>最近の大規模化してるアプリだとまぁ、ありがちではありますが・・・<br/>例えばVBアプリケーションやDirectXアプリケーションなんかはランタイムDLLの一部が無くてもとりあえず動いちゃったりするので、今一度確認してみると良いでしょう。<br/>(そのまま使い続けてるケースは少ないとは思いますが)<br/>もしくは、機能拡張可能な仕様としているが、現在その機能拡張が導入されていないといったケースでしょうか？<br/>普通は、該当DLLファイルの実態があるかを確認してからロードすべきだというツッコミをしたくなりますが、<br/>エラー処理に任せてとりあえずロードしてみる男気あふれるアプリは要注意ですね。<br/>昔のOSにはあったが今は無くなった機能を呼び出すケース、<br/>最近のOSのみにある機能を呼び出す系統のアプリをXPで呼び出すケースも要注意です。<br/>(Vista以降のAeroとか、Win7のタスクバー拡張とかそういう新しいOS限定の機能にも対応してそうな奴)</p><p>他に注意すべきは、プラグインによる拡張可能なアプリケーションやIME、フックを利用するキーボード/マウス系に始まる各種便利ツール類です。<br/>これらは、アプリケーションプロセスに寄生しますが、そのDLL内から更に別のDLLを呼び出す可能性があります。<br/>この場合、本体アプリケーションに問題が無くても、その寄生されている拡張が原因で脆弱性を持った状態に作り変えられてしまう現象が起こり得ます。<br/>普通は自アプリケーションのフォルダを絶対指定するとは思いますが、インストール時に環境変数のPATHに追加するだけという手を抜いてるケースだと危険性が高くなります。<br/>特にXP SP2より前、SP1とか2kとかだとカレントディレクトリが優先して呼ばれますし、<br/>また、ショートカットなどでアプリケーションのOS互換性設定(Vistaより前のXP SP3等)してると、カレントディレクトリが先に来ますのでかなり不味いですね。</p><p>ちなみに、上記の問題が無いアプリケーションをお使いであれば、User権限で暮す、UACをONはそこそこ効果的な対策になりえます。<br/>アプリのインストール先をProgram Filesにしてあれば通常アプリケーションからDLLを改ざんされなくなりますし、<br/>ユーザーがうっかりコピーして入れる事も基本的にありませんので。</p><p>とりあえず、<a href="http://support.microsoft.com/kb/2264107" rel="nofollow" title="microsoft.com">Hotfix:(KB2264107)入れてカレントディレクトリからの読み込むを無効にしちゃう</a> [microsoft.com]のが一番お手軽ですね。<br/>動かなくなったアプリは既に実は死んでたのが表面化したということで。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816662">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:2000年からわかっていた問題')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816662'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816662'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816662'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_15da3ab7.html" onclick="return D2.selectParent(1816518)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816662"></div>
+<ul class="comment-group" id="group_1816662">
+<li class="hide" id="hiddens_1816662"></li>
+</ul><ul id="commtree_1816662"><li class="comment full contain" id="tree_1816672"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816672"></div>
+<div class="comment-item" id="comment_1816672">
+<div class="commentTop comment-top newcomment" id="comment_top_1816672">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f1b01393.html" id="comment_link_1816672" name="comment_link_1816672" onclick="return D2.setFocusComment(1816672)">Re:2000年からわかっていた問題</a>
+<span class="score" id="comment_score_1816672">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816672); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kei100/index.html">kei100 (5854)</a>
+<span class="otherdetails" id="comment_otherdetails_1816672">on 2010年08月28日  1時49分
+			 (<a href="../../../../../../srad.jp/comment/1816672.html">#1816672</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816672"><p>セルフ追記。</p><p>日本語にはまだ対応してない、多言語対応アプリも要注意かもしれません。<br/>リソースをDLLで持っていて読み取り方法が不味く、システム言語ファイルをとりあえず最初にロードするタイプだと合わせ技で食らうかもしれません。<br/>アプリ名_langid.dll例えば"lang0409.dll"とか、<br/>"AppName.1033"(拡張子は必ずしもDLLとは限らない)とか、<br/>AppLang.enu(<a href="http://msdn.microsoft.com/ja-jp/library/cc422087.aspx" rel="nofollow" title="microsoft.com">GetLocaleInfo</a> [microsoft.com]+<a href="http://msdn.microsoft.com/en-us/library/dd373831.aspx" rel="nofollow" title="microsoft.com">LOCALE_SABBREVLANGNAME</a> [microsoft.com]とかで文字な場合もある)とか<br/>みたいな感じのファイルがアプリのフォルダにがあったら要注意だと思います。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816672">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:2000年からわかっていた問題')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816672'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816672'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816672'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_bdf0f5c2.html" onclick="return D2.selectParent(1816662)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816672"></div>
+<ul class="comment-group" id="group_1816672">
+<li class="hide" id="hiddens_1816672"></li>
+</ul></li><li class="comment hidden" id="tree_1816707"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816707"></div>
+<div class="comment-item" id="comment_1816707">
+</div>
+<div id="replyto_1816707"></div>
+<ul class="comment-group" id="group_1816707">
+<li class="hide" id="hiddens_1816707"></li>
+</ul><ul id="commtree_1816707"><li class="comment full contain" id="tree_1816911"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816911"></div>
+<div class="comment-item" id="comment_1816911">
+<div class="commentTop comment-top newcomment" id="comment_top_1816911">
+<div class="title">
+<h4><a href="../../../../../comments.pl_3ce9578b.html" id="comment_link_1816911" name="comment_link_1816911" onclick="return D2.setFocusComment(1816911)">Re:2000年からわかっていた問題</a>
+<span class="score" id="comment_score_1816911">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816911); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kei100/index.html">kei100 (5854)</a>
+<span class="otherdetails" id="comment_otherdetails_1816911">on 2010年08月28日 23時59分
+			 (<a href="../../../../../../srad.jp/comment/1816911.html">#1816911</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816911"><p>Windowsが機能追加して「MSめ、同じ名前のDLLを標準で組み込みやがった畜生！」とかいうケースがあるので、絶対パスってます。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816911">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:2000年からわかっていた問題')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816911'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816911'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816911'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_4c77dfe0.html" onclick="return D2.selectParent(1816707)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816911"></div>
+<ul class="comment-group" id="group_1816911">
+<li class="hide" id="hiddens_1816911"></li>
+</ul><ul id="commtree_1816911"><li class="comment hidden" id="tree_1816940"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816940"></div>
+<div class="comment-item" id="comment_1816940">
+</div>
+<div id="replyto_1816940"></div>
+<ul class="comment-group" id="group_1816940">
+<li class="hide" id="hiddens_1816940"></li>
+</ul><ul id="commtree_1816940"><li class="comment full contain" id="tree_1816944"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816944"></div>
+<div class="comment-item" id="comment_1816944">
+<div class="commentTop comment-top newcomment" id="comment_top_1816944">
+<div class="title">
+<h4><a href="../../../../../comments.pl_e55483c5.html" id="comment_link_1816944" name="comment_link_1816944" onclick="return D2.setFocusComment(1816944)">Re:2000年からわかっていた問題</a>
+<span class="score" id="comment_score_1816944">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816944); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kei100/index.html">kei100 (5854)</a>
+<span class="otherdetails" id="comment_otherdetails_1816944">on 2010年08月29日  8時03分
+			 (<a href="../../../../../../srad.jp/comment/1816944.html">#1816944</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816944"><p>大切な前提として「ユーザーが消した」「セットアップが不完全」ってのが検出できて適切に縮退する事です。<br/>中途半端に動くのが一番怖いので。</p><p>あと、どうせ他のリソース(iniとかxmlやら)は絶対パスで読まないと駄目なので絶対パスを構築する関数が用意済みってのもあるかしら。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816944">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:2000年からわかっていた問題')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816944'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816944'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816944'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_720d1d00.html" onclick="return D2.selectParent(1816940)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816944"></div>
+<ul class="comment-group" id="group_1816944">
+<li class="hide" id="hiddens_1816944"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1816531"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816531"></div>
+<div class="comment-item" id="comment_1816531">
+<div class="commentTop comment-top newcomment" id="comment_top_1816531">
+<div class="title">
+<h4><a href="../../../../../comments.pl_054124f8.html" id="comment_link_1816531" name="comment_link_1816531" onclick="return D2.setFocusComment(1816531)">Re:2000年からわかっていた問題</a>
+<span class="score" id="comment_score_1816531">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816531); return false">スコア:2</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816531">on 2010年08月27日 18時38分
+			 (<a href="../../../../../../srad.jp/comment/1816531.html">#1816531</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816531"><p><a href="http://msdn.microsoft.com/en-us/library/ms682586(VS.85).aspx" rel="nofollow" title="microsoft.com">Dynamic-Link Library Search Order (Windows)</a> [microsoft.com]<br/>最近のWindowsでは Safe DLL search mode という機能が導入されて改善されたはず<br/>と思ったら優先順位が変わっただけで相変わらずカレントディレクトリが検索パスに入ってるし。</p><p>ACLだの整合性レベルだのUIPIだの導入してる癖になんでこんなところは雑なんだ。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816531">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:2000年からわかっていた問題')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816531'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816531'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816531'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_15da3ab7.html" onclick="return D2.selectParent(1816518)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816531"></div>
+<ul class="comment-group" id="group_1816531">
+<li class="hide" id="hiddens_1816531"></li>
+</ul><ul id="commtree_1816531"><li class="comment full contain" id="tree_1816577"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816577"></div>
+<div class="comment-item" id="comment_1816577">
+<div class="commentTop comment-top newcomment" id="comment_top_1816577">
+<div class="title">
+<h4><a href="../../../../../comments.pl_85da779c.html" id="comment_link_1816577" name="comment_link_1816577" onclick="return D2.setFocusComment(1816577)">その辺は</a>
+<span class="score" id="comment_score_1816577">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816577); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kcg/index.html">kcg (26566)</a>
+<span class="otherdetails" id="comment_otherdetails_1816577">on 2010年08月27日 20時54分
+			 (<a href="../../../../../../srad.jp/comment/1816577.html">#1816577</a>)
+			<small>
+<a class="user_homepage_display" href="http://www.google.co.jp/search?q=site:slashdot.jp+kcg" title="http://www.google.co.jp/search?q=site:slashdot.jp+kcg">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~kcg/journal/index.html" title="2011年07月07日 15時19分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816577"><p>.Netのアセンブリですべて解決しようとしているのでしょう。<br/>そう簡単に移行できずにいるようですが。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816577">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('その辺は')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816577'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816577'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816577'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_03dce56b.html" onclick="return D2.selectParent(1816531)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816577"></div>
+<ul class="comment-group" id="group_1816577">
+<li class="hide" id="hiddens_1816577"></li>
+</ul></li><li class="comment full contain" id="tree_1816559"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816559"></div>
+<div class="comment-item" id="comment_1816559">
+<div class="commentTop comment-top newcomment" id="comment_top_1816559">
+<div class="title">
+<h4><a href="../../../../../comments.pl_53eb5eab.html" id="comment_link_1816559" name="comment_link_1816559" onclick="return D2.setFocusComment(1816559)">Re:2000年からわかっていた問題</a>
+<span class="score" id="comment_score_1816559">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816559); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816559">on 2010年08月27日 20時07分
+			 (<a href="../../../../../../srad.jp/comment/1816559.html">#1816559</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816559">カレントから検索するって仕様は後方互換性のために<br/>
+弄れないんだと思う。<br/>
+なんか今に始まったホールのような言い方してる人は、<br/>
+多分駄目SIの人間で、こうやって世間を騷がして、皆の問題して<br/>
+誤魔化そうとしてるんだと思う。<br/>
+<br/>
+日経*とかスッラッシュドットとか人事紺猿系のサイトって最近その為の<br/>
+サイトになってたりする。</div>
+</div>
+<div class="commentSub" id="comment_sub_1816559">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:2000年からわかっていた問題')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816559'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816559'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816559'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_03dce56b.html" onclick="return D2.selectParent(1816531)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816559"></div>
+<ul class="comment-group" id="group_1816559">
+<li class="hide" id="hiddens_1816559"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_1816523"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816523"></div>
+<div class="comment-item" id="comment_1816523">
+<div class="commentTop comment-top newcomment" id="comment_top_1816523">
+<div class="title">
+<h4><a href="../../../../../comments.pl_bd3572e5.html" id="comment_link_1816523" name="comment_link_1816523" onclick="return D2.setFocusComment(1816523)">Re:</a>
+<span class="score" id="comment_score_1816523">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816523); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816523"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816523"><p>最初は .exe の場所では。<br/>カレントディレクトリは2番目。(ただし、最近のWindowsだとsystem32, system, windowsに次ぐ5番目)</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816523"></div>
+</div>
+<div id="replyto_1816523"></div>
+<ul class="comment-group" id="group_1816523">
+<li class="hide" id="hiddens_1816523"></li>
+</ul><ul id="commtree_1816523"><li class="comment oneline" id="tree_1816533"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816533"></div>
+<div class="comment-item" id="comment_1816533">
+<div class="commentTop comment-top newcomment" id="comment_top_1816533">
+<div class="title">
+<h4><a href="../../../../../comments.pl_90c40ff3.html" id="comment_link_1816533" name="comment_link_1816533" onclick="return D2.setFocusComment(1816533)">Re:</a>
+<span class="score" id="comment_score_1816533">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816533); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816533"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816533">なので、LoadLibraryが悪いとか、そういう話ではないですよね。<br/>プラグインをロードするときに、フルパス指定せずに、相対パスで読み込んでいるとか、そういう類の話だと思われるんですが。<br/># リンク先はちょっと目を通したぐらいじゃ理解できませんでした。</div>
+</div>
+<div class="commentSub" id="comment_sub_1816533"></div>
+</div>
+<div id="replyto_1816533"></div>
+<ul class="comment-group" id="group_1816533">
+<li class="hide" id="hiddens_1816533"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_1816530"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816530"></div>
+<div class="comment-item" id="comment_1816530">
+<div class="commentTop comment-top newcomment" id="comment_top_1816530">
+<div class="title">
+<h4><a href="../../../../../comments.pl_7256f429.html" id="comment_link_1816530" name="comment_link_1816530" onclick="return D2.setFocusComment(1816530)">Re:</a>
+<span class="score" id="comment_score_1816530">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816530); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816530"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816530">これはいわゆる DLL 地獄に対する逃げ道としてのメカニズムですよね<br/><br/>Windows では OS 自体の仕様になっちゃってますが<br/>Unix 系でも開発者がユーザに<br/>LD 系の環境変数を変えさせるという<br/>「仕様」にしちゃってる例はよく見られます<br/>#昔はこーゆーのは root の仕事でしたなぁ</div>
+</div>
+<div class="commentSub" id="comment_sub_1816530"></div>
+</div>
+<div id="replyto_1816530"></div>
+<ul class="comment-group" id="group_1816530">
+<li class="hide" id="hiddens_1816530"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1816516"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816516"></div>
+<div class="comment-item" id="comment_1816516">
+<div class="commentTop comment-top newcomment" id="comment_top_1816516">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c967c321.html" id="comment_link_1816516" name="comment_link_1816516" onclick="return D2.setFocusComment(1816516)">WebDAV</a>
+<span class="score" id="comment_score_1816516">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816516); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816516">on 2010年08月27日 18時12分
+			 (<a href="../../../../../../srad.jp/comment/1816516.html">#1816516</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816516">Windowsのサービスはさっさと無効にしてCarotDAV利用。</div>
+</div>
+</div>
+<div id="replyto_1816516"></div>
+<ul class="comment-group" id="group_1816516">
+<li class="hide" id="hiddens_1816516"></li>
+</ul><ul id="commtree_1816516"><li class="comment oneline" id="tree_1816623"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816623"></div>
+<div class="comment-item" id="comment_1816623">
+<div class="commentTop comment-top newcomment" id="comment_top_1816623">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f222ebc3.html" id="comment_link_1816623" name="comment_link_1816623" onclick="return D2.setFocusComment(1816623)">Re:</a>
+<span class="score" id="comment_score_1816623">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816623); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816623"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816623"><p>なんで1発目のコメントに「既出」が付くの？<br/>関連ストーリーのコメントとダブることすら許されないの？</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816623"></div>
+</div>
+<div id="replyto_1816623"></div>
+<ul class="comment-group" id="group_1816623">
+<li class="hide" id="hiddens_1816623"></li>
+</ul><ul id="commtree_1816623"><li class="comment oneline" id="tree_1816631"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816631"></div>
+<div class="comment-item" id="comment_1816631">
+<div class="commentTop comment-top newcomment" id="comment_top_1816631">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c035f092.html" id="comment_link_1816631" name="comment_link_1816631" onclick="return D2.setFocusComment(1816631)">Re:</a>
+<span class="score" id="comment_score_1816631">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816631); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816631"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816631"><p>ウェブダブなだけに<br/>なんちゃって</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816631"></div>
+</div>
+<div id="replyto_1816631"></div>
+<ul class="comment-group" id="group_1816631">
+<li class="hide" id="hiddens_1816631"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1816594"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816594"></div>
+<div class="comment-item" id="comment_1816594">
+<div class="commentTop comment-top newcomment" id="comment_top_1816594">
+<div class="title">
+<h4><a href="../../../../../comments.pl_72a47a0e.html" id="comment_link_1816594" name="comment_link_1816594" onclick="return D2.setFocusComment(1816594)">DLL相対指定時にカレントを対象にする仕様自体はいいとして</a>
+<span class="score" id="comment_score_1816594">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816594); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~s4h/index.html">s4h (24325)</a>
+<span class="otherdetails" id="comment_otherdetails_1816594">on 2010年08月27日 21時45分
+			 (<a href="../../../../../../srad.jp/comment/1816594.html">#1816594</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816594"><p>ファイルの関連付け実行でカレントがそのファイルのある場所になる意義は何も無いはず。<br/>と思ったが、ファイルダイアログの開始フォルダがカレントになるから、こっちのほうが使い勝手よくなるのね。<br/>ついでに、これWindowsのファイル実行APIじゃなくてexplorer(SHELLDLL_DefView)の仕様だから、explorerでファイル実行しない人はあんま関係ない。</p></div>
+</div>
+</div>
+<div id="replyto_1816594"></div>
+<ul class="comment-group" id="group_1816594">
+<li class="hide" id="hiddens_1816594"></li>
+</ul><ul id="commtree_1816594"><li class="comment full contain" id="tree_1816616"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816616"></div>
+<div class="comment-item" id="comment_1816616">
+<div class="commentTop comment-top newcomment" id="comment_top_1816616">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9e4c09ab.html" id="comment_link_1816616" name="comment_link_1816616" onclick="return D2.setFocusComment(1816616)">Re:DLL相対指定時にカレントを対象にする仕様自体はいいとして</a>
+<span class="score" id="comment_score_1816616">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816616); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~s4h/index.html">s4h (24325)</a>
+<span class="otherdetails" id="comment_otherdetails_1816616">on 2010年08月27日 22時23分
+			 (<a href="../../../../../../srad.jp/comment/1816616.html">#1816616</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816616"><p>と思ったが、ファイルを実行するときに、大抵はexe(だけじゃないけど)とそれ以外を分けてないだろうから、explorerじゃなくても、普通はファイルのあるフォルダをカレントとして実行するよね、っていうか、今試したら自分のプログラムもしてた。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816616">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:DLL相対指定時にカレントを対象にする仕様自体はいいとして')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816616'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816616'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816616'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_52084aaa.html" onclick="return D2.selectParent(1816594)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816616"></div>
+<ul class="comment-group" id="group_1816616">
+<li class="hide" id="hiddens_1816616"></li>
+</ul></li><li class="comment oneline" id="tree_1816606"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816606"></div>
+<div class="comment-item" id="comment_1816606">
+<div class="commentTop comment-top newcomment" id="comment_top_1816606">
+<div class="title">
+<h4><a href="../../../../../comments.pl_5ba1890e.html" id="comment_link_1816606" name="comment_link_1816606" onclick="return D2.setFocusComment(1816606)">Re:</a>
+<span class="score" id="comment_score_1816606">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816606); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816606"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816606"><p>カレントディレクトリと無関係の開始ディレクトリも指定できるから指定してカレントディレクトリは変更しないようにフラグを指定したほうが安全。<br/>だけどわざわざそんな面倒なことをしてるアプリはほとんどないって話ね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816606"></div>
+</div>
+<div id="replyto_1816606"></div>
+<ul class="comment-group" id="group_1816606">
+<li class="hide" id="hiddens_1816606"></li>
+</ul></li></ul></li><li class="comment full contain" id="tree_1816607"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816607"></div>
+<div class="comment-item" id="comment_1816607">
+<div class="commentTop comment-top newcomment" id="comment_top_1816607">
+<div class="title">
+<h4><a href="../../../../../comments.pl_4899a162.html" id="comment_link_1816607" name="comment_link_1816607" onclick="return D2.setFocusComment(1816607)">『Windowsアプリケーションにおける』だよね</a>
+<span class="score" id="comment_score_1816607">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816607); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~miyuri/index.html">miyuri (33181)</a>
+<span class="otherdetails" id="comment_otherdetails_1816607">on 2010年08月27日 22時08分
+			 (<a href="../../../../../../srad.jp/comment/1816607.html">#1816607</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~miyuri/journal/index.html" title="2023年11月18日 22時03分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816607">作り直せない既存の脆弱性のあるアプリケーションに対して、良い解決策が無いのが痛い。</div>
+</div>
+</div>
+<div id="replyto_1816607"></div>
+<ul class="comment-group" id="group_1816607">
+<li class="hide" id="hiddens_1816607"></li>
+</ul><ul id="commtree_1816607"><li class="comment oneline" id="tree_1816619"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816619"></div>
+<div class="comment-item" id="comment_1816619">
+<div class="commentTop comment-top newcomment" id="comment_top_1816619">
+<div class="title">
+<h4><a href="../../../../../comments.pl_51440e0e.html" id="comment_link_1816619" name="comment_link_1816619" onclick="return D2.setFocusComment(1816619)">Re:</a>
+<span class="score" id="comment_score_1816619">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816619); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816619"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816619">カレントディレクトリを検索対象から外す設定を管理者ができるようになるHotFixが提供されたらしいよ。</div>
+</div>
+<div class="commentSub" id="comment_sub_1816619"></div>
+</div>
+<div id="replyto_1816619"></div>
+<ul class="comment-group" id="group_1816619">
+<li class="hide" id="hiddens_1816619"></li>
+</ul><ul id="commtree_1816619"><li class="comment full contain" id="tree_1817019"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817019"></div>
+<div class="comment-item" id="comment_1817019">
+<div class="commentTop comment-top newcomment" id="comment_top_1817019">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f618a045.html" id="comment_link_1817019" name="comment_link_1817019" onclick="return D2.setFocusComment(1817019)">Re:『Windowsアプリケーションにおける』だよね</a>
+<span class="score" id="comment_score_1817019">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817019); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~ksada/index.html">ksada (4435)</a>
+<span class="otherdetails" id="comment_otherdetails_1817019">on 2010年08月29日 20時48分
+			 (<a href="../../../../../../srad.jp/comment/1817019.html">#1817019</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817019"><p>カレントディレクトリを検索しないと動かないシステムが一杯でてきたりして</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1817019">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:『Windowsアプリケーションにおける』だよね')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1817019'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1817019'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1817019'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_ae5c1a59.html" onclick="return D2.selectParent(1816619)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817019"></div>
+<ul class="comment-group" id="group_1817019">
+<li class="hide" id="hiddens_1817019"></li>
+</ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1816534"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816534"></div>
+<div class="comment-item" id="comment_1816534">
+<div class="commentTop comment-top newcomment" id="comment_top_1816534">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ff7267d3.html" id="comment_link_1816534" name="comment_link_1816534" onclick="return D2.setFocusComment(1816534)">つまりどういうことだってばよ！？</a>
+<span class="score" id="comment_score_1816534">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816534); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816534">on 2010年08月27日 18時42分
+			 (<a href="../../../../../../srad.jp/comment/1816534.html">#1816534</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816534"><p>Windowsの多くのソフトが危うくて危険が険しいと言うことですか。<br/>WebDavとかいうのが一番悪いというわけではなく、<br/>WindowsのDLL読み込み順序の仕様が致命的なミスを誘うようになってたと言うことですか？</p><p>よくわからんのですが、例えばある解凍ソフトがあるDLLを使う場合に、<br/>そのDLLと同名の悪意を持ったDLLを解凍ソフトの.exeと同じフォルダに配置して、<br/>解凍ソフトを実行した場合に悪意を持ったDLLが読み込まれて問題が起きると言うことですか？<br/>その場合は.exeと同じ場所(もしくは環境変数で指定されている場所など)に<br/>悪意を持ったDLLを置かせないよう、気を付けていれば問題ないのですか？</p></div>
+</div>
+</div>
+<div id="replyto_1816534"></div>
+<ul class="comment-group" id="group_1816534">
+<li class="hide" id="hiddens_1816534"></li>
+</ul><ul id="commtree_1816534"><li class="comment oneline" id="tree_1816565"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816565"></div>
+<div class="comment-item" id="comment_1816565">
+<div class="commentTop comment-top newcomment" id="comment_top_1816565">
+<div class="title">
+<h4><a href="../../../../../comments.pl_503d62ca.html" id="comment_link_1816565" name="comment_link_1816565" onclick="return D2.setFocusComment(1816565)">Re:</a>
+<span class="score" id="comment_score_1816565">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816565); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816565"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816565"><p>&gt;解凍ソフトの.exeと同じフォルダ</p><p>この場合、適当な圧縮ファイルをダブルクリックすると解凍ソフトが立ち上がると思うが、<br/>その時その圧縮ファイルと同じフォルダに悪意のある名前のDLLが有れば、それが実行されてしまう。<br/>そしてWebDavのおかげでそのフォルダがネットの向こうにあっても構わない。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816565"></div>
+</div>
+<div id="replyto_1816565"></div>
+<ul class="comment-group" id="group_1816565">
+<li class="hide" id="hiddens_1816565"></li>
+</ul><ul id="commtree_1816565"><li class="comment oneline" id="tree_1816587"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816587"></div>
+<div class="comment-item" id="comment_1816587">
+<div class="commentTop comment-top newcomment" id="comment_top_1816587">
+<div class="title">
+<h4><a href="../../../../../comments.pl_70a587a2.html" id="comment_link_1816587" name="comment_link_1816587" onclick="return D2.setFocusComment(1816587)">Re:</a>
+<span class="score" id="comment_score_1816587">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816587); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816587"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816587">&gt; その時その圧縮ファイルと同じフォルダに悪意のある名前のDLLが有れば、それが実行されてしまう。<br/>
+より正確に言えば、解凍ソフトの.exeが置かれているフォルダに目的とするDLLが存在せず、かつ、圧縮ファイルの置かれたディレクトリにその名前と同名の悪意のあるDLLファイルが置かれている場合、でしょ。DLLのサーチ順序は、カレントディレクトリよりもEXEファイルが置かれているディレクトリの方が先ですから。<br/>
+<br/>
+要するに攻撃者が攻撃を成功させるためには「.EXEのあるディレクトリから該当するDLLを削除したのちに」、悪意のあるDLLとそれをキックするための文書ファイルを送り付けなきゃいけないわけで、サーチ順序の最初にある「.exeが置かれているフォルダ」というのを無視した議論なんじゃないのかねぇ</div>
+</div>
+<div class="commentSub" id="comment_sub_1816587"></div>
+</div>
+<div id="replyto_1816587"></div>
+<ul class="comment-group" id="group_1816587">
+<li class="hide" id="hiddens_1816587"></li>
+</ul><ul id="commtree_1816587"><li class="comment full contain" id="tree_1816615"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816615"></div>
+<div class="comment-item" id="comment_1816615">
+<div class="commentTop comment-top newcomment" id="comment_top_1816615">
+<div class="title">
+<h4><a href="../../../../../comments.pl_71662920.html" id="comment_link_1816615" name="comment_link_1816615" onclick="return D2.setFocusComment(1816615)">Re:つまりどういうことだってばよ！？</a>
+<span class="score" id="comment_score_1816615">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816615); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~taka2/index.html">taka2 (14791)</a>
+<span class="otherdetails" id="comment_otherdetails_1816615">on 2010年08月27日 22時20分
+			 (<a href="../../../../../../srad.jp/comment/1816615.html">#1816615</a>)
+			<small>
+<a class="user_homepage_display" href="http://taka2.info/" title="http://taka2.info/">ホームページ</a>
+<a class="user_journal_display" href="../../../../../../srad.jp/~taka2/journal/index.html" title="2023年11月11日  7時50分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816615"><p>&gt; 「.EXEのあるディレクトリから該当するDLLを削除したのちに」</p><p>それは不要でしょう。XPなんかだと、カレントディレクトリの方がシステムディレクトリや環境変数PATHの検索より優先順位が高いので、<br/>・「Windowsのシステムが提供するDLL」などのシステムディレクトリにあるDLL<br/>・複数アプリケーションで共有するためなどの理由で、EXEファイルとは別の、PATHの通ったディレクトリに置いてあるDLL<br/>については、同名のDLLによる差し替えが可能になります。それで十分驚異的。</p><p>タレコミに上がっている実行例ではwab32res.dll が狙われています。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816615">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:つまりどういうことだってばよ！？')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816615'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816615'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816615'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_0465ae7a.html" onclick="return D2.selectParent(1816587)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816615"></div>
+<ul class="comment-group" id="group_1816615">
+<li class="hide" id="hiddens_1816615"></li>
+</ul><ul id="commtree_1816615"><li class="comment full contain" id="tree_1816648"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816648"></div>
+<div class="comment-item" id="comment_1816648">
+<div class="commentTop comment-top newcomment" id="comment_top_1816648">
+<div class="title">
+<h4><a href="../../../../../comments.pl_f2eeea62.html" id="comment_link_1816648" name="comment_link_1816648" onclick="return D2.setFocusComment(1816648)">Re:つまりどういうことだってばよ！？</a>
+<span class="score" id="comment_score_1816648">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816648); return false">スコア:3</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816648">on 2010年08月28日  0時03分
+			 (<a href="../../../../../../srad.jp/comment/1816648.html">#1816648</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816648">&gt; XPなんかだと、カレントディレクトリの方がシステムディレクトリや環境変数PATHの検索より優先順位が高いので、<br/>
+だからこれが間違いだってば。なんでこの程度のこと確認しないの?<br/>
+<br/>
+すでに他の人にも指摘されているけど、<a href="http://msdn.microsoft.com/en-us/library/ms682586(v=VS.85).aspx" rel="nofollow" title="microsoft.com">Windows XPについてはSP2から、以下の順序でサーチされる</a> [microsoft.com]んだってば。<ol>
+<li>実行されたEXEと同じディレクトリにあるDLL</li>
+<li>GetSystemDirectoryで得られるWindowsシステムディレクトリ</li>
+<li>16bitシステムディレクトリ</li>
+<li>Windowsディレクトリ</li>
+<li>カレントディレクトリ</li>
+</ol><p>
+要するに、この爆弾を起爆するには、カレントディレクトリよりも上位にある同名のDLLを全部削除しなきゃ駄目。少なくとも、XPsp2以降またはWindows2000sp4はね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816648">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:つまりどういうことだってばよ！？')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816648'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816648'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816648'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_8e2fac1b.html" onclick="return D2.selectParent(1816615)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816648"></div>
+<ul class="comment-group" id="group_1816648">
+<li class="hide" id="hiddens_1816648"></li>
+</ul><ul id="commtree_1816648"><li class="comment full contain" id="tree_1816674"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816674"></div>
+<div class="comment-item" id="comment_1816674">
+<div class="commentTop comment-top newcomment" id="comment_top_1816674">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1bc486f4.html" id="comment_link_1816674" name="comment_link_1816674" onclick="return D2.setFocusComment(1816674)">Re:つまりどういうことだってばよ！？</a>
+<span class="score" id="comment_score_1816674">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816674); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~s02222/index.html">s02222 (20350)</a>
+<span class="otherdetails" id="comment_otherdetails_1816674">on 2010年08月28日  1時57分
+			 (<a href="../../../../../../srad.jp/comment/1816674.html">#1816674</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816674">DLL不足で「hogehoge.DLLが見つかりません」とエラーが出る場合なら・・・まあ、原理的にはともかく、攻撃として成立するシチュエーションが皆無だから気にする必要は無いか。<br/> <br/>
+
+・あるアプリが、DLL不足の状態でインストールされていて起動しない、もしくは、プラグイン不足のような形で特定の機能のみ使えない<br/>
+・そのアプリが何らかの拡張子に関連づけされている<br/> <br/>
+
+という状況で、例えば、
+不足しているDLLと同名の「悪意のあるDLL」と同じディレクトリに置いてある、その拡張子のファイルを開こうとすると、悪意のあるDLLが読み込まれる。<br/> <br/>
+
+動かないアプリになんかの拡張子が関連づけられたままPCを使ってるとか、にもかかわらずその拡張子のファイルを開けようとするとか、
+問題となってるDLLの名前を悪意を持った第3者が知ってるとか、条件がいろいろと不自然だけど。<br/> <br/>
+
+強いて挙げるなら、その状況を作為的に作る事は出来そうな気もする。
+例えば、<br/> <br/>
+
+・「この動画を見たければ、再生ソフト○○をインストールすべし」と促すウェブページを作る<br/>
+・促すソフトとしては、普通に流通しているフリーウェアからいくつかの条件を満たす物を選ぶ<br/>
+・条件とは、「インストールするとデフォルトで拡張子.fooに対して関連づけされる」「プラグインのDLLを追加すると.foo形式のファイルの内、再生出来るコーデックが増える」<br/>
+・「ソフトをインストールしたらこのリンクをクリックすると動画再生開始」のようなリンクを作り、リンク先をWebDavで公開された.foo形式のファイルにする<br/>
+・リンク先は、追加のプラグインDLLが無いと再生出来ないコーデックな.foo形式のファイルで、同じWebDavフォルダ上には、偽の追加プラグインDLLが置かれている<br/>
+・偽の追加プラグインDLLがロードされ、悪意のあったコードが実行される<br/> <br/>
+
+回りくどいけど。「これを我がウェブページからダウンロードしてインストールせよ」と言われると怪しいから絶対触らないけど、有名なフリーウェア紹介サイトへのリンクになっていれば怪しさ半減。ついでに、インストールさせるツールは何の細工もない優良なソフトウェアなので、ウィルスチェッカの類に検知されない。でも悪意を持ったDLLの方もウィルスチェッカの検査を通るだろうから脅威が大幅に増えるわけではないかな。<br/> <br/>
+
+# デフォルト設定のまま常用してるとあるツール、ある操作をすると<br/>
+# 「プラグインhogehoge.DLLが見つかりません」の類のエラーが出る。<br/>
+# このツールに対する攻撃をされるとちょっと危ないかな、とか思ったとこからの連想検討。<br/>
+# そのツールが、フィッシング詐欺やらのターゲットになるぐらいのシェアを持ってるかどうかは不明だけど。</div>
+</div>
+<div class="commentSub" id="comment_sub_1816674">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:つまりどういうことだってばよ！？')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816674'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816674'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816674'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_c3aaf539.html" onclick="return D2.selectParent(1816648)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816674"></div>
+<ul class="comment-group" id="group_1816674">
+<li class="hide" id="hiddens_1816674"></li>
+</ul><ul id="commtree_1816674"><li class="comment full contain" id="tree_1816790"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816790"></div>
+<div class="comment-item" id="comment_1816790">
+<div class="commentTop comment-top newcomment" id="comment_top_1816790">
+<div class="title">
+<h4><a href="../../../../../comments.pl_88cb4a98.html" id="comment_link_1816790" name="comment_link_1816790" onclick="return D2.setFocusComment(1816790)">Re:つまりどういうことだってばよ！？</a>
+<span class="score" id="comment_score_1816790">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816790); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816790">on 2010年08月28日 14時26分
+			 (<a href="../../../../../../srad.jp/comment/1816790.html">#1816790</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816790">残念ながら、有名どころも含めそれなりの数のアプリケーションが正常な状態でも存在しないまたはPATH上のDLLを実際にサーチしている、という記事です。<br/>・なぜか存在していないDLLを探している（しかしエラーにならない）<br/>・他所のDLLを利用しようとして失敗してる（けどエラーにならない）<br/>・多言語対応でその言語版に存在しないDLLを探している（というか読めるDLLにより何言語版か決めている）<br/>・Windowsの古いバージョンにしか存在しないDLLを探している（既にない機能への対応が残ってる）<br/>理由は色々あると思います。<br/>・フリー/有料とか通常/上位版とか別アプリとの連携機能とかを取り合えずDLL呼んで成功/失敗で分けてる<br/>・別アプリへのプラグイン追加でexeの場所が違うからPATHで対応/プラグイン呼び出しか否か判断/バグってるけどエラーでなくて気がついてない<br/>・95/2000対応時代の古いコードを削除する必要がないからそのまま今でも残ってる<br/>とか。<br/>あと、攻撃手法もWebDav経由でドキュメント開くだけじゃなくて<br/>・safariにある（あった？）プロンプトなしでファイルをダウンロードさせるバグと（同様のバグと）組み合わせるとデスクトップフォルダにdllを仕込むことでデスクトップのドキュメント開くと発動する様になる<br/>・自分のFacebookのページと称して、カレントディレクトリを指定してoperaで開くショートカットを示し、operaがサーチするdllにより攻撃する<br/>があるそうだ。</div>
+</div>
+<div class="commentSub" id="comment_sub_1816790">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:つまりどういうことだってばよ！？')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816790'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816790'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816790'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_d12daa8f.html" onclick="return D2.selectParent(1816674)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816790"></div>
+<ul class="comment-group" id="group_1816790">
+<li class="hide" id="hiddens_1816790"></li>
+</ul></li></ul></li></ul></li><li class="comment oneline" id="tree_1816624"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816624"></div>
+<div class="comment-item" id="comment_1816624">
+<div class="commentTop comment-top newcomment" id="comment_top_1816624">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ff38cb0f.html" id="comment_link_1816624" name="comment_link_1816624" onclick="return D2.setFocusComment(1816624)">Re:</a>
+<span class="score" id="comment_score_1816624">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816624); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816624"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816624"><p>実行ファイルが置いてあるディレクトリに不正なDLLファイルがある時点で、サーバ提供者に悪意があるかサーバがクラックされている可能性があるので<br/>実行ファイル自体も細工がされている可能性があるし、これのどこが脆弱性なのかな？と思う。</p><p>それなら、UNIX系で何らかの理由で外部鯖のPATHが優先される設定環境において、<br/>外部鯖がクラックされて標準的なコマンドと同名の悪意あるコマンドファイルが置かれた場合も同じじゃないかと思う<br/>（コマンドの絶対パス確認コマンドやらチェックサムコマンドが乗っ取られたら分からないし）</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816624"></div>
+</div>
+<div id="replyto_1816624"></div>
+<ul class="comment-group" id="group_1816624">
+<li class="hide" id="hiddens_1816624"></li>
+</ul></li><li class="comment oneline" id="tree_1816626"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816626"></div>
+<div class="comment-item" id="comment_1816626">
+<div class="commentTop comment-top newcomment" id="comment_top_1816626">
+<div class="title">
+<h4><a href="../../../../../comments.pl_de6d96da.html" id="comment_link_1816626" name="comment_link_1816626" onclick="return D2.setFocusComment(1816626)">Re:</a>
+<span class="score" id="comment_score_1816626">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816626); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816626"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816626">コメントを否定するわけではなく都合がいいのでぶらさげる<br/>Windowsかどうかなんて、関係ない。もちろんDLLかEXEかなんてのも関係ない。<br/>マシンにコードを食わせればなんでもしてくれる</div>
+</div>
+<div class="commentSub" id="comment_sub_1816626"></div>
+</div>
+<div id="replyto_1816626"></div>
+<ul class="comment-group" id="group_1816626">
+<li class="hide" id="hiddens_1816626"></li>
+</ul></li><li class="comment oneline" id="tree_1816633"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816633"></div>
+<div class="comment-item" id="comment_1816633">
+<div class="commentTop comment-top newcomment" id="comment_top_1816633">
+<div class="title">
+<h4><a href="../../../../../comments.pl_9a6bc3f1.html" id="comment_link_1816633" name="comment_link_1816633" onclick="return D2.setFocusComment(1816633)">Re:</a>
+<span class="score" id="comment_score_1816633">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816633); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816633"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816633">だーかーらー、WebDavとはこういう仕様じゃん。<br/>
+脅威的とか何を騒いでるの？　<br/>
+って思う。<br/>
+<br/>
+何かのキャンペーンなの？</div>
+</div>
+<div class="commentSub" id="comment_sub_1816633"></div>
+</div>
+<div id="replyto_1816633"></div>
+<ul class="comment-group" id="group_1816633">
+<li class="hide" id="hiddens_1816633"></li>
+</ul></li><li class="comment oneline" id="tree_1816634"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816634"></div>
+<div class="comment-item" id="comment_1816634">
+<div class="commentTop comment-top newcomment" id="comment_top_1816634">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b624a154.html" id="comment_link_1816634" name="comment_link_1816634" onclick="return D2.setFocusComment(1816634)">Re:</a>
+<span class="score" id="comment_score_1816634">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816634); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816634"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816634"><p>カレントディレクトリがとくに危険なのは、誰でも自由に書き込めるディレクトリでも簡単にカレントに設定できる(どころか何も考えていない多数のアプリが無雑作に設定してることすらある)から。<br/>(デフォルト管理者のXPではほとんど無意味な配慮ですが)誰でも書き込めて攻撃者がパスを予測できるような場所にアプリケーションをインストールするなってことですね。<br/># Chromeェ…<br/>&gt; XPなんかだと、カレントディレクトリの方がシステムディレクトリや環境変数PATHの検索より優先順位が高いので、<br/>XP SP2からデフォルトでシステムディレクトリよりは後回しになった。PATHよりはまだ早いみたいだけど。<br/><a href="http://msdn.microsoft.com/en-us/library/ms682586(v=VS.85).aspx" rel="nofollow" title="microsoft.com">http://msdn.microsoft.com/en-us/library/ms682586(v=VS.85).aspx</a> [microsoft.com]</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816634"></div>
+</div>
+<div id="replyto_1816634"></div>
+<ul class="comment-group" id="group_1816634">
+<li class="hide" id="hiddens_1816634"></li>
+</ul></li><li class="comment hidden" id="tree_1816649"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816649"></div>
+<div class="comment-item" id="comment_1816649">
+</div>
+<div id="replyto_1816649"></div>
+<ul class="comment-group" id="group_1816649">
+<li class="hide" id="hiddens_1816649"></li>
+</ul><ul id="commtree_1816649"><li class="comment full contain" id="tree_1816661"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816661"></div>
+<div class="comment-item" id="comment_1816661">
+<div class="commentTop comment-top newcomment" id="comment_top_1816661">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d11f4572.html" id="comment_link_1816661" name="comment_link_1816661" onclick="return D2.setFocusComment(1816661)">叩いてやるよ</a>
+<span class="score" id="comment_score_1816661">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816661); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816661">on 2010年08月28日  0時54分
+			 (<a href="../../../../../../srad.jp/comment/1816661.html">#1816661</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816661"><p>だから他の人が指摘してるけど、XPSP2以降はそんな検索順序じゃねぇ。<br/>XPSP2未満だと既にサポート外だから最初から危険。</p><p>纏めるっていうなら伝聞だけでなくちゃんと調べろ。<br/>流言蜚語をばら撒くな、馬鹿。<br/><a href="http://msdn.microsoft.com/en-us/library/ms682586(v=VS.85).aspx" rel="nofollow" title="microsoft.com">http://msdn.microsoft.com/en-us/library/ms682586(v=VS.85).aspx</a> [microsoft.com]<br/>へのリンクがこれだけ指摘されているのに何言っているんだ。<br/><a href="../../../../../../srad.jp/security/comments.pl_054124f8.html" title="srad.jp">http://srad.jp/security/comments.pl?sid=505937&amp;cid=1816531</a> [srad.jp]<br/><a href="../../../../../../srad.jp/security/comments.pl_f2eeea62.html" title="srad.jp">http://srad.jp/security/comments.pl?sid=505937&amp;cid=1816648</a> [srad.jp]<br/><a href="../../../../../../srad.jp/security/comments.pl_b624a154.html" title="srad.jp">http://srad.jp/security/comments.pl?sid=505937&amp;cid=1816634</a> [srad.jp]<br/>読み込もうとするDLLがカレントディレクトリか%PATH%にのみ存在する場合が危ないの。</p><p>叩くってこんな感じでいい？<br/>もうちっと強いほうがデマは沈静化するかな。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816661">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('叩いてやるよ')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816661'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816661'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816661'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_c7d74c81.html" onclick="return D2.selectParent(1816649)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816661"></div>
+<ul class="comment-group" id="group_1816661">
+<li class="hide" id="hiddens_1816661"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1816535"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816535"></div>
+<div class="comment-item" id="comment_1816535">
+<div class="commentTop comment-top newcomment" id="comment_top_1816535">
+<div class="title">
+<h4><a href="../../../../../comments.pl_c60d7ea7.html" id="comment_link_1816535" name="comment_link_1816535" onclick="return D2.setFocusComment(1816535)">そもそも</a>
+<span class="score" id="comment_score_1816535">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816535); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816535">on 2010年08月27日 18時42分
+			 (<a href="../../../../../../srad.jp/comment/1816535.html">#1816535</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816535">信頼できないネットワーク越しにあるファイルを<br/>ダブルクリックで開くこと自体に<br/>リテラシの問題があるんじゃないのかなぁ。<br/>そうさせないためのポリシィ設定してない環境とか。<br/><br/>信頼済みネットワーク内で刺されたらご愁傷様ってことで。<br/><br/>そうでないと、Side By Side以前の通例がネックになるんじゃない？<br/>DLLバージョン依存アプリはEXEとともに<br/>動作確認済みバージョンのDLL置いておくケースは珍しくなかったしさ。<br/><br/>それを無視してMSに対策しましたとかされても<br/>弊害でまくりな気がするんだけど。。。だいじょうぶなん？</div>
+</div>
+</div>
+<div id="replyto_1816535"></div>
+<ul class="comment-group" id="group_1816535">
+<li class="hide" id="hiddens_1816535"></li>
+</ul><ul id="commtree_1816535"><li class="comment oneline" id="tree_1816544"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816544"></div>
+<div class="comment-item" id="comment_1816544">
+<div class="commentTop comment-top newcomment" id="comment_top_1816544">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a52c517a.html" id="comment_link_1816544" name="comment_link_1816544" onclick="return D2.setFocusComment(1816544)">Re:</a>
+<span class="score" id="comment_score_1816544">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816544); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816544"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816544"><blockquote><div><p>信頼済みネットワーク内で刺されたらご愁傷様ってことで。</p></div></blockquote><p>社内ネットワークは信頼済みに入りますか?</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816544"></div>
+</div>
+<div id="replyto_1816544"></div>
+<ul class="comment-group" id="group_1816544">
+<li class="hide" id="hiddens_1816544"></li>
+</ul><ul id="commtree_1816544"><li class="comment oneline" id="tree_1816547"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816547"></div>
+<div class="comment-item" id="comment_1816547">
+<div class="commentTop comment-top newcomment" id="comment_top_1816547">
+<div class="title">
+<h4><a href="../../../../../comments.pl_be4ff0ce.html" id="comment_link_1816547" name="comment_link_1816547" onclick="return D2.setFocusComment(1816547)">Re:</a>
+<span class="score" id="comment_score_1816547">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816547); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816547"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816547">お好みのリテラシィとポリシィでどうぞ。<br/><br/>権限がなければ、<br/>伝染病放置の職場ってことで、<br/>関係各位含めてご愁傷様。</div>
+</div>
+<div class="commentSub" id="comment_sub_1816547"></div>
+</div>
+<div id="replyto_1816547"></div>
+<ul class="comment-group" id="group_1816547">
+<li class="hide" id="hiddens_1816547"></li>
+</ul></li></ul></li><li class="comment oneline" id="tree_1816561"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816561"></div>
+<div class="comment-item" id="comment_1816561">
+<div class="commentTop comment-top newcomment" id="comment_top_1816561">
+<div class="title">
+<h4><a href="../../../../../comments.pl_eb8e2ac5.html" id="comment_link_1816561" name="comment_link_1816561" onclick="return D2.setFocusComment(1816561)">Re:</a>
+<span class="score" id="comment_score_1816561">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816561); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816561"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816561"><p>一見正論に見えて、何も解決しない意見ご苦労様。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816561"></div>
+</div>
+<div id="replyto_1816561"></div>
+<ul class="comment-group" id="group_1816561">
+<li class="hide" id="hiddens_1816561"></li>
+</ul><ul id="commtree_1816561"><li class="comment oneline" id="tree_1816590"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816590"></div>
+<div class="comment-item" id="comment_1816590">
+<div class="commentTop comment-top newcomment" id="comment_top_1816590">
+<div class="title">
+<h4><a href="../../../../../comments.pl_45f6ae7e.html" id="comment_link_1816590" name="comment_link_1816590" onclick="return D2.setFocusComment(1816590)">Re:</a>
+<span class="score" id="comment_score_1816590">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816590); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816590"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816590">いや、だからそもそも、<br/>ローカルと同等にその場所を扱って、<br/>ダブルクリックやオートランで開くんだから、<br/>食らうのあたりまえじゃない？ってことなんだけど。。。<br/><br/>ファイルの場所がローカルで、<br/>DLLがインターネットゾーンにあるのに、<br/>それでもロードされて発動するんなら脆弱性といえるだろうけど、<br/>発動可能な場所で開いたら発動するでしょそりゃ。<br/><br/>EXEじゃないから大丈夫だと思ったなんてのと同程度じゃないの？<br/><br/>それって過去も今もこれからも解消しないんじゃない？<br/>ヒューリスティック対応のアンチウイルス使いましょうってレベルでしょ。<br/><br/>だから、「そもそも」脆弱性なのこれ？</div>
+</div>
+<div class="commentSub" id="comment_sub_1816590"></div>
+</div>
+<div id="replyto_1816590"></div>
+<ul class="comment-group" id="group_1816590">
+<li class="hide" id="hiddens_1816590"></li>
+</ul><ul id="commtree_1816590"><li class="comment full contain" id="tree_1816828"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816828"></div>
+<div class="comment-item" id="comment_1816828">
+<div class="commentTop comment-top newcomment" id="comment_top_1816828">
+<div class="title">
+<h4><a href="../../../../../comments.pl_347209df.html" id="comment_link_1816828" name="comment_link_1816828" onclick="return D2.setFocusComment(1816828)">Re:そもそも</a>
+<span class="score" id="comment_score_1816828">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816828); return false">スコア:1</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816828">on 2010年08月28日 17時26分
+			 (<a href="../../../../../../srad.jp/comment/1816828.html">#1816828</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816828"><p>&gt;ファイルの場所がローカルで、<br/>&gt;DLLがインターネットゾーンにあるのに、<br/>&gt;それでもロードされて発動するんなら<br/>細工したローカルなファイルを開くことでカレントディレクトリをネットワーク共有上(例えば\\example.jp\)に変えることができれば可能なはず。<br/>というわけでパターンマッチによる外部読み込みでSetCurrentDirectoryしてからFindFirstFileするようなソフトウェアとかは狙い目。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816828">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:そもそも')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816828'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816828'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816828'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_045be62d.html" onclick="return D2.selectParent(1816590)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816828"></div>
+<ul class="comment-group" id="group_1816828">
+<li class="hide" id="hiddens_1816828"></li>
+</ul><ul id="commtree_1816828"><li class="comment full contain" id="tree_1816956"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816956"></div>
+<div class="comment-item" id="comment_1816956">
+<div class="commentTop comment-top newcomment" id="comment_top_1816956">
+<div class="title">
+<h4><a href="../../../../../comments.pl_d2a1ad77.html" id="comment_link_1816956" name="comment_link_1816956" onclick="return D2.setFocusComment(1816956)">Re:そもそも</a>
+<span class="score" id="comment_score_1816956">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816956); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816956">on 2010年08月29日 11時17分
+			 (<a href="../../../../../../srad.jp/comment/1816956.html">#1816956</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816956"><p>&gt; SetCurrentDirectoryしてからFindFirstFile<br/>それは明らかにそんなことしてるほうが悪いだろ。FindFirstFileはふつうにフルパス受け付けるのに。<br/>それよりファイルオープンダイアログでファイル共有上のファイルを選ばせるだけで危険(GetOpenFileNameはデフォルトで開いたファイルがあるフォルダをカレントにするから)</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816956">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:そもそも')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816956'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816956'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816956'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_39d27c1b.html" onclick="return D2.selectParent(1816828)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816956"></div>
+<ul class="comment-group" id="group_1816956">
+<li class="hide" id="hiddens_1816956"></li>
+</ul></li></ul></li></ul></li></ul></li><li class="comment hidden" id="tree_1816789"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816789"></div>
+<div class="comment-item" id="comment_1816789">
+</div>
+<div id="replyto_1816789"></div>
+<ul class="comment-group" id="group_1816789">
+<li class="hide" id="hiddens_1816789"></li>
+</ul><ul id="commtree_1816789"><li class="comment hidden" id="tree_1816817"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816817"></div>
+<div class="comment-item" id="comment_1816817">
+</div>
+<div id="replyto_1816817"></div>
+<ul class="comment-group" id="group_1816817">
+<li class="hide" id="hiddens_1816817"></li>
+</ul><ul id="commtree_1816817"><li class="comment hidden" id="tree_1816822"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816822"></div>
+<div class="comment-item" id="comment_1816822">
+</div>
+<div id="replyto_1816822"></div>
+<ul class="comment-group" id="group_1816822">
+<li class="hide" id="hiddens_1816822"></li>
+</ul><ul id="commtree_1816822"><li class="comment hidden" id="tree_1816831"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816831"></div>
+<div class="comment-item" id="comment_1816831">
+</div>
+<div id="replyto_1816831"></div>
+<ul class="comment-group" id="group_1816831">
+<li class="hide" id="hiddens_1816831"></li>
+</ul><ul id="commtree_1816831"><li class="comment hidden" id="tree_1816845"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816845"></div>
+<div class="comment-item" id="comment_1816845">
+</div>
+<div id="replyto_1816845"></div>
+<ul class="comment-group" id="group_1816845">
+<li class="hide" id="hiddens_1816845"></li>
+</ul><ul id="commtree_1816845"><li class="comment hidden" id="tree_1816864"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816864"></div>
+<div class="comment-item" id="comment_1816864">
+</div>
+<div id="replyto_1816864"></div>
+<ul class="comment-group" id="group_1816864">
+<li class="hide" id="hiddens_1816864"></li>
+</ul></li><li class="comment full contain" id="tree_1816888"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816888"></div>
+<div class="comment-item" id="comment_1816888">
+<div class="commentTop comment-top newcomment" id="comment_top_1816888">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a9b7d177.html" id="comment_link_1816888" name="comment_link_1816888" onclick="return D2.setFocusComment(1816888)">Re:そもそも</a>
+<span class="score" id="comment_score_1816888">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816888); return false">スコア:1</a>, 参考になる)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816888">on 2010年08月28日 22時01分
+			 (<a href="../../../../../../srad.jp/comment/1816888.html">#1816888</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816888"><p>&gt;「仕様の範疇」<br/>この仕様(Design=設計)が何を指しているか分かりません。<br/>ファイル共有へのアクセスが透過的なのはWindowsの仕様です。<br/>今回の問題は酷いWindowsのDLL読み込みの仕様に対して対策をしていなかった多くのアプリケーションが脆弱だという話です。この脆弱性は設計から来るものではなく、アプリケーションの局所的な問題から来るものです。<br/><a href="http://www.net-security.org/malware_news.php?id=1444" rel="nofollow" title="net-security.org">約48%のSMBサーバーがマルウェアに感染しています</a> [net-security.org]。この脆弱性は組織内<a href="http://itpro.nikkeibp.co.jp/article/Keyword/20080530/305486/" rel="nofollow" title="nikkeibp.co.jp">アウトブレーク</a> [nikkeibp.co.jp]を引き起こす可能性のある致命的なものです。</p><p>今回の件はアプリケーション側での解決法がありますが、それが無い場合はシステム側の仕様の脆弱性です。<br/>AutoRunについては酷い仕様ですが、Microsoftは脆弱性では無いと言っていますね。AutoRunからのウィルス感染は多いのですが、あの悪名高い<a href="http://d.hatena.ne.jp/keyword/%A4%BD%A4%EC%A4%CF%BB%C5%CD%CD%A4%C7%A4%B9" rel="nofollow" title="hatena.ne.jp">それは仕様です</a> [hatena.ne.jp]ということでしょう。そもそもWindows自体がぜいじゃk(ry<br/>まぁUSBメモリ型でキーボードコマンドを送り込むハードウェアのようにOSに依存しない攻撃法もあるので、ソフトウェアでは防げない問題もあります。結局はリスク管理の問題ですが、防げることは防ぐべきです。</p><p>&gt;仕様の悪用方法は、<br/>&gt;そりゃ探せばいくらでもあるよね？<br/>Officeのマクロ付きファイルでは警告がでるようになりました。ダウンロードしたプログラムを起動すると警告が出るようになりました。<br/>仕様か否かに関わらず脆弱性は毎日発見されては対策されています。</p><p>&gt;”突破されたら”なんでもあり<br/>なんでもありじゃないです。仕様の隙間を突いていかないといけません。如何に攻撃を困難にするかが重要です。<br/>Windowsだと互換性維持の為に継ぎ接ぎだらけで隙間も多いですが、Linuxなどだと一貫性があって隙間は少なく堅固です。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816888">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:そもそも')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816888'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816888'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816888'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_bb45d295.html" onclick="return D2.selectParent(1816864)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816888"></div>
+<ul class="comment-group" id="group_1816888">
+<li class="hide" id="hiddens_1816888"></li>
+</ul></li><li class="comment hidden" id="tree_1816919"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816919"></div>
+<div class="comment-item" id="comment_1816919">
+</div>
+<div id="replyto_1816919"></div>
+<ul class="comment-group" id="group_1816919">
+<li class="hide" id="hiddens_1816919"></li>
+</ul></li><li class="comment full contain" id="tree_1816931"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816931"></div>
+<div class="comment-item" id="comment_1816931">
+<div class="commentTop comment-top newcomment" id="comment_top_1816931">
+<div class="title">
+<h4><a href="../../../../../comments.pl_a84dfe75.html" id="comment_link_1816931" name="comment_link_1816931" onclick="return D2.setFocusComment(1816931)">Re:そもそも</a>
+<span class="score" id="comment_score_1816931">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816931); return false">スコア:1</a>, すばらしい洞察)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816931">on 2010年08月29日  3時24分
+			 (<a href="../../../../../../srad.jp/comment/1816931.html">#1816931</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816931"><p>んーLINUXと比べてどうこうって主張だから、<br/>合ってるのにちょこっとずれた話になってるのかな？</p><p>今回の件はWINDOWS仕様なので、<br/>LINUXの仕様前提でってのはなしにしよう。<br/>(個人的にもCUI・GUI両方LINUX使ってるんで言いたいことはわかります)</p><p>ようはね、WebDavにしろ、Autrun.infのことにしろ、<br/>ローカルと同等の領域として扱っているから、<br/>WINの仕様として、<br/>やばいものも実行できちゃってるわけですよ。</p><blockquote><div><p>flashファイル開いたらウィルスに感染させるとが出来るなら</p></div></blockquote><p>なので、ここだけはNG。<br/>ローカルにflash保存しての話限定であれば、この話とかみ合うけど、<br/>普通はネット越しのローカル扱いされない領域での話だから。</p><p>でね、ローカルと同等の領域として扱うってことは、<br/>そちらの主張からだと「その文化そのものが脆弱性」ってことでしょ。<br/>その論議は宗教論議になるからやめましょう。</p><p>お言葉を借りれば、まさにこれ、<br/>「WebDavを切る、信頼のおけない領域と接続しない等々」<br/>「頼できないCD-ROM/R/フラッシュメモリ/etc...を挿さないという運用」<br/>そうすることで対応することでしょってのが、<br/>こちらの主張なのですよ。</p><p>「俺達WINユーザーは知らずに危ない方法を選んでたんだー」<br/>って話になるだけでいいんじゃないかな？<br/>(個人的にもXP・VISTA・7使ってるんで一応わたしも俺達に含まれます)</p><p>てことで、ローカルと同等の領域として扱う文化のWINは、<br/>招き入れる境界をリテラシィかポリシィかできっちりやるか、<br/>外部を扱う安全な別な手段を生み出すか、<br/>さぁ選べって言われるべき状況なんじゃなかなと。</p><p>そういう意味で、<br/>「機能や仕様の脆弱性だー」<br/>って話とは違うんじゃない？ってこと。</p><p>無論、LINUXと比べりゃ、<br/>UACありのWINでさえ根本的に難ありってのはわかるけどさ、<br/>そこは切り分けて話そうよ。<br/>今回はWIN限定の問題ってことで、一つご容赦を。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816931">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:そもそも')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816931'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816931'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816931'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_b020567c.html" onclick="return D2.selectParent(1816919)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816931"></div>
+<ul class="comment-group" id="group_1816931">
+<li class="hide" id="hiddens_1816931"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment hidden" id="tree_1817095"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817095"></div>
+<div class="comment-item" id="comment_1817095">
+</div>
+<div id="replyto_1817095"></div>
+<ul class="comment-group" id="group_1817095">
+<li class="hide" id="hiddens_1817095"></li>
+</ul><ul id="commtree_1817095"><li class="comment hidden" id="tree_1817292"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817292"></div>
+<div class="comment-item" id="comment_1817292">
+</div>
+<div id="replyto_1817292"></div>
+<ul class="comment-group" id="group_1817292">
+<li class="hide" id="hiddens_1817292"></li>
+</ul><ul id="commtree_1817292"><li class="comment hidden" id="tree_1817465"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817465"></div>
+<div class="comment-item" id="comment_1817465">
+</div>
+<div id="replyto_1817465"></div>
+<ul class="comment-group" id="group_1817465">
+<li class="hide" id="hiddens_1817465"></li>
+</ul><ul id="commtree_1817465"><li class="comment hidden" id="tree_1817797"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817797"></div>
+<div class="comment-item" id="comment_1817797">
+</div>
+<div id="replyto_1817797"></div>
+<ul class="comment-group" id="group_1817797">
+<li class="hide" id="hiddens_1817797"></li>
+</ul><ul id="commtree_1817797"><li class="comment hidden" id="tree_1817823"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817823"></div>
+<div class="comment-item" id="comment_1817823">
+</div>
+<div id="replyto_1817823"></div>
+<ul class="comment-group" id="group_1817823">
+<li class="hide" id="hiddens_1817823"></li>
+</ul></li><li class="comment full contain" id="tree_1817900"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1817900"></div>
+<div class="comment-item" id="comment_1817900">
+<div class="commentTop comment-top newcomment" id="comment_top_1817900">
+<div class="title">
+<h4><a href="../../../../../comments.pl_eac8975e.html" id="comment_link_1817900" name="comment_link_1817900" onclick="return D2.setFocusComment(1817900)">Re:そもそも</a>
+<span class="score" id="comment_score_1817900">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1817900); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~Crus.M/index.html">Crus.M (19063)</a>
+<span class="otherdetails" id="comment_otherdetails_1817900">on 2010年08月31日 19時46分
+			 (<a href="../../../../../../srad.jp/comment/1817900.html">#1817900</a>)
+			<small>
+<a class="user_homepage_display" href="http://crus.s11.xrea.com/" title="http://crus.s11.xrea.com/">ホームページ</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1817900">&gt; でも、カレントにパスを通すと、シェルの内部コマンドよりも外部コマンドが優先され、トロイの木馬を踏んでしまうんでしょ?<br/>いいえ、少なくともDebian GNU/Linux 5.0.6上のbash/dashでは内部コマンドが優先されます。</div>
+</div>
+<div class="commentSub" id="comment_sub_1817900">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:そもそも')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1817900'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1817900'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1817900'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_16bbd51c.html" onclick="return D2.selectParent(1817823)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1817900"></div>
+<ul class="comment-group" id="group_1817900">
+<li class="hide" id="hiddens_1817900"></li>
+</ul></li></ul></li></ul></li></ul></li></ul></li></ul></li></ul></li><li class="comment full contain" id="tree_1816566"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816566"></div>
+<div class="comment-item" id="comment_1816566">
+<div class="commentTop comment-top newcomment" id="comment_top_1816566">
+<div class="title">
+<h4><a href="../../../../../comments.pl_725392b7.html" id="comment_link_1816566" name="comment_link_1816566" onclick="return D2.setFocusComment(1816566)">怪しげなファイルを自由におけるWebDavからファイルを開くってシチュ</a>
+<span class="score" id="comment_score_1816566">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816566); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816566">on 2010年08月27日 20時17分
+			 (<a href="../../../../../../srad.jp/comment/1816566.html">#1816566</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816566">がよくわからん。<br/>実際のところたとえばiTunes使ってる人がどういう経緯で開いちゃうんだろうか？</div>
+</div>
+</div>
+<div id="replyto_1816566"></div>
+<ul class="comment-group" id="group_1816566">
+<li class="hide" id="hiddens_1816566"></li>
+</ul><ul id="commtree_1816566"><li class="comment oneline" id="tree_1816584"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816584"></div>
+<div class="comment-item" id="comment_1816584">
+<div class="commentTop comment-top newcomment" id="comment_top_1816584">
+<div class="title">
+<h4><a href="../../../../../comments.pl_1dbb3922.html" id="comment_link_1816584" name="comment_link_1816584" onclick="return D2.setFocusComment(1816584)">Re:</a>
+<span class="score" id="comment_score_1816584">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816584); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816584"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816584"><p>iTunesはしらんけどフィッシング的な方法が使えるでしょう。</p><p>ま、方法はともかく。<br/>例えばテキストファイル開くのもヤバいと思う？<br/>flashやpdfも普通のHTTP経由なら開くけどWebDav経由ならヤバい？</p><p>確かにネット経由で入手したファイルを開くのはローカルのファイルを開くのに比べたらヤバい事かもしれない。<br/>でも、pdf開いたり圧縮ファイル開くと、任意のバイナリが実行出来るってのはセキュリティホール扱いだよね。<br/>普通のHTTP経由なら安全でWebDav経由なら危険っておかしいよね。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816584"></div>
+</div>
+<div id="replyto_1816584"></div>
+<ul class="comment-group" id="group_1816584">
+<li class="hide" id="hiddens_1816584"></li>
+</ul></li><li class="comment oneline" id="tree_1816602"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816602"></div>
+<div class="comment-item" id="comment_1816602">
+<div class="commentTop comment-top newcomment" id="comment_top_1816602">
+<div class="title">
+<h4><a href="../../../../../comments.pl_797d3c99.html" id="comment_link_1816602" name="comment_link_1816602" onclick="return D2.setFocusComment(1816602)">Re:</a>
+<span class="score" id="comment_score_1816602">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816602); return false">スコア:0</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			Anonymous Coward
+			
+			
+			<span class="otherdetails" id="comment_otherdetails_1816602"></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816602">WebDAV は「診断」に使うって書いてあるような気がするがなぁ。<br/>診断にひっかかるようなソフトは USB メモリーだろうが、なんだろうが同じことをやるわけでしょ。</div>
+</div>
+<div class="commentSub" id="comment_sub_1816602"></div>
+</div>
+<div id="replyto_1816602"></div>
+<ul class="comment-group" id="group_1816602">
+<li class="hide" id="hiddens_1816602"></li>
+</ul></li></ul></li><li class="comment hidden" id="tree_1816701"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816701"></div>
+<div class="comment-item" id="comment_1816701">
+</div>
+<div id="replyto_1816701"></div>
+<ul class="comment-group" id="group_1816701">
+<li class="hide" id="hiddens_1816701"></li>
+</ul><ul id="commtree_1816701"><li class="comment full contain" id="tree_1816782"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816782"></div>
+<div class="comment-item" id="comment_1816782">
+<div class="commentTop comment-top newcomment" id="comment_top_1816782">
+<div class="title">
+<h4><a href="../../../../../comments.pl_bfade510.html" id="comment_link_1816782" name="comment_link_1816782" onclick="return D2.setFocusComment(1816782)">Re:LINUXでも。</a>
+<span class="score" id="comment_score_1816782">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816782); return false">スコア:2</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~reininn/index.html">reininn (35924)</a>
+<span class="otherdetails" id="comment_otherdetails_1816782">on 2010年08月28日 13時53分
+			 (<a href="../../../../../../srad.jp/comment/1816782.html">#1816782</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816782">export LD_LIBRARY_PATH=.:${LD_LIBRARY_PATH}<br/>
+ってやったら同じにならない？</div>
+</div>
+<div class="commentSub" id="comment_sub_1816782">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:LINUXでも。')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816782'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816782'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816782'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_14c183db.html" onclick="return D2.selectParent(1816701)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816782"></div>
+<ul class="comment-group" id="group_1816782">
+<li class="hide" id="hiddens_1816782"></li>
+</ul></li><li class="comment full contain" id="tree_1816814"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816814"></div>
+<div class="comment-item" id="comment_1816814">
+<div class="commentTop comment-top newcomment" id="comment_top_1816814">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b8555c82.html" id="comment_link_1816814" name="comment_link_1816814" onclick="return D2.setFocusComment(1816814)">Re:LINUXでも。</a>
+<span class="score" id="comment_score_1816814">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816814); return false">スコア:2</a>, 興味深い)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kota/index.html">kota (2142)</a>
+<span class="otherdetails" id="comment_otherdetails_1816814">on 2010年08月28日 16時11分
+			 (<a href="../../../../../../srad.jp/comment/1816814.html">#1816814</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~kota/journal/index.html" title="2011年07月07日 23時42分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816814"><p>shellアーカイブ形式をブラウザが勝手に展開するようになったら、Linuxも軽く死ねそう。</p><p>そういえば、Linux対応のアンチウィルスソフトって、悪意のある<br/>shellスクリプトファイルに対応しているのかな？<br/># AntiVirやF-secureの製品情報ページ読んでも、よくわからない...</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816814">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:LINUXでも。')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816814'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816814'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816814'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_14c183db.html" onclick="return D2.selectParent(1816701)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816814"></div>
+<ul class="comment-group" id="group_1816814">
+<li class="hide" id="hiddens_1816814"></li>
+</ul><ul id="commtree_1816814"><li class="comment hidden" id="tree_1816829"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816829"></div>
+<div class="comment-item" id="comment_1816829">
+</div>
+<div id="replyto_1816829"></div>
+<ul class="comment-group" id="group_1816829">
+<li class="hide" id="hiddens_1816829"></li>
+</ul><ul id="commtree_1816829"><li class="comment full contain" id="tree_1816847"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816847"></div>
+<div class="comment-item" id="comment_1816847">
+<div class="commentTop comment-top newcomment" id="comment_top_1816847">
+<div class="title">
+<h4><a href="../../../../../comments.pl_ef2c97cf.html" id="comment_link_1816847" name="comment_link_1816847" onclick="return D2.setFocusComment(1816847)">Re:LINUXでも。</a>
+<span class="score" id="comment_score_1816847">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816847); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~s02222/index.html">s02222 (20350)</a>
+<span class="otherdetails" id="comment_otherdetails_1816847">on 2010年08月28日 18時28分
+			 (<a href="../../../../../../srad.jp/comment/1816847.html">#1816847</a>)
+			<small>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816847">MS-DOSとかWindowsとかを主に使っていた人をUNIX系に触れさせる場合には「'.'をPATHに加えちゃダメ」と注意する、っちゅう話がありますね。</div>
+</div>
+<div class="commentSub" id="comment_sub_1816847">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:LINUXでも。')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816847'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816847'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816847'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_d6ab05b0.html" onclick="return D2.selectParent(1816829)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816847"></div>
+<ul class="comment-group" id="group_1816847">
+<li class="hide" id="hiddens_1816847"></li>
+</ul></li><li class="comment full contain" id="tree_1816861"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816861"></div>
+<div class="comment-item" id="comment_1816861">
+<div class="commentTop comment-top newcomment" id="comment_top_1816861">
+<div class="title">
+<h4><a href="../../../../../comments.pl_b5cbd369.html" id="comment_link_1816861" name="comment_link_1816861" onclick="return D2.setFocusComment(1816861)">Re:LINUXでも。</a>
+<span class="score" id="comment_score_1816861">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816861); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kota/index.html">kota (2142)</a>
+<span class="otherdetails" id="comment_otherdetails_1816861">on 2010年08月28日 19時20分
+			 (<a href="../../../../../../srad.jp/comment/1816861.html">#1816861</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~kota/journal/index.html" title="2011年07月07日 23時42分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816861"><p>＞ Windowsってそんなヤバイ事してんの？</p><p>「余計なお世話」が行きすぎると、そんなことになるかな、というだけです。<br/>explorerでzipファイルをシームレスに扱える、という流れからすると、「Linuxで、sharファイルがシームレスに<br/>扱えたら便利じゃね？」ということを考える馬鹿が出ないとも限らない、ってだけ。</p><p># そういや、しばらくsharファイルって見てないかも...</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816861">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:LINUXでも。')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816861'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816861'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816861'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_d6ab05b0.html" onclick="return D2.selectParent(1816829)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816861"></div>
+<ul class="comment-group" id="group_1816861">
+<li class="hide" id="hiddens_1816861"></li>
+</ul></li></ul></li><li class="comment hidden" id="tree_1816825"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816825"></div>
+<div class="comment-item" id="comment_1816825">
+</div>
+<div id="replyto_1816825"></div>
+<ul class="comment-group" id="group_1816825">
+<li class="hide" id="hiddens_1816825"></li>
+</ul><ul id="commtree_1816825"><li class="comment full contain" id="tree_1816857"><span class="ind"></span>
+<div class="comment-status commentstatus" id="comment_status_1816857"></div>
+<div class="comment-item" id="comment_1816857">
+<div class="commentTop comment-top newcomment" id="comment_top_1816857">
+<div class="title">
+<h4><a href="../../../../../comments.pl_51d60feb.html" id="comment_link_1816857" name="comment_link_1816857" onclick="return D2.setFocusComment(1816857)">Re:LINUXでも。</a>
+<span class="score" id="comment_score_1816857">(<a href="index.html" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', 1816857); return false">スコア:1</a>)</span></h4>
+</div>
+<div class="details">
+			by
+			<a href="../../../../../../srad.jp/~kota/index.html">kota (2142)</a>
+<span class="otherdetails" id="comment_otherdetails_1816857">on 2010年08月28日 19時07分
+			 (<a href="../../../../../../srad.jp/comment/1816857.html">#1816857</a>)
+			<small>
+<a class="user_journal_display" href="../../../../../../srad.jp/~kota/journal/index.html" title="2011年07月07日 23時42分">日記</a>
+</small></span>
+</div>
+</div>
+<div class="commentBody comment-body">
+<div class="contents_text" id="comment_body_1816857"><p>＞Linuxのアンチウイルスソフトは、(略)Windowsへウイルスを感染させないために入れるものです。</p><p>ん？主にそうだ、というだけで、Linuxをターゲットにしたウィルスを検知しないわけじゃないでしょ？</p><p>Linux自体、以前にくらべればずいぶん「誰でも使える」という状態に近づいてきたから、オンデマンドで<br/>ヒューリスティック検知（っていうのかな？）できるものならば、してもらいたいな。<br/># で、それに頼りきってしまって、地雷を踏む、と。</p></div>
+</div>
+<div class="commentSub" id="comment_sub_1816857">
+<div class="my_toggle_share">
+<div class="my_toggle_sharelink" onclick="my_toggle_share_display(this)">シェア</div>
+<div class="my_toggle_sharebox" style="display: none;">
+<span class="sprite-syndication sp-twitter_white_32" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Re:LINUXでも。')+'&amp;url='+encodeURIComponent('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816857'),'_blank','width=550,height=420,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-facebook_32" onclick="window.open('https://www.facebook.com/sharer.php?u='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816857'),'_blank','width=550,height=480,scrollbars=1,resizable=1',0)"></span>
+<span class="sprite-syndication sp-gplus_32" onclick="window.open('https://plus.google.com/share?url='+encodeURI('https://security.srad.jp/comments.pl?sid=505937&amp;cid=1816857'),'_blank','width=550,height=480,scrollbars=1,resizable=1', 0)"></span>
+</div>
+</div>
+<span class="parent_comment_link">
+<a class="btn link" href="../../../../../comments.pl_37d0ac9a.html" onclick="return D2.selectParent(1816825)">親コメント</a>
+</span>
+</div>
+</div>
+<div id="replyto_1816857"></div>
+<ul class="comment-group" id="group_1816857">
+<li class="hide" id="hiddens_1816857"></li>
+</ul></li></ul></li></ul></li></ul></li>
+<li class="hide" id="roothiddens"></li>
+</ul>
+<noscript><p><b>より多くのコメントがこの議論にあるかもしれませんが、JavaScriptが有効ではない環境を使用している場合、<a href="../../../../../users.pl_a170a88b.html">クラシックなコメントシステム(D1)に設定を変更する</a>必要があります。</b></p></noscript>
+<div class="clearfix" id="discussion_buttons">
+</div>
+<div class="newcmnt"><div id="replyto_0"></div></div>
+<script type="text/javascript">
+<!--
+		D2.currents()['hidden']   = 0;
+		D2.currents()['full']     = 31;
+		D2.currents()['oneline']  = 19;
+		// D2.currents_total(50);
+
+		D2.abbrev_comments({});
+		D2.noshow_comments([1816707,1816940,1816649,1816789,1816817,1816822,1816831,1816845,1816864,1816919,1817095,1817292,1817465,1817797,1817823,1816701,1816829,1816825]);
+		D2.pieces_comments([1816523,1816533,1816530,1816623,1816631,1816606,1816619,1816565,1816587,1816624,1816626,1816633,1816634,1816544,1816547,1816561,1816590,1816584,1816602]);
+		D2.init_hiddens([]);
+
+		D2.finishLoading();
+
+
+
+//-->
+	</script>
+</div>
+</section>
+</div>
+</section>
+</section>
+</div>
+<style>
+menu, menu * {
+	text-decoration:none;
+}
+
+menu[type=context] {
+	display:none;
+	position:absolute;
+	z-index:10000;
+}
+
+menu[type=context]:not(.brief) {
+	background-color:#dfdfdf;
+	margin:0;
+	padding:2px 0.5em;
+	border-style:solid;
+	border-width:1px;
+	border-color:#eeeeee #aaaaaa #aaaaaa #eeeeee;
+	-moz-border-radius-topright:.7em;
+	-webkit-border-top-right-radius: 0.7em 0.7em;
+}
+
+menu.full[type=context] > a.slash-hover:first-child {
+	-moz-border-radius-topright:.6em;
+	-webkit-border-top-right-radius: 0.6em 0.6em;
+}
+
+
+
+menu.brief[type=context] > a {
+	-moz-border-radius:.6em;
+	-webkit-border-radius: 0.6em;
+	color:#ffffff;
+	background-color:#000000;
+}
+
+/*
+span.briefmenu a.tag:not(.datatype) {
+    padding-left:.5em;
+}
+*/
+
+
+
+
+/* #tag-menu a, #feedback-menu a  { */
+menu.tag-menu a {
+	display:list-item;
+	list-style:none;
+	text-align:left;
+	font-weight:bold;
+	color:black;
+	padding:0.1em 0.5em;
+	margin:-0.1em -0.5em;
+	cursor:pointer;
+}
+
+
+.tags .edit-bar { position:relative; }
+article aside .share .addthis_toolbox { display:block; width:60px; float:left; }
+article aside.view_mode .share { min-width:120px; padding-top:.5em; }
+#firehose.list article header h2 {padding-left: 20px; !important}
+.novote .vote { display:none; }
+.vote > a, .votedup > a, .voteddown > a {border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.25); display:block; height:22px; width:22px; margin:-2px 3px 0 0; color:rgb(255,255,255); text-decoration:none; line-height:22px; text-align:center; font-weight:bold; font-size:14px; float:left; border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.5); }
+.vote > a, .votedup > a, .voteddown > a {color:rgb(0,0,0);}
+article.fhitem-submission h2 .vote > a, article.fhitem-submission h2 .votedup > a, article.fhitem-submission h2 .voteddown > a { border-color:rgba(0,0,0,0.15); }
+.vote .up, .vote .down, .votedup .up, .votedup .down, .voteddown .up, .voteddown .down { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; text-shadow:0 0 2px #000000; } 
+article:not(.fhitem-story) .vote .up,article:not(.fhitem-story) .vote .down,article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .votedup .down,article:not(.fhitem-story) .voteddown .up,article:not(.fhitem-story) .voteddown .down { text-shadow:none !important; }
+.voteddown .down, .votedup .up { text-indent:2px; line-height:24px; }
+article:not(.fhitem-story) .votedup .up,article:not(.fhitem-story) .voteddown .down {background: rgb(174,174,174);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(174,174,174)), to(rgb(193,193,193)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(193,193,193), rgb(174,174,174) 100%);color:rgb(0,0,0);}
+article.fhitem-story .votedup .up,article.fhitem-story .voteddown .down {background: rgb(0,66,66);background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(0,53,53)), to(rgb(0,102,102)));background-image: -moz-linear-gradient(100% 100% 90deg,rgb(0,102,102), rgb(0,53,53) 100%);}
+
+
+
+
+
+#tag-menu span.var-tag {
+font-weight:normal;
+color:#444444;
+}
+
+menu.reasons-menu a {
+padding:0 .25em 0 .25em;
+font-size:80%;
+-moz-border-radius:.5em;
+-webkit-border-radius:.5em;
+cursor:pointer;
+}
+
+menu.reasons-menu a:hover {
+background:rgb(153,153,153);
+background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102);
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102)));
+color:#fff;
+text-decoration:none;
+font-weignt:normal;
+}
+
+article.fhitem-story menu.reasons-menu a:hover {
+background:#002323 !important;
+background:-moz-linear-gradient(100% 100% 90deg, #002323, #005353 70%) repeat scroll 0 0 #002323 !important;
+background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#005353), to(#002323)) !important;
+}
+
+
+menu.reasons-menu {
+	display:none;
+	margin:0;
+	padding:0;
+}
+
+div.fhitem h3 menu.reasons-menu {
+margin:0.25em 0 0;
+}
+
+div.fhitem h3 menu.reasons-menu a.tag {
+font-size:.8em;
+}
+
+#tag-menu a.slash-hover,
+#feedback-menu a.slash-hover,
+
+.tag-display span.tag:hover,
+.tag-display span.tag.trigger {
+	color:white;
+	background-color:rgb(0, 85, 85);
+}
+
+#tag-menu a.slash-hover span.var-tag {
+	color:#eee;
+}
+
+.tag-entry.default {
+        color:#ccc;
+}
+
+.brief .nix {
+	margin-top:-1.35em;
+	margin-left:0px;
+	margin-top:-1.15em;
+	text-decoration:none;
+	line-height:1.35em;
+	padding:0 2px;
+	-moz-border-radius:.6em 0 0 .6em;
+	-webkit-border-radius:.6em 0 0 .6em;
+	-o-border-radius:.6em 0 0 .6em;
+	border-radius:.6em 0 0 .6em;
+    color:#fff !important;
+    background:transparent !important;
+}
+
+.brief .nix:hover {
+    background:rgb(153,153,153) !important;
+    background:-moz-linear-gradient(100% 100% 90deg, rgb(102,102,102), rgb(153,153,153) 70%) repeat scroll 0 0 rgb(102,102,102) !important;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(153,153,153)), to(rgb(102,102,102))) !important;
+}
+
+</style>
+<menu id="nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">マヌケ</a><a class="tag">不当プラスモデ</a><a class="tag">余計なもの</a><a class="tag">冗長</a><a class="tag">古い</a><a class="tag">既出</a><a class="tag">荒し</a><a class="tag">荒らし</a>
+</menu>
+<menu id="nod-reasons" style="display:none">
+<a class="tag">おもしろおかしい</a><a class="tag">すばらしい洞察</a><a class="tag">不当マイナスモデ</a><a class="tag">参考になる</a><a class="tag">新しい</a><a class="tag">興味深い</a>
+</menu>
+<menu id="comment-nix-reasons" style="display:none">
+<a class="tag">オフトピック</a><a class="tag">フレームのもと</a><a class="tag">荒らし</a><a class="tag">既出</a><a class="tag">不当プラスモデ</a>
+</menu>
+<menu id="comment-nod-reasons" style="display:none">
+<a class="tag">すばらしい洞察</a><a class="tag">興味深い</a><a class="tag">参考になる</a><a class="tag">おもしろおかしい</a><a class="tag">不当マイナスモデ</a>
+</menu>
+<menu id="tag-nod-reasons" style="display:none">
+<a class="tag">descriptive</a>
+</menu>
+<menu class="tag-menu" id="feedback-menu" type="context">
+<a class="tag">typo</a><a class="tag">dupe</a><a class="tag">error</a>
+</menu>
+<menu class="tag-menu none" id="tag-menu" type="context">
+<!--	<a data-op="!" class="nix">!<span class="var-tag hide"></span></a>-->
+</menu>
+<script type="text/javascript">
+$(function(){
+var $CURRENT_MENU, $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/, IE7=/^7\.0/, TAG_PREFIX=/^((https?:)?\/\/[^\/]+)?\/tag\//;
+
+function get_tag_name( $tag ){
+	return decodeURIComponent(($tag.attr('href') || '').replace(TAG_PREFIX, '')) || $tag.text().toLowerCase();
+}
+
+function trigger_menu( e, selector, $menu, menu_content ){
+	var $target=$(original_target(e, selector)), in_use=$target.is('.trigger');
+	if ( $CURRENT_MENU ) {
+		$CURRENT_MENU.menu('cancel', e);
+		$CURRENT_MENU = null;
+	}
+
+	if ( !in_use ) {
+		menu_content && $menu.stop(true, true).hide().html(menu_content);
+		($CURRENT_MENU=$menu).menu('context', e);
+	}
+	return !in_use;
+}
+
+function open_menu( trigger, $menu ){
+	var $trigger=$(trigger), $fhitem=$trigger.closest('.fhitem');
+	$fhitem.length && user_intent('interest', $fhitem[0]);
+
+	$menu.appendTo(document.body).css({ opacity:0 }).show();
+
+	var 	right	= $fhitem.offset().left + $fhitem.width(),
+		global	= $trigger.offset(),
+		local	= $menu.offsetParent().offset();
+
+	// Ugly IE position hack required:
+	$.browser.msie && IE7.test($.browser.version) && (local.top = 0);
+
+	// pin the menu (horizontally) on-screen
+	global.left = Math.min(global.left, right-$menu.width());
+
+	$trigger.addClass('trigger');
+	$menu.css({
+		position:	'absolute',
+		top:		global.top - local.top + $trigger.height(),
+		left:		global.left - local.left,
+		opacity:	1
+	});
+}
+
+function close_menu( trigger, $menu ){
+	$menu.hide();
+	$(trigger).removeClass('trigger');
+	($CURRENT_MENU===$menu) && ($CURRENT_MENU=false);
+}
+
+/* T2 tag context-menu */
+var $TAG_MENU=$('#tag-menu'), NOTNOT=/^!!/;
+
+
+    var user_is_admin = 0;
+
+	
+
+$('a[rel=tag]').live('mousedown',function(ea){
+    window.open(this.href);
+    return false;
+})
+
+$('.tag-bar .disagree').live('mousedown',function(ee){
+	var fhitem = $(original_target(ee)).closest('.fhitem')[0],
+		command = ('!' + $(original_target(ee)).attr("data-tag")).replace(NOTNOT, '');
+    try { Tags.submit(fhitem, command); } catch ( err ) {  }
+    return false;
+})
+
+
+
+$('a[rel=tag]').
+	live('mousedown', function( e ){
+        
+            return true;
+        
+
+	}).
+	live('click', function( e ){
+		if ( !logged_in ) {
+			var	target	= original_target(e),
+				tag	= $(target).text();
+			addfhfilter(tag);
+		}
+		e.preventDefault();
+		return false;
+	});
+
+$TAG_MENU.menu({
+	cssNamespace: 'slash',
+	liveTriggers: true,
+	clickDuration: 300,
+
+	start: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			context	= firehose_settings && firehose_settings.viewtitle;
+
+		// Insert the tagname into the menu items where needed.
+		$TAG_MENU.find('span.var-tag').text(tag);
+		$TAG_MENU.find('a.nix').attr('title','not ' + tag);
+		
+
+			// non-admins may only delete their own tags
+		$TAG_MENU.find('a:[data-op="-"]').toggle($tag.is('.my'));
+	
+
+		// *tagname* in *viewtitle*
+		$TAG_MENU.find('a:[data-op="="]').toggle(!!context);
+		context && $TAG_MENU.find('span.var-view').text(context);
+
+		open_menu($tag, $TAG_MENU);
+	},
+
+	select: function( e, ui ){
+		var	$tag	= $(ui.trigger),
+			tag	= get_tag_name($tag),
+			op	= $(ui.select).attr('data-op'),
+			fhitem,
+			command;
+
+		// Global for positioning other things.
+		$related_trigger = $tag;
+
+		switch ( op ) {
+			case '=':
+				addfhfilter(tag);
+				break;
+
+			default:
+				fhitem = $tag.closest('.fhitem')[0];
+				command = (op + tag).replace(NOTNOT, '');
+				try { Tags.submit(fhitem, command); } catch ( err ) {  }
+				break;
+		}
+	},
+
+	stop: function( e, ui ){ close_menu(ui.trigger, $TAG_MENU); }
+});
+
+
+
+
+/* T2 feedback context-menu */
+
+
+
+/* T2 datatype context-menu (admin-only) */
+
+
+
+
+
+
+});
+</script>
+<script type="text/javascript">
+$(function(){
+$('#firehose-filter').
+	focus(function(event){
+		gFocusedText = this;
+	}).
+	blur(function(event){
+		if ( gFocusedText === this ) {
+			gFocusedText = null;
+		}
+	});
+	
+	apply_updates_when(			'at-end', true);
+	});
+</script>
+<!-- body end --><!-- END: view 388 --><!-- yui_footer -->
+<div id="ads-footer-rec" style="overflow: hidden;">
+<div class="logly-story-bottom">
+<div id="logly-lift-4282390"></div>
+<script charset="UTF-8">
+  (function(){
+    var _lgy_lw = document.createElement("script");
+    _lgy_lw.type = "text/javascript";
+    _lgy_lw.charset = "UTF-8";
+    _lgy_lw.async = true;
+    _lgy_lw.src= (("https:" == document.location.protocol) ? "https://" : "http://")+"l.logly.co.jp/lift_widget.js?adspot_id=4282390";
+    var _lgy_lw_0 = document.getElementsByTagName("script")[0];
+    _lgy_lw_0.parentNode.insertBefore(_lgy_lw, _lgy_lw_0);
+  })();
+</script>
+</div>
+<div id="gpt-sd_article_rec-footer-left" style="float:left;margin:0 32px 16px 0;overflow: hidden;"></div>
+<div id="gpt-sd_article_rec-footer-right" style="margin:0 0 16px 0;;overflow: hidden;"></div>
+</div>
+</section>
+<footer class="grid_24 nf aoc" id="fhft">
+<div class="fleft" id="logo_nf">
+<a href="../../../../../../srad.jp/index.html"><span>スラド</span></a>
+</div>
+<nav role="firehose footer">
+<button class="btn" disabled="disabled">アーカイブ済み</button>
+<a class="btn hide" id="footer_moderate_button">モデレート</a>
+<a class="btn hide" id="footer_moderatorhelp_button">モデレーター・ヘルプ</a>
+<a class="btn hide" id="footer_delete_button" title="Checked comments will be deleted.">Delete</a>
+<script>
+				(function($){
+					var old_moderate_btn = $("#discussion_moderate_button");
+					if (old_moderate_btn.length) {
+						var moderate_btn = $("#footer_moderate_button");
+						moderate_btn.click(
+							function(){old_moderate_btn.click()}
+						);
+						moderate_btn.removeClass('hide');
+					}
+
+					var old_moderatorhelp_btn = $("#discussion_moderatorhelp_button");
+					if (old_moderatorhelp_btn.length) {
+						var moderatorhelp_btn = $("#footer_moderatorhelp_button");
+						moderatorhelp_btn.click(
+							function(){old_moderatorhelp_btn.click()}
+						);
+						moderatorhelp_btn.attr(
+							'href', old_moderatorhelp_btn.attr('href')
+						);
+						moderatorhelp_btn.removeClass('hide');
+					}
+
+					var old_delete_btn = $("#discussion_delete_button");
+					if (old_delete_btn.length) {
+						var delete_btn = $("#footer_delete_button");
+						delete_btn.click(
+							function(){old_delete_btn.click()}
+						);
+						delete_btn.removeClass('hide');
+					}
+
+					$('#discussion_buttons').addClass('hide');
+				})(Slash.jQuery); // (function($){
+			</script>
+<ul class="fleft">
+<li class="fleft selected">
+<span class="nbutton btn hide link reset" id="more_comments_button"><a href="index.html" onclick="D2.ajaxFetchComments(0,1); return false"><span class="hide" id="more_comments_num_a">残りのコメントを取得</span></a></span>
+</li>
+<li class="fleft"><span class="loadedcommentcnt">50</span>/<span class="totalcommentcnt">106</span>コメントを表示</li>
+</ul>
+<script type="text/javascript">D2.finishLoading()</script>
+<!-- below markup is for D1
+<ul class="fleft">
+	<li class="fleft"><a href="">Moderator help</a></li>
+	<li class="fleft"><a href="">Delete</a></li>
+	<li class="fleft"><a href="">?</a></li>
+	<li class="fleft"><a href="">__1_of_10_loaded__</a></li>
+</ul>
+-->
+<ul class="fright submitstory"><li class="fright"><a href="../../../../../../srad.jp/submission.html" onclick="show_submit_box('','submission'); $('#modal_box').addClass('submit'); return false;" title="スラドへのストーリーのタレコミ">タレコむ</a></li></ul>
+</nav>
+</footer>
+<section class="bq"><blockquote cite="https://srad.jp" class="msg grid_24"><p>一つのことを行い、またそれをうまくやるプログラムを書け -- Malcolm Douglas McIlroy<br/></p><span class="slant"></span></blockquote></section>
+<footer class="grid_24" id="ft">
+<nav class="grid_10" role="footer">
+<ul>
+<li><a href="../../../../../../srad.jp/about.html">About</a></li>
+<li><a href="../../../../../../srad.jp/faq/index.html">FAQ</a></li>
+<li><a href="../../../../../../srad.jp/story/index.html">ストーリアーカイブ</a></li>
+<li><a href="../../../../../../srad.jp/hof.html">殿堂入り</a></li>
+<li><a href="../../../../../../srad.jp/authors/index.html">編集者紹介</a></li>
+<li><a href="../../../../../../srad.jp/topics.pl.html">トピック</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise">広告掲載</a></li>
+<li><a href="https://ja.osdn.net/docs/Privacy_Policy">プライバシー</a></li>
+<li><a href="https://ja.osdn.net/docs/advertise-vender">広告事業者のポリシー</a></li>
+</ul>
+</nav>
+<div class="grid_14 tright tm">Trademarks property of their respective owners. Comments owned by the poster. <span class="nobr">©SRAD. SRAD is an <a href="https://appirits.com/" title="The Mother Ship">Appirits</a> service.</span></div>
+</footer>
+<div class="hide" id="modal_cover" onclick="hide_modal_box(); return false;"></div>
+<div class="hide" id="modal_box">
+<div id="modal_box_content"></div>
+<header class="n">
+<span class="fadeout"></span>
+<span class="fadeoutfade"></span>
+<span class="pf"><a class="ico close" href="index.html" onclick="hide_modal_box(); return false;"><span>閉じる</span></a></span>
+<h3 class="pf"><a href="../../../../../../srad.jp/index.html" id="logo_modal">スラド</a><span id="preference_title"></span></h3>
+</header>
+</div>
+<script id="after-content">
+(function( $, fn, console ){
+	$ && fn && $(function(){ fn($, console); });
+})(window.jQuery, window.pageload_done, window.console);
+</script>
+<div class="busy genericspinner hide"><span><i class="fa fa-circle-o-notch fa-spin"></i>読み込み中...</span></div>
+</body>
+</html>
